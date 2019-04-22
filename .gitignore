@@ -3,6 +3,7 @@
 .ipython
 .jupyter
 .matplotlib
+.ndradex
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
