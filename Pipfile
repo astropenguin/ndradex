@@ -1,0 +1,28 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[packages]
+numpy = "*"
+xarray = "*"
+toml = "*"
+astropy = "*"
+pandas = "*"
+matplotlib = "*"
+
+[dev-packages]
+ipython = "*"
+jupyter = "*"
+twine = "*"
+pylint = "*"
+
+[requires]
+python_version = "3.7"
+
+[scripts]
+jupyter = "jupyter notebook ${HOME}"
+distribute = """
+bash -c 'python setup.py sdist
+twine upload $(python setup.py --fullname).tar.gz'
+"""
