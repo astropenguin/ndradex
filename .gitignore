@@ -1,3 +1,9 @@
+# User-defined
+.vscode
+.ipython
+.jupyter
+.matplotlib
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
