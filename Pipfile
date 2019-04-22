@@ -10,6 +10,8 @@ toml = "*"
 astropy = "*"
 pandas = "*"
 matplotlib = "*"
+tqdm = "*"
+netcdf4 = "*"
 
 [dev-packages]
 ipython = "*"
