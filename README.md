@@ -1,2 +1,2 @@
-# radex-xarray
-:zap: Python RADEX wrapper powered by xarray
+# ndRADEX
+:zap: Python package for RADEX grid calculation
