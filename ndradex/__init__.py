@@ -39,4 +39,4 @@ config = _load_config()
 
 
 # import submodules
-from . import utils
+from .lamda import *
