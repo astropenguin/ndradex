@@ -38,5 +38,5 @@ def _load_config():
 config = _load_config()
 
 
-# import submodules
+# import modules
 from .lamda import *
