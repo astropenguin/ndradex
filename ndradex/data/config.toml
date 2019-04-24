@@ -1,4 +1,11 @@
+[cache]
+enable = true
+maxnum = 1000000
+
 [radex]
 radex-uni  = "radex-uni"
 radex-lvg  = "radex-lvg"
 radex-slab = "radex-slab"
+
+[alias]
+"CO" = "co.dat"
