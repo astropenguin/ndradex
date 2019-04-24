@@ -12,6 +12,7 @@ pandas = "*"
 matplotlib = "*"
 tqdm = "*"
 netcdf4 = "*"
+astroquery = "*"
 
 [dev-packages]
 ipython = "*"
