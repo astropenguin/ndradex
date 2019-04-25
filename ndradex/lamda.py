@@ -1,18 +1,27 @@
+__all__ = ['LAMDA']
+
 # from standard library
+from typing import Union
+from pathlib import Path
 
 # from dependent packages
 import ndradex as nd
 from astropy import units as u
 from astropy.table import Column
 from astroquery.lamda import Lamda
+from astroquery.lamda import parse_lamda_datafile
+from astroquery.lamda import write_lamda_datafile
+
+# module constants
+PathLike = Union[Path, str]
 
 
 class LAMDA:
-    def __init__(self, query):
-        if query in nd.config['alias']:
-            query = nd.config['alias'][query]
+    def __init__(self, moldata: PathLike):
+        if moldata in nd.config['alias']:
+            moldata = nd.config['alias'][moldata]
 
-        tables = self._get_tables(query)
+        tables = self._get_tables(moldata)
         self._collrates = tables[0]
         self._transitions = tables[1]
         self._levels = tables[2]
@@ -54,12 +63,23 @@ class LAMDA:
         self._upper_energies = dict(zip(transitions, upper_energies))
         return self._upper_energies
 
-    def _get_tables(self, query):
-        """(Down) load molecular data as astropy tables."""
-        collrates, transitions, levels = Lamda.query(query)
-        levels.add_index('Level')
+    def _get_tables(self, moldata: PathLike):
+        """(Down)load molecular data as astropy tables.
+
+        This will also add a column of transition name
+        (i.e., 1-0) to the transition table (as Name).
+
+        """
+        path = Path(moldata).expanduser()
+
+        if path.exists():
+            collrates, transitions, levels = parse_lamda_datafile(path)
+        else:
+            collrates, transitions, levels = Lamda.query(moldata)
 
         data = []
+        levels.add_index('Level')
+
         for row in transitions:
             J_u = levels.loc[row['Upper']]['J']
             J_l = levels.loc[row['Lower']]['J']
@@ -73,15 +93,3 @@ class LAMDA:
     def __repr__(self):
         molname = self._levels.meta['molecule']
         return f'LAMDA({molname})'
-
-
-def list_moldata():
-    names = list(Lamda.molecule_dict)
-
-    for alias, name in nd.config['alias'].items():
-        if name not in names:
-            continue
-
-        names.append(alias)
-
-    return names
