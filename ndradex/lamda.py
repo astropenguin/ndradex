@@ -3,6 +3,7 @@ __all__ = ['LAMDA']
 # from standard library
 from typing import Union
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 
 # from dependent packages
 import ndradex as nd
@@ -90,6 +91,19 @@ class LAMDA:
 
         return collrates, transitions, levels
 
+    def __enter__(self):
+        """Create a temporary moldata file inside a context block."""
+        self._tempfile = NamedTemporaryFile()
+        tables = (self._collrates, self._transitions, self._levels)
+        write_lamda_datafile(self._tempfile.name, tables)
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """Delete a temporary moldata file outside a context block."""
+        self._tempfile.close()
+        delattr(self, '_tempfile')
+
     def __repr__(self):
-        molname = self._levels.meta['molecule']
-        return f'LAMDA({molname})'
+        if hasattr(self, '_tempfile'):
+            return self._tempfile.name
+
