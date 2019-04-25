@@ -107,3 +107,5 @@ class LAMDA:
         if hasattr(self, '_tempfile'):
             return self._tempfile.name
 
+        molecule = self._levels.meta['molecule']
+        return f'LAMDA({molecule})'
