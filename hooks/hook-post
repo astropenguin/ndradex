@@ -1,0 +1,16 @@
+#!/bin/bash
+set -eu
+
+# IPython startup
+cat << EOS > $IPYTHONDIR/profile_default/startup/00.py
+import numpy as np
+import xarray as xr
+import pandas as pd
+import ndradex as nd
+EOS
+
+# IPython config
+cat << EOS > $IPYTHONDIR/profile_default/ipython_config.py
+c.InteractiveShellApp.exec_lines = ['%autoreload 2']
+c.InteractiveShellApp.extensions = ['autoreload']
+EOS
