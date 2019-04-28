@@ -1,9 +1,10 @@
 __all__ = ['LAMDA']
 
 # from standard library
-from typing import Union
+from logging import getLogger
 from pathlib import Path
 from tempfile import NamedTemporaryFile
+logger = getLogger(__name__)
 
 # from dependent packages
 import ndradex as nd
