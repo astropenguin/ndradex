@@ -12,12 +12,9 @@ from astroquery.lamda import Lamda
 from astroquery.lamda import parse_lamda_datafile
 from astroquery.lamda import write_lamda_datafile
 
-# module constants
-PathLike = Union[Path, str]
-
 
 class LAMDA:
-    def __init__(self, moldata: PathLike):
+    def __init__(self, moldata):
         if moldata in nd.config['alias']:
             moldata = nd.config['alias'][moldata]
 
@@ -61,7 +58,7 @@ class LAMDA:
         self._e_up = dict(zip(self.qn_ul, e_up))
         return self._e_up
 
-    def _get_tables(self, moldata: PathLike):
+    def _get_tables(self, moldata):
         """(Down)load molecular data as astropy tables.
 
         This will also add a column of transition quantum
