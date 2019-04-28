@@ -21,6 +21,7 @@ twine = "*"
 pylint = "*"
 yapf = "*"
 pytest = "*"
+jupyterthemes = "*"
 
 [requires]
 python_version = "3.7"
