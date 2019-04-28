@@ -7,7 +7,6 @@ from tempfile import NamedTemporaryFile
 
 # from dependent packages
 import ndradex as nd
-from astropy import units as u
 from astropy.table import Column
 from astroquery.lamda import Lamda
 from astroquery.lamda import parse_lamda_datafile
@@ -28,50 +27,45 @@ class LAMDA:
         self._levels = tables[2]
 
     @property
-    def transitions(self):
-        return list(self._transitions['Name'])
+    def qn_ul(self):
+        """List of transition quantum numbers."""
+        return list(self._transitions['QN_ul'])
 
     @property
-    def frequencies(self):
+    def freq(self):
         """Dictionary of radiation frequencies."""
-        if hasattr(self, '_frequencies'):
-            return self._frequencies
+        if hasattr(self, '_freq'):
+            return self._freq
 
-        transitions = self._transitions['Name']
-        frequencies = self._transitions['Frequency'] * u.GHz
-
-        self._frequencies = dict(zip(transitions, frequencies))
-        return self._frequencies
+        freq = self._transitions['Frequency']
+        self._freq = dict(zip(self.qn_ul, freq))
+        return self._freq
 
     @property
-    def a_coeffs(self):
+    def a_coeff(self):
         """Dictionary of Einstein A coefficients."""
-        if hasattr(self, '_a_coeffs'):
-            return self._a_coeffs
+        if hasattr(self, '_a_coeff'):
+            return self._a_coeff
 
-        transitions = self._transitions['Name']
-        a_coeffs = self._transitions['EinsteinA'] / u.s
-
-        self._a_coeffs = dict(zip(transitions, a_coeffs))
+        a_coeff = self._transitions['EinsteinA']
+        self._a_coeff = dict(zip(self.qn_ul, a_coeff))
         return self._a_coeffs
 
     @property
-    def upper_energies(self):
+    def e_up(self):
         """Dictionary of upper state energies."""
-        if hasattr(self, '_upper_energies'):
-            return self._upper_energies
+        if hasattr(self, '_e_up'):
+            return self._e_up
 
-        transitions = self._transitions['Name']
-        upper_energies = self._transitions['E_u(K)'] * u.K
-
-        self._upper_energies = dict(zip(transitions, upper_energies))
-        return self._upper_energies
+        e_up = self._transitions['E_u(K)']
+        self._e_up = dict(zip(self.qn_ul, e_up))
+        return self._e_up
 
     def _get_tables(self, moldata: PathLike):
         """(Down)load molecular data as astropy tables.
 
-        This will also add a column of transition name
-        (i.e., 1-0) to the transition table (as Name).
+        This will also add a column of transition quantum
+        numbers (i.e., 1-0) to the transition table (QN_ul).
 
         """
         path = Path(moldata).expanduser()
@@ -89,9 +83,8 @@ class LAMDA:
             J_l = levels.loc[row['Lower']]['J']
             data.append(f'{J_u}-{J_l}')
 
-        transitions.add_column(Column(data, 'Name'))
-        transitions.add_index('Name')
-
+        transitions.add_column(Column(data, 'QN_ul'))
+        transitions.add_index('QN_ul')
         return collrates, transitions, levels
 
     def __enter__(self):
