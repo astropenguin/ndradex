@@ -7,10 +7,17 @@ rm .env && mv .env.new .env
 
 # IPython startup
 cat << EOS > $IPYTHONDIR/profile_default/startup/00.py
+import os
+import re
+import sys
+import time
+from pathlib import Path
+
 import numpy as np
 import xarray as xr
 import pandas as pd
 import ndradex as nd
+from astropy import units as u
 EOS
 
 # IPython config
