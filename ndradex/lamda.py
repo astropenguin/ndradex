@@ -86,12 +86,12 @@ class LAMDA:
         else:
             collrates, transitions, levels = Lamda.query(query)
 
-        data = []
         levels.add_index('Level')
 
+        data = []
         for row in transitions:
-            J_u = levels.loc[row['Upper']]['J']
-            J_l = levels.loc[row['Lower']]['J']
+            J_u = nd.parse_qn(levels.loc[row['Upper']]['J'])
+            J_l = nd.parse_qn(levels.loc[row['Lower']]['J'])
             data.append(f'{J_u}-{J_l}')
 
         transitions.add_column(Column(data, 'QN_ul'))
