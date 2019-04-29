@@ -6,6 +6,7 @@ from subprocess import run, PIPE
 # from dependent packages
 import numpy as np
 import xarray as xr
+import ndradex as nd
 
 # module constants
 class Dims(Enum):
@@ -51,6 +52,18 @@ def _get_inputs(lamda, coords):
         items = dict(zip(keys, vals))
         freq_lim = lamda.freq_lim[items['QN_ul']]
         yield template.format(freq_lim=freq_lim, **items)
+
+
+def _get_outputs(lamda, coords):
+    dataset = xr.Dataset()
+    shape = [c[1].size for c in coords]
+
+    for var in Vars:
+        array = xr.DataArray(np.empty(shape), coords, name=var.value)
+        dataset[var.value] = array
+
+    dataset['desc'] = repr(lamda)
+    return dataset
 
 
 def _run_radex(input, geometry='uni'):
