@@ -42,6 +42,17 @@ class LAMDA:
         return self._freq
 
     @property
+    def freq_lim(self):
+        """Transition frequency ranges in units of GHz."""
+        if hasattr(self, '_freq_lim'):
+            return self._freq_lim
+
+        freq = self._transitions['Frequency']
+        freq_lim = [f'{(1-1e-9)*f} {(1+1e-9)*f}' for f in freq]
+        self._freq_lim = dict(zip(self.qn_ul, freq_lim))
+        return self._freq_lim
+
+    @property
     def a_coeff(self):
         """Dictionary of Einstein A coefficients."""
         if hasattr(self, '_a_coeff'):
