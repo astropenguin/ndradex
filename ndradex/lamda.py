@@ -3,7 +3,6 @@ __all__ = ['LAMDA']
 # from standard library
 from logging import getLogger
 from pathlib import Path
-from tempfile import NamedTemporaryFile
 logger = getLogger(__name__)
 
 # from dependent packages
@@ -15,14 +14,17 @@ from astroquery.lamda import write_lamda_datafile
 
 
 class LAMDA:
-    def __init__(self, moldata):
-        if moldata in nd.config['alias']:
-            moldata = nd.config['alias'][moldata]
+    def __init__(self, query, dir='.'):
+        if query in nd.config['alias']:
+            query = nd.config['alias'][query]
 
-        tables = self._get_tables(moldata)
+        tables = self._get_tables(query)
+        path = self._get_temppath(query, dir)
+
         self._collrates = tables[0]
         self._transitions = tables[1]
         self._levels = tables[2]
+        self._temppath = path
 
     @property
     def qn_ul(self):
@@ -59,19 +61,30 @@ class LAMDA:
         self._e_up = dict(zip(self.qn_ul, e_up))
         return self._e_up
 
-    def _get_tables(self, moldata):
+    def _get_temppath(self, query, dir='.'):
+        """Get path object for temporary moldata."""
+        path = Path(query).expanduser()
+
+        if path.exists():
+            moldata = path.name
+        else:
+            moldata = query + '.dat'
+
+        return Path(dir).expanduser() / moldata
+
+    def _get_tables(self, query):
         """(Down)load molecular data as astropy tables.
 
         This will also add a column of transition quantum
         numbers (i.e., 1-0) to the transition table (QN_ul).
 
         """
-        path = Path(moldata).expanduser()
+        path = Path(query).expanduser()
 
         if path.exists():
             collrates, transitions, levels = parse_lamda_datafile(path)
         else:
-            collrates, transitions, levels = Lamda.query(moldata)
+            collrates, transitions, levels = Lamda.query(query)
 
         data = []
         levels.add_index('Level')
@@ -86,20 +99,18 @@ class LAMDA:
         return collrates, transitions, levels
 
     def __enter__(self):
-        """Create a temporary moldata file inside a context block."""
-        self._tempfile = NamedTemporaryFile()
+        """Create a temporary moldata inside a context block."""
         tables = (self._collrates, self._transitions, self._levels)
-        write_lamda_datafile(self._tempfile.name, tables)
+        write_lamda_datafile(self._temppath, tables)
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        """Delete a temporary moldata file outside a context block."""
-        self._tempfile.close()
-        delattr(self, '_tempfile')
+        """Delete a temporary moldata outside a context block."""
+        self._temppath.unlink()
+
+    def __str__(self):
+        return self._temppath.name
 
     def __repr__(self):
-        if hasattr(self, '_tempfile'):
-            return self._tempfile.name
-
         molecule = self._levels.meta['molecule']
         return f'LAMDA({molecule})'
