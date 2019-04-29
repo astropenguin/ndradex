@@ -1,4 +1,5 @@
 __all__ = ['ensure_values',
+           'parse_qn',
            'set_defaults']
 
 # from standard library
@@ -25,6 +26,13 @@ def ensure_values(values, unit=None):
         return values[np.newaxis]
     else:
         return values
+
+
+def parse_qn(qn):
+    try:
+        return str(int(qn))
+    except ValueError:
+        return qn.strip('" ')
 
 
 class set_defaults:
