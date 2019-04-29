@@ -33,7 +33,7 @@ class LAMDA:
 
     @property
     def freq(self):
-        """Dictionary of radiation frequencies."""
+        """Transition frequencies in units of GHz."""
         if hasattr(self, '_freq'):
             return self._freq
 
@@ -54,7 +54,7 @@ class LAMDA:
 
     @property
     def a_coeff(self):
-        """Dictionary of Einstein A coefficients."""
+        """Einstein A coefficients in units of s^-1."""
         if hasattr(self, '_a_coeff'):
             return self._a_coeff
 
@@ -64,7 +64,7 @@ class LAMDA:
 
     @property
     def e_up(self):
-        """Dictionary of upper state energies."""
+        """Upper state energies in units of K."""
         if hasattr(self, '_e_up'):
             return self._e_up
 
