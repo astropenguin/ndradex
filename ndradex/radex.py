@@ -43,11 +43,54 @@ def calc(moldata, transition, T_kin=100, N_mol=1e15,
 
 
 # utility functions
-def _make_input(moldata, transition, T_kin, N_mol, n_coll, T_bg, dV):
-    # moldata is either string or LAMDA instance
-    pass
+def _get_inputs(lamda, coords):
+    keys, values = zip(*coords)
+    template = _get_template(lamda, coords)
+
+    for vals in product(*values):
+        items = dict(zip(keys, vals))
+        freq_lim = lamda.freq_lim[items['QN_ul']]
+        yield template.format(freq_lim=freq_lim, **items)
 
 
 def _run_radex(input, geometry='uni'):
     # return cache if exists
     pass
+
+
+def _get_coords(QN_ul, T_kin=100, T_bg=2.73, N_mol=1e15, n_H2=1e3,
+                 dv=1.0, geo='uni', n_pH2=None, n_oH2=None,
+                 n_e=None, n_H=None, n_He=None, n_Hp=None):
+    """Make coords as list for xarray.DataArray objects."""
+    items = {Dims.QN_ul: nd.ensure_values(QN_ul),
+             Dims.T_kin: nd.ensure_values(T_kin, 'K'),
+             Dims.T_bg:  nd.ensure_values(T_bg, 'K'),
+             Dims.N_mol: nd.ensure_values(N_mol, 'cm^-2'),
+             Dims.n_H2:  nd.ensure_values(n_H2, 'cm^-3'),
+             Dims.n_pH2: nd.ensure_values(n_pH2, 'cm^-3'),
+             Dims.n_oH2: nd.ensure_values(n_oH2, 'cm^-3'),
+             Dims.n_e:   nd.ensure_values(n_e, 'cm^-3'),
+             Dims.n_H:   nd.ensure_values(n_H, 'cm^-3'),
+             Dims.n_He:  nd.ensure_values(n_He, 'cm^-3'),
+             Dims.n_Hp:  nd.ensure_values(n_Hp, 'cm^-3'),
+             Dims.dv:    nd.ensure_values(dv, 'km/s'),
+             Dims.geo:   nd.ensure_values(geo)}
+
+    return [(dim.value, items[dim]) for dim in Dims]
+
+
+def _get_template(lamda, coords):
+    prefix = 'n_'
+    coords = [c for c in coords if np.all(c[1] != None)]
+    n_coords = [c for c in coords if c[0].startswith(prefix)]
+
+    template = '{}\n'.format(lamda)
+    template += 'radex.out\n{freq_lim}\n{T_kin}\n'
+    template += '{}\n'.format(len(n_coords))
+
+    for dim, values in n_coords:
+        template += '{}\n'.format(dim.lstrip(prefix))
+        template += '{{{}}}\n'.format(dim)
+
+    template += '{T_bg}\n{N_mol}\n{dv}\n0'
+    return template
