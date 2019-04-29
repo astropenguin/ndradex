@@ -2,6 +2,7 @@
 from enum import Enum
 from pathlib import Path
 from subprocess import run, PIPE
+from tempfile import TemporaryDirectory
 
 # from dependent packages
 import numpy as np
@@ -38,9 +39,17 @@ class Vars(Enum):
 
 
 # main function
-def calc(moldata, transition, T_kin=100, N_mol=1e15,
-         n_coll=1e3, T_bg=2.73, dV=1.0, geometry='uni'):
-    pass
+def calc(moldata, QN_ul, T_kin=100, T_bg=2.73, N_mol=1e15,
+         n_H2=1e3, dv=1.0, geo='uni', n_pH2=None, n_oH2=None,
+         n_e=None, n_H=None, n_He=None, n_Hp=None, squeeze=True):
+    """Execute N-dim RADEX calculation."""
+    coords = _get_coords(QN_ul, T_kin, T_bg, N_mol, n_H2, dv, geo,
+                         n_pH2, n_oH2, n_e, n_H, n_He, n_Hp)
+
+    with TemporaryDirectory(dir='.') as tempdir:
+        with nd.LAMDA(moldata, tempdir) as lamda:
+            inputs = _get_inputs(lamda, coords)
+            outputs = _get_outputs(lamda, coords)
 
 
 # utility functions
