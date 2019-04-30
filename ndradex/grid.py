@@ -1,4 +1,7 @@
+__all__ = ['run']
+
 # from standard library
+from concurrent.futures import ProcessPoolExecutor
 from enum import Enum
 from itertools import product
 from tempfile import TemporaryDirectory
@@ -48,7 +51,13 @@ def run(moldata, QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3,
     with TemporaryDirectory(dir='.') as tempdir:
         with nd.LAMDA(moldata, tempdir) as lamda:
             inputs = get_inputs(lamda, coords)
-            outputs = get_outputs(lamda, coords)
+            geoms = get_geometries(coords)
+            return calc(inputs, geoms)
+
+
+def calc(inputs, geoms):
+    with ProcessPoolExecutor(4) as executor:
+        mapped = executor.map(nd.run_radex, inputs, radexes)
 
 
 # sub functions
@@ -59,10 +68,17 @@ def get_inputs(lamda, coords):
 
     for vals in product(*values):
         items = dict(zip(keys, vals))
-        qn_ul = items['QN_ul']
-        items['output_id'] = nd.random_hex()
-        items['freq_lim'] = lamda.freq_lim[qn_ul]
+        items['output_id'] = nd.utils.random_hex()
+        items['freq_lim'] = lamda.freq_lim[items['QN_ul']]
         yield template.format(**items)
+
+
+def get_radexes(coords):
+    keys, values = zip(*coords)
+
+    for vals in product(*values):
+        geom = dict(zip(keys, vals))['geom']
+        yield nd.config['radex'][geom]
 
 
 def get_outputs(lamda, coords):
@@ -76,25 +92,6 @@ def get_outputs(lamda, coords):
 
     dataset['desc'] = repr(lamda)
     return dataset
-
-
-def get_template(lamda, coords):
-    """Make template string for RADEX input."""
-    prefix = 'n_'
-    coords = [c for c in coords if np.all(c[1] != None)]
-    n_coords = [c for c in coords if c[0].startswith(prefix)]
-
-    template = '{}\n'.format(lamda)
-    template += '{}.{{output_id}}\n'.format(lamda)
-    template += '{freq_lim}\n{T_kin}\n'
-    template += '{}\n'.format(len(n_coords))
-
-    for dim, values in n_coords:
-        template += '{}\n'.format(dim.lstrip(prefix))
-        template += '{{{}}}\n'.format(dim)
-
-    template += '{T_bg}\n{N_mol}\n{dv}\n0'
-    return template
 
 
 # utility functions
@@ -117,6 +114,25 @@ def get_coords(QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3,
              Dims.geom:  ensure_values(geom)}
 
     return [(dim.value, items[dim]) for dim in Dims]
+
+
+def get_template(lamda, coords):
+    """Make template string for RADEX input."""
+    prefix = 'n_'
+    coords = [c for c in coords if np.all(c[1] != None)]
+    n_coords = [c for c in coords if c[0].startswith(prefix)]
+
+    template = '{}\n'.format(lamda)
+    template += '{}.{{output_id}}\n'.format(lamda)
+    template += '{freq_lim}\n{T_kin}\n'
+    template += '{}\n'.format(len(n_coords))
+
+    for dim, values in n_coords:
+        template += '{}\n'.format(dim.lstrip(prefix))
+        template += '{{{}}}\n'.format(dim)
+
+    template += '{T_bg}\n{N_mol}\n{dv}\n0'
+    return template
 
 
 def ensure_values(values, unit=None):
