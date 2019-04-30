@@ -120,7 +120,7 @@ class LAMDA:
         self._temppath.unlink()
 
     def __str__(self):
-        return self._temppath.name
+        return str(self._temppath)
 
     def __repr__(self):
         molecule = self._levels.meta['molecule']
