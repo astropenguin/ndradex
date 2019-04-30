@@ -1,7 +1,6 @@
 # from standard library
 from enum import Enum
 from itertools import product
-from pathlib import Path
 from tempfile import TemporaryDirectory
 
 # from dependent packages
@@ -76,11 +75,6 @@ def _get_outputs(lamda, coords):
 
     dataset['desc'] = repr(lamda)
     return dataset
-
-
-def _run_radex(input, geometry='uni'):
-    # return cache if exists
-    pass
 
 
 def _get_coords(QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3,
