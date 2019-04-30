@@ -50,11 +50,8 @@ def run_radex(input, radex='radex-uni', log='radex.log',
         logger.warning('RADEX version is not valid')
         return sep.join(ERROR_OUTPUT)
     finally:
-        if log.exists():
-            log.unlink()
-
-        if output.exists():
-            output.unlink()
+        remove_file(log)
+        remove_file(output)
 
 
 # utility functions
@@ -75,3 +72,11 @@ def ensure_output(cp, output, encoding='utf-8'):
 
     with open(output, encoding=encoding) as f:
         return f.readlines()[-1].split()[-N_VARS:]
+
+
+def remove_file(path):
+    """Remove file forcibly (i.e., rm -f <path>)."""
+    try:
+        Path(path).unlink()
+    except FileNotFoundError:
+        pass
