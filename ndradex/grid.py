@@ -22,6 +22,7 @@ class Dims(Enum):
     n_Hp  = 'n_H+'
     T_bg  = 'T_bg'
     dv    = 'dv'
+    geom  = 'geom'
 
 class Vars(Enum):
     E_u   = 'E_u'
@@ -37,12 +38,12 @@ class Vars(Enum):
 
 
 # main function
-def calc(moldata, QN_ul, T_kin=100, T_bg=2.73, N_mol=1e15,
-         n_H2=1e3, dv=1.0, n_pH2=None, n_oH2=None, n_e=None,
-         n_H=None, n_He=None, n_Hp=None, geometry='uni'):
-    """Execute N-dim RADEX calculation."""
-    coords = get_coords(QN_ul, T_kin, N_mol, n_H2, n_pH2,
-                         n_oH2, n_e, n_H, n_He, n_Hp, T_bg, dv)
+def run(moldata, QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3,
+        n_pH2=None, n_oH2=None, n_e=None, n_H=None, n_He=None,
+        n_Hp=None, T_bg=2.73, dv=1.0, geom='uni', squeeze=True):
+    """Execute N-dim RADEX grid calculation."""
+    coords = get_coords(QN_ul, T_kin, N_mol, n_H2, n_pH2, n_oH2,
+                        n_e, n_H, n_He, n_Hp, T_bg, dv, geom)
 
     with TemporaryDirectory(dir='.') as tempdir:
         with nd.LAMDA(moldata, tempdir) as lamda:
@@ -79,7 +80,7 @@ def get_outputs(lamda, coords):
 
 def get_coords(QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3,
                 n_pH2=None, n_oH2=None, n_e=None, n_H=None,
-                n_He=None, n_Hp=None, T_bg=2.73, dv=1.0):
+                n_He=None, n_Hp=None, T_bg=2.73, dv=1.0, geom='uni'):
     """Make coords as list for xarray.DataArray objects."""
     items = {Dims.QN_ul: ensure_values(QN_ul),
              Dims.T_kin: ensure_values(T_kin, 'K'),
@@ -92,7 +93,8 @@ def get_coords(QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3,
              Dims.n_He:  ensure_values(n_He, 'cm^-3'),
              Dims.n_Hp:  ensure_values(n_Hp, 'cm^-3'),
              Dims.T_bg:  ensure_values(T_bg, 'K'),
-             Dims.dv:    ensure_values(dv, 'km/s')}
+             Dims.dv:    ensure_values(dv, 'km/s'),
+             Dims.geom:  ensure_values(geom)}
 
     return [(dim.value, items[dim]) for dim in Dims]
 
