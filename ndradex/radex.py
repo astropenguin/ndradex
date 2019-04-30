@@ -8,8 +8,9 @@ from subprocess import CalledProcessError
 logger = getLogger(__name__)
 
 # module constants
+N_VARS = 10
 RADEX_VERSION = '30nov2011'
-ERROR_OUTPUT = ['NaN'] * 10
+ERROR_OUTPUT = ['NaN'] * N_VARS
 
 
 # main function
@@ -28,15 +29,8 @@ def run_radex(input, radex='radex-uni', sep=', ',
         output (str)
 
     """
-    log = Path(log)
-    radex = Path(radex)
-
-    if isinstance(input, (list, tuple)):
-        output = Path(input[1])
-        input = '\n'.join(input).encode(encoding)
-    else:
-        output = Path(input.split('\n')[1])
-        input = input.encode(encoding)
+    radex, log = Path(radex), Path(log)
+    input, output = ensure_input(input, encoding)
 
     try:
         cp = run([radex], input=input, stdout=PIPE, check=True)
@@ -59,14 +53,20 @@ def run_radex(input, radex='radex-uni', sep=', ',
 
 
 # utility functions
+def ensure_input(input, encoding='utf-8'):
+    if isinstance(input, (list, tuple)):
+        output = Path(input[1])
+        input = '\n'.join(input).encode(encoding)
+    else:
+        output = Path(input.split('\n')[1])
+        input = input.encode(encoding)
+
+    return input, output
+
+
 def ensure_output(cp, output, encoding='utf-8'):
-    if RADEX_VERSION not in cp.stdout.decode('utf-8'):
+    if RADEX_VERSION not in cp.stdout.decode(encoding):
         raise RuntimeError('Not a valid RADEX version')
 
-    return lastline(output, encoding).split()[3:]
-
-
-def lastline(file, encoding='utf-8'):
-    """Get the last line of a file."""
-    with open(file, encoding=encoding) as f:
-        return f.readlines()[-1]
+    with open(output, encoding=encoding) as f:
+        return f.readlines()[-1].split()[-N_VARS:]
