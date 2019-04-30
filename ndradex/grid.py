@@ -96,8 +96,8 @@ def get_outputs(lamda, coords):
 
 # utility functions
 def get_coords(QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3,
-                n_pH2=None, n_oH2=None, n_e=None, n_H=None,
-                n_He=None, n_Hp=None, T_bg=2.73, dv=1.0, geom='uni'):
+               n_pH2=None, n_oH2=None, n_e=None, n_H=None,
+               n_He=None, n_Hp=None, T_bg=2.73, dv=1.0, geom='uni'):
     """Make coords as list for xarray.DataArray objects."""
     items = {Dims.QN_ul: ensure_values(QN_ul),
              Dims.T_kin: ensure_values(T_kin, 'K'),
