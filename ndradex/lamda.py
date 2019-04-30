@@ -18,13 +18,13 @@ class LAMDA:
         if query in nd.config['alias']:
             query = nd.config['alias'][query]
 
-        tables = self._get_tables(query)
-        path = self._get_temppath(query, dir)
+        tables = get_tables(query)
+        temppath = get_temppath(query, dir)
 
         self._collrates = tables[0]
         self._transitions = tables[1]
         self._levels = tables[2]
-        self._temppath = path
+        self._temppath = temppath
 
     @property
     def qn_ul(self):
@@ -72,43 +72,6 @@ class LAMDA:
         self._e_up = dict(zip(self.qn_ul, e_up))
         return self._e_up
 
-    def _get_temppath(self, query, dir='.'):
-        """Get path object for temporary moldata."""
-        path = Path(query).expanduser()
-
-        if path.exists():
-            moldata = path.name
-        else:
-            moldata = query + '.dat'
-
-        return Path(dir).expanduser() / moldata
-
-    def _get_tables(self, query):
-        """(Down)load molecular data as astropy tables.
-
-        This will also add a column of transition quantum
-        numbers (i.e., 1-0) to the transition table (QN_ul).
-
-        """
-        path = Path(query).expanduser()
-
-        if path.exists():
-            collrates, transitions, levels = parse_lamda_datafile(path)
-        else:
-            collrates, transitions, levels = Lamda.query(query)
-
-        levels.add_index('Level')
-
-        data = []
-        for row in transitions:
-            J_u = nd.parse_qn(levels.loc[row['Upper']]['J'])
-            J_l = nd.parse_qn(levels.loc[row['Lower']]['J'])
-            data.append(f'{J_u}-{J_l}')
-
-        transitions.add_column(Column(data, 'QN_ul'))
-        transitions.add_index('QN_ul')
-        return collrates, transitions, levels
-
     def __enter__(self):
         """Create a temporary moldata inside a context block."""
         tables = (self._collrates, self._transitions, self._levels)
@@ -125,3 +88,50 @@ class LAMDA:
     def __repr__(self):
         molecule = self._levels.meta['molecule']
         return f'LAMDA({molecule})'
+
+
+# utility functions
+def get_tables(query):
+    """(Down)load molecular data as astropy tables.
+
+    This will also add a column of transition quantum
+    numbers (i.e., 1-0) to the transition table (QN_ul).
+
+    """
+    path = Path(query).expanduser()
+
+    if path.exists():
+        collrates, transitions, levels = parse_lamda_datafile(path)
+    else:
+        collrates, transitions, levels = Lamda.query(query)
+
+    levels.add_index('Level')
+
+    data = []
+    for row in transitions:
+        J_u = ensure_qn(levels.loc[row['Upper']]['J'])
+        J_l = ensure_qn(levels.loc[row['Lower']]['J'])
+        data.append(f'{J_u}-{J_l}')
+
+    transitions.add_column(Column(data, 'QN_ul'))
+    transitions.add_index('QN_ul')
+    return collrates, transitions, levels
+
+
+def get_temppath(query, dir='.'):
+    """Get path object for temporary moldata."""
+    path = Path(query).expanduser()
+
+    if path.exists():
+        moldata = path.name
+    else:
+        moldata = query + '.dat'
+
+    return Path(dir).expanduser() / moldata
+
+
+def ensure_qn(qn):
+    try:
+        return str(int(qn))
+    except ValueError:
+        return qn.strip('" ')
