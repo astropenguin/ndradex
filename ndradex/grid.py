@@ -78,6 +78,26 @@ def get_outputs(lamda, coords):
     return dataset
 
 
+def get_template(lamda, coords):
+    """Make template string for RADEX input."""
+    prefix = 'n_'
+    coords = [c for c in coords if np.all(c[1] != None)]
+    n_coords = [c for c in coords if c[0].startswith(prefix)]
+
+    template = '{}\n'.format(lamda)
+    template += '{}.{{output_id}}\n'.format(lamda)
+    template += '{freq_lim}\n{T_kin}\n'
+    template += '{}\n'.format(len(n_coords))
+
+    for dim, values in n_coords:
+        template += '{}\n'.format(dim.lstrip(prefix))
+        template += '{{{}}}\n'.format(dim)
+
+    template += '{T_bg}\n{N_mol}\n{dv}\n0'
+    return template
+
+
+# utility functions
 def get_coords(QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3,
                 n_pH2=None, n_oH2=None, n_e=None, n_H=None,
                 n_He=None, n_Hp=None, T_bg=2.73, dv=1.0, geom='uni'):
@@ -99,26 +119,6 @@ def get_coords(QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3,
     return [(dim.value, items[dim]) for dim in Dims]
 
 
-def get_template(lamda, coords):
-    """Make template string for RADEX input."""
-    prefix = 'n_'
-    coords = [c for c in coords if np.all(c[1] != None)]
-    n_coords = [c for c in coords if c[0].startswith(prefix)]
-
-    template = '{}\n'.format(lamda)
-    template += '{}.{{output_id}}\n'.format(lamda)
-    template += '{freq_lim}\n{T_kin}\n'
-    template += '{}\n'.format(len(n_coords))
-
-    for dim, values in n_coords:
-        template += '{}\n'.format(dim.lstrip(prefix))
-        template += '{{{}}}\n'.format(dim)
-
-    template += '{T_bg}\n{N_mol}\n{dv}\n0'
-    return template
-
-
-# utility functions
 def ensure_values(values, unit=None):
     # lazy import of astropy-related things
     from astropy import units as u
