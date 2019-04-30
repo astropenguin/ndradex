@@ -41,20 +41,20 @@ def calc(moldata, QN_ul, T_kin=100, T_bg=2.73, N_mol=1e15,
          n_H2=1e3, dv=1.0, n_pH2=None, n_oH2=None, n_e=None,
          n_H=None, n_He=None, n_Hp=None, geometry='uni'):
     """Execute N-dim RADEX calculation."""
-    coords = _get_coords(QN_ul, T_kin, N_mol, n_H2, n_pH2,
+    coords = get_coords(QN_ul, T_kin, N_mol, n_H2, n_pH2,
                          n_oH2, n_e, n_H, n_He, n_Hp, T_bg, dv)
 
     with TemporaryDirectory(dir='.') as tempdir:
         with nd.LAMDA(moldata, tempdir) as lamda:
-            inputs = _get_inputs(lamda, coords)
-            outputs = _get_outputs(lamda, coords)
+            inputs = get_inputs(lamda, coords)
+            outputs = get_outputs(lamda, coords)
 
 
-# utility functions
-def _get_inputs(lamda, coords):
+# sub functions
+def get_inputs(lamda, coords):
     """Make RADEX input strings iteratively."""
     keys, values = zip(*coords)
-    template = _get_template(lamda, coords)
+    template = get_template(lamda, coords)
 
     for vals in product(*values):
         items = dict(zip(keys, vals))
@@ -64,7 +64,7 @@ def _get_inputs(lamda, coords):
         yield template.format(**items)
 
 
-def _get_outputs(lamda, coords):
+def get_outputs(lamda, coords):
     """Make empty xarray.Dataset object."""
     dataset = xr.Dataset()
     shape = [c[1].size for c in coords]
@@ -77,27 +77,27 @@ def _get_outputs(lamda, coords):
     return dataset
 
 
-def _get_coords(QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3,
+def get_coords(QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3,
                 n_pH2=None, n_oH2=None, n_e=None, n_H=None,
                 n_He=None, n_Hp=None, T_bg=2.73, dv=1.0):
     """Make coords as list for xarray.DataArray objects."""
-    items = {Dims.QN_ul: nd.ensure_values(QN_ul),
-             Dims.T_kin: nd.ensure_values(T_kin, 'K'),
-             Dims.N_mol: nd.ensure_values(N_mol, 'cm^-2'),
-             Dims.n_H2:  nd.ensure_values(n_H2, 'cm^-3'),
-             Dims.n_pH2: nd.ensure_values(n_pH2, 'cm^-3'),
-             Dims.n_oH2: nd.ensure_values(n_oH2, 'cm^-3'),
-             Dims.n_e:   nd.ensure_values(n_e, 'cm^-3'),
-             Dims.n_H:   nd.ensure_values(n_H, 'cm^-3'),
-             Dims.n_He:  nd.ensure_values(n_He, 'cm^-3'),
-             Dims.n_Hp:  nd.ensure_values(n_Hp, 'cm^-3'),
-             Dims.T_bg:  nd.ensure_values(T_bg, 'K'),
-             Dims.dv:    nd.ensure_values(dv, 'km/s')}
+    items = {Dims.QN_ul: ensure_values(QN_ul),
+             Dims.T_kin: ensure_values(T_kin, 'K'),
+             Dims.N_mol: ensure_values(N_mol, 'cm^-2'),
+             Dims.n_H2:  ensure_values(n_H2, 'cm^-3'),
+             Dims.n_pH2: ensure_values(n_pH2, 'cm^-3'),
+             Dims.n_oH2: ensure_values(n_oH2, 'cm^-3'),
+             Dims.n_e:   ensure_values(n_e, 'cm^-3'),
+             Dims.n_H:   ensure_values(n_H, 'cm^-3'),
+             Dims.n_He:  ensure_values(n_He, 'cm^-3'),
+             Dims.n_Hp:  ensure_values(n_Hp, 'cm^-3'),
+             Dims.T_bg:  ensure_values(T_bg, 'K'),
+             Dims.dv:    ensure_values(dv, 'km/s')}
 
     return [(dim.value, items[dim]) for dim in Dims]
 
 
-def _get_template(lamda, coords):
+def get_template(lamda, coords):
     """Make template string for RADEX input."""
     prefix = 'n_'
     coords = [c for c in coords if np.all(c[1] != None)]
@@ -114,3 +114,20 @@ def _get_template(lamda, coords):
 
     template += '{T_bg}\n{N_mol}\n{dv}\n0'
     return template
+
+
+# utility functions
+def ensure_values(values, unit=None):
+    # lazy import of astropy-related things
+    from astropy import units as u
+
+    if isinstance(values, u.Quantity):
+        unit = u.Unit(unit)
+        values = values.to(unit)
+
+    values = np.asarray(values)
+
+    if values.size==1 and not values.shape:
+        return values[np.newaxis]
+    else:
+        return values

@@ -7,10 +7,6 @@ logger = getLogger(__name__)
 
 # from dependent packages
 import ndradex as nd
-from astropy.table import Column
-from astroquery.lamda import Lamda
-from astroquery.lamda import parse_lamda_datafile
-from astroquery.lamda import write_lamda_datafile
 
 
 class LAMDA:
@@ -74,6 +70,9 @@ class LAMDA:
 
     def __enter__(self):
         """Create a temporary moldata inside a context block."""
+        # lazy import of astropy-related things
+        from astroquery.lamda import write_lamda_datafile
+
         tables = (self._collrates, self._transitions, self._levels)
         write_lamda_datafile(self._temppath, tables)
         return self
@@ -98,6 +97,11 @@ def get_tables(query):
     numbers (i.e., 1-0) to the transition table (QN_ul).
 
     """
+    # lazy import of astropy-related things
+    from astropy.table import Column
+    from astroquery.lamda import Lamda
+    from astroquery.lamda import parse_lamda_datafile
+
     path = Path(query).expanduser()
 
     if path.exists():
