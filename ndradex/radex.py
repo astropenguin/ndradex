@@ -1,7 +1,7 @@
 # from standard library
 from enum import Enum
+from itertools import product
 from pathlib import Path
-from subprocess import run, PIPE
 from tempfile import TemporaryDirectory
 
 # from dependent packages
@@ -58,8 +58,10 @@ def _get_inputs(lamda, coords):
 
     for vals in product(*values):
         items = dict(zip(keys, vals))
-        freq_lim = lamda.freq_lim[items['QN_ul']]
-        yield template.format(freq_lim=freq_lim, **items)
+        qn_ul = items['QN_ul']
+        items['output_id'] = nd.random_hex()
+        items['freq_lim'] = lamda.freq_lim[qn_ul]
+        yield template.format(**items)
 
 
 def _get_outputs(lamda, coords):
@@ -105,7 +107,8 @@ def _get_template(lamda, coords):
     n_coords = [c for c in coords if c[0].startswith(prefix)]
 
     template = '{}\n'.format(lamda)
-    template += 'radex.out\n{freq_lim}\n{T_kin}\n'
+    template += '{}.{{output_id}}\n'.format(lamda)
+    template += '{freq_lim}\n{T_kin}\n'
     template += '{}\n'.format(len(n_coords))
 
     for dim, values in n_coords:
