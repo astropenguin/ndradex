@@ -4,7 +4,7 @@ __all__ = ['run_radex']
 from logging import getLogger
 from pathlib import Path
 from subprocess import run, PIPE
-from subprocess import CalledProcessError
+from subprocess import CalledProcessError, TimeoutExpired
 logger = getLogger(__name__)
 
 # module constants
@@ -14,15 +14,16 @@ ERROR_OUTPUT = ['NaN'] * N_VARS
 
 
 # main function
-def run_radex(input, radex='radex-uni', sep=', ',
-              log='radex.log', encoding='utf-8'):
-    """Run RADEX and get numerical output as string.
+def run_radex(input, radex='radex-uni', log='radex.log',
+              sep=', ', timeout=10, encoding='utf-8'):
+    """Run RADEX and get numerical result as string.
 
     Args:
         input (str or sequence)
         radex (str or path, optional)
-        sep (str, optional)
         log (str or path, optional)
+        sep (str, optional)
+        timeout (int, optional)
         encoding (str, optional)
 
     Returns:
@@ -33,13 +34,17 @@ def run_radex(input, radex='radex-uni', sep=', ',
     input, output = ensure_input(input, encoding)
 
     try:
-        cp = run([radex], input=input, stdout=PIPE, check=True)
+        cp = run([radex], input=input, timeout=timeout,
+                 stdout=PIPE, stderr=PIPE, check=True)
         return sep.join(ensure_output(cp, output, encoding))
     except FileExistsError:
         logger.warning('RADEX path does not exist')
         return sep.join(ERROR_OUTPUT)
     except CalledProcessError:
         logger.warning('RADEX failed due to invalid input')
+        return sep.join(ERROR_OUTPUT)
+    except TimeoutExpired:
+        logger.warning('RADEX interrupted due to timeout')
         return sep.join(ERROR_OUTPUT)
     except RuntimeError:
         logger.warning('RADEX version is not valid')
