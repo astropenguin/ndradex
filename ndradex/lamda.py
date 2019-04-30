@@ -135,6 +135,7 @@ def get_temppath(query, dir='.'):
 
 
 def ensure_qn(qn):
+    """Trim unwanted characters from QN string."""
     try:
         return str(int(qn))
     except ValueError:
