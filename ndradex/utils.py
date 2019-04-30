@@ -1,40 +1,20 @@
-__all__ = ['ensure_values',
-           'parse_qn',
+__all__ = ['bar',
+           'random_hex',
            'set_defaults']
 
 # from standard library
-import re
+import sys
 from functools import wraps
 from inspect import signature
 from logging import getLogger
-from pathlib import Path
+from random import getrandbits
 logger = getLogger(__name__)
 
 # from dependent packages
-import numpy as np
-from astropy import units as u
+from tqdm import tqdm, tqdm_notebook
 
 
-def ensure_values(values, unit=None):
-    if isinstance(values, u.Quantity):
-        unit = u.Unit(unit)
-        values = values.to(unit)
-
-    values = np.asarray(values)
-
-    if values.size==1 and not values.shape:
-        return values[np.newaxis]
-    else:
-        return values
-
-
-def parse_qn(qn):
-    try:
-        return str(int(qn))
-    except ValueError:
-        return qn.strip('" ')
-
-
+# utility classes
 class set_defaults:
     def __init__(self, **defaults):
         self.defaults = defaults
@@ -71,3 +51,17 @@ class set_defaults:
             params.append(param.replace(default=default))
 
         return sig.replace(parameters=params)
+
+
+# utility functions
+def bar(*args, **kwargs):
+    """Wrapper of tqdm for in both GUI and CUI."""
+    if 'ipykernel' in sys.modules:
+        return tqdm_notebook(*args, **kwargs)
+    else:
+        return tqdm(*args, **kwargs)
+
+
+def random_hex(length=8):
+    """Random hexadecimal string of given length."""
+    return f'{getrandbits(length*4):x}'
