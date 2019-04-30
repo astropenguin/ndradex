@@ -53,6 +53,7 @@ def calc(moldata, QN_ul, T_kin=100, T_bg=2.73, N_mol=1e15,
 
 # utility functions
 def _get_inputs(lamda, coords):
+    """Make RADEX input strings iteratively."""
     keys, values = zip(*coords)
     template = _get_template(lamda, coords)
 
@@ -65,6 +66,7 @@ def _get_inputs(lamda, coords):
 
 
 def _get_outputs(lamda, coords):
+    """Make empty xarray.Dataset object."""
     dataset = xr.Dataset()
     shape = [c[1].size for c in coords]
 
@@ -102,6 +104,7 @@ def _get_coords(QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3,
 
 
 def _get_template(lamda, coords):
+    """Make template string for RADEX input."""
     prefix = 'n_'
     coords = [c for c in coords if np.all(c[1] != None)]
     n_coords = [c for c in coords if c[0].startswith(prefix)]
