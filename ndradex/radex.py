@@ -37,6 +37,8 @@ def run_radex(input, radex='radex-uni', logfile='radex.log',
         cp = run([radex], input=input, timeout=timeout,
                  stdout=PIPE, stderr=PIPE, check=True)
         return sep.join(ensure_output(cp, outfile, encoding))
+    except FileNotFoundError:
+        logger.warning('RADEX path or moldata does not exist')
         return sep.join(ERROR_OUTPUT)
     except CalledProcessError:
         logger.warning('RADEX failed due to invalid input')
