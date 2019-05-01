@@ -14,14 +14,14 @@ ERROR_OUTPUT = ['NaN'] * N_VARS
 
 
 # main function
-def run_radex(input, radex='radex-uni', log='radex.log',
+def run_radex(input, radex='radex-uni', logfile='radex.log',
               sep=', ', timeout=10, encoding='utf-8'):
     """Run RADEX and get numerical result as string.
 
     Args:
         input (str or sequence)
         radex (str or path, optional)
-        log (str or path, optional)
+        logfile (str or path, optional)
         sep (str, optional)
         timeout (int, optional)
         encoding (str, optional)
@@ -30,15 +30,13 @@ def run_radex(input, radex='radex-uni', log='radex.log',
         output (str)
 
     """
-    radex, log = Path(radex), Path(log)
-    input, output = ensure_input(input, encoding)
+    radex, logfile = Path(radex), Path(logfile)
+    input, outfile = ensure_input(input, encoding)
 
     try:
         cp = run([radex], input=input, timeout=timeout,
                  stdout=PIPE, stderr=PIPE, check=True)
-        return sep.join(ensure_output(cp, output, encoding))
-    except FileExistsError:
-        logger.warning('RADEX path does not exist')
+        return sep.join(ensure_output(cp, outfile, encoding))
         return sep.join(ERROR_OUTPUT)
     except CalledProcessError:
         logger.warning('RADEX failed due to invalid input')
@@ -50,27 +48,27 @@ def run_radex(input, radex='radex-uni', log='radex.log',
         logger.warning('RADEX version is not valid')
         return sep.join(ERROR_OUTPUT)
     finally:
-        remove_file(log)
-        remove_file(output)
+        remove_file(logfile)
+        remove_file(outfile)
 
 
 # utility functions
 def ensure_input(input, encoding='utf-8'):
     if isinstance(input, (list, tuple)):
-        output = Path(input[1])
+        outfile = Path(input[1])
         input = '\n'.join(input).encode(encoding)
     else:
-        output = Path(input.split('\n')[1])
+        outfile = Path(input.split('\n')[1])
         input = input.encode(encoding)
 
-    return input, output
+    return input, outfile
 
 
-def ensure_output(cp, output, encoding='utf-8'):
+def ensure_output(cp, outfile, encoding='utf-8'):
     if RADEX_VERSION not in cp.stdout.decode(encoding):
         raise RuntimeError('Not a valid RADEX version')
 
-    with open(output, encoding=encoding) as f:
+    with open(outfile, encoding=encoding) as f:
         return f.readlines()[-1].split()[-N_VARS:]
 
 
