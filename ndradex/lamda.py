@@ -6,13 +6,13 @@ from pathlib import Path
 logger = getLogger(__name__)
 
 # from dependent packages
-import ndradex as nd
+import ndradex
 
 
 class LAMDA:
     def __init__(self, query, dir=None):
-        if query in nd.config['alias']:
-            query = nd.config['alias'][query]
+        if query in ndradex.config['alias']:
+            query = ndradex.config['alias'][query]
 
         tables = get_tables(query)
         temppath = get_temppath(query, dir)
