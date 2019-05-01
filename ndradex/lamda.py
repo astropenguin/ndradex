@@ -10,7 +10,7 @@ import ndradex as nd
 
 
 class LAMDA:
-    def __init__(self, query, dir='.'):
+    def __init__(self, query, dir=None):
         if query in nd.config['alias']:
             query = nd.config['alias'][query]
 
@@ -107,7 +107,7 @@ def get_tables(query):
     if path.exists():
         collrates, transitions, levels = parse_lamda_datafile(path)
     else:
-        collrates, transitions, levels = Lamda.query(query)
+        collrates, transitions, levels = Lamda.query(path.stem)
 
     levels.add_index('Level')
 
@@ -122,16 +122,14 @@ def get_tables(query):
     return collrates, transitions, levels
 
 
-def get_temppath(query, dir='.'):
+def get_temppath(query, dir=None):
     """Get path object for temporary moldata."""
-    path = Path(query).expanduser()
+    moldata = Path(query).stem + '.dat'
 
-    if path.exists():
-        moldata = path.name
+    if dir is None:
+        return Path('.', moldata).expanduser()
     else:
-        moldata = query + '.dat'
-
-    return Path(dir).expanduser() / moldata
+        return Path(dir, moldata).expanduser()
 
 
 def ensure_qn(qn):
