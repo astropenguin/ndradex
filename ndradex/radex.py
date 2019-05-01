@@ -1,9 +1,10 @@
-__all__ = ['run_radex']
+__all__ = ['run']
 
 # from standard library
 from logging import getLogger
 from pathlib import Path
-from subprocess import run, PIPE
+from subprocess import PIPE
+from subprocess import run as sprun
 from subprocess import CalledProcessError, TimeoutExpired
 logger = getLogger(__name__)
 
@@ -14,8 +15,8 @@ ERROR_OUTPUT = ['NaN'] * N_VARS
 
 
 # main function
-def run_radex(input, radex='radex-uni', logfile='radex.log',
-              sep=', ', timeout=10, encoding='utf-8'):
+def run(input, radex='radex-uni', logfile='radex.log',
+        sep=', ', timeout=10, encoding='utf-8'):
     """Run RADEX and get numerical result as string.
 
     Args:
@@ -34,8 +35,8 @@ def run_radex(input, radex='radex-uni', logfile='radex.log',
     input, outfile = ensure_input(input, encoding)
 
     try:
-        cp = run([radex], input=input, timeout=timeout,
-                 stdout=PIPE, stderr=PIPE, check=True)
+        cp = sprun([radex], input=input, timeout=timeout,
+                   stdout=PIPE, stderr=PIPE, check=True)
         return sep.join(ensure_output(cp, outfile, encoding))
     except FileNotFoundError:
         logger.warning('RADEX path or moldata does not exist')
