@@ -11,7 +11,7 @@ logger = getLogger(__name__)
 # module constants
 N_VARS = 10
 RADEX_VERSION = '30nov2011'
-ERROR_OUTPUT = ['NaN'] * N_VARS
+ERROR_OUTPUT = ('NaN',) * N_VARS
 
 
 # main function
@@ -35,21 +35,19 @@ def run(input, radex='radex-uni', logfile='radex.log',
     input, outfile = ensure_input(input, encoding)
 
     try:
-        cp = sprun([radex], input=input, timeout=timeout,
-                   stdout=PIPE, stderr=PIPE, check=True)
-        return sep.join(ensure_output(cp, outfile, encoding))
+        return ensure_output(cp, outfile, encoding)
     except FileNotFoundError:
         logger.warning('RADEX path or moldata does not exist')
-        return sep.join(ERROR_OUTPUT)
+        return ERROR_OUTPUT
     except CalledProcessError:
         logger.warning('RADEX failed due to invalid input')
-        return sep.join(ERROR_OUTPUT)
+        return ERROR_OUTPUT
     except TimeoutExpired:
         logger.warning('RADEX interrupted due to timeout')
-        return sep.join(ERROR_OUTPUT)
+        return ERROR_OUTPUT
     except RuntimeError:
         logger.warning('RADEX version is not valid')
-        return sep.join(ERROR_OUTPUT)
+        return ERROR_OUTPUT
     finally:
         remove_file(logfile)
         remove_file(outfile)
