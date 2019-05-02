@@ -10,17 +10,17 @@ import ndradex
 
 
 class LAMDA:
-    def __init__(self, query, dir=None):
+    def __init__(self, query, dir='.'):
         if query in ndradex.config['alias']:
             query = ndradex.config['alias'][query]
 
         tables = get_tables(query)
-        temppath = get_temppath(query, dir)
+        path = get_data_path(query, dir)
 
         self._collrates = tables[0]
         self._transitions = tables[1]
         self._levels = tables[2]
-        self._temppath = temppath
+        self._data_path = path
 
     @property
     def qn_ul(self):
@@ -69,29 +69,29 @@ class LAMDA:
         return self._e_up
 
     def __enter__(self):
-        """Create a temporary moldata inside a context block."""
+        """Create a temporary LAMDA data inside a context block."""
         # lazy import of astropy-related things
         from astroquery.lamda import write_lamda_datafile
 
         tables = (self._collrates, self._transitions, self._levels)
-        write_lamda_datafile(self._temppath, tables)
+        write_lamda_datafile(self._data_path, tables)
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        """Delete a temporary moldata outside a context block."""
-        self._temppath.unlink()
+        """Delete a temporary LAMDA data outside a context block."""
+        self._data_path.unlink()
 
     def __str__(self):
-        return str(self._temppath)
+        return str(self._data_path)
 
     def __repr__(self):
-        molecule = self._levels.meta['molecule']
-        return f'LAMDA({molecule})'
+        name = self._levels.meta['molecule']
+        return f'LAMDA({name})'
 
 
 # utility functions
 def get_tables(query):
-    """(Down)load molecular data as astropy tables.
+    """(Down)load LAMDA data as astropy tables.
 
     This will also add a column of transition quantum
     numbers (i.e., 1-0) to the transition table (QN_ul).
@@ -122,14 +122,10 @@ def get_tables(query):
     return collrates, transitions, levels
 
 
-def get_temppath(query, dir=None):
-    """Get path object for temporary moldata."""
-    moldata = Path(query).stem + '.dat'
-
-    if dir is None:
-        return Path('.', moldata).expanduser()
-    else:
-        return Path(dir, moldata).expanduser()
+def get_data_path(query, dir='.'):
+    """Get path object for temporary LAMDA data."""
+    data = Path(query).stem + '.dat'
+    return Path(dir, data).expanduser()
 
 
 def ensure_qn(qn):
