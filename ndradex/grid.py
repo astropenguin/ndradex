@@ -68,8 +68,8 @@ def get_inputs(lamda, coords):
 
     for vals in product(*values):
         items = dict(zip(keys, vals))
-        items['output_id'] = nd.utils.random_hex()
-        items['freq_lim'] = lamda.freq_lim[items['QN_ul']]
+        items['id'] = ndradex.utils.random_hex()
+        items['f_lim'] = lamda.freq_lim[items['QN_ul']]
         yield template.format(**items)
 
 
@@ -123,8 +123,8 @@ def get_template(lamda, coords):
     n_coords = [c for c in coords if c[0].startswith(prefix)]
 
     template = '{}\n'.format(lamda)
-    template += '{}.{{output_id}}\n'.format(lamda)
-    template += '{freq_lim}\n{T_kin}\n'
+    template += '{}.{{id}}\n'.format(lamda)
+    template += '{f_lim}\n{T_kin}\n'
     template += '{}\n'.format(len(n_coords))
 
     for dim, values in n_coords:
