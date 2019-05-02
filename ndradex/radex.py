@@ -31,8 +31,11 @@ def run(input, radex='radex-uni', dir='.', timeout=5,
         output (tuple of str)
 
     """
-    radex, logfile = Path(radex), Path(logfile)
-    input, outfile = ensure_input(input, encoding)
+    try:
+        input, outfile = ensure_input(input, encoding)
+    except (AttributeError, IndexError, TypeError):
+        logger.warning('RADEX did not run due to invalid input')
+        return ERROR_OUTPUT
 
     try:
         cp = sprun([radex], input=input, cwd=dir, stdout=PIPE,
@@ -58,10 +61,10 @@ def run(input, radex='radex-uni', dir='.', timeout=5,
 # utility functions
 def ensure_input(input, encoding='utf-8'):
     if isinstance(input, (list, tuple)):
-        outfile = Path(input[1])
+        outfile = input[1]
         input = '\n'.join(input).encode(encoding)
     else:
-        outfile = Path(input.split('\n')[1])
+        outfile = input.split('\n')[1]
         input = input.encode(encoding)
 
     return input, outfile
@@ -69,7 +72,7 @@ def ensure_input(input, encoding='utf-8'):
 
 def ensure_output(cp, outfile, encoding='utf-8'):
     if RADEX_VERSION not in cp.stdout.decode(encoding):
-        raise RuntimeError('Not a valid RADEX version')
+        raise RuntimeError('RADEX version is not valid')
 
     with open(outfile, encoding=encoding) as f:
         return f.readlines()[-1].split()[-N_VARS:]
