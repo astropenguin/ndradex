@@ -17,7 +17,7 @@ def _load_config():
 
     if 'NDRADEX_PATH' in os.environ:
         path = os.environ.get('NDRADEX_PATH')
-        user = Path(path).expanduser()
+        user = Path(path).expanduser().resolve()
     else:
         user = Path.home() / '.config' / 'ndradex'
 

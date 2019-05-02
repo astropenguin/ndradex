@@ -102,7 +102,7 @@ def get_tables(query):
     from astroquery.lamda import Lamda
     from astroquery.lamda import parse_lamda_datafile
 
-    path = Path(query).expanduser()
+    path = Path(query).expanduser().resolve()
 
     if path.exists():
         collrates, transitions, levels = parse_lamda_datafile(path)
@@ -125,7 +125,7 @@ def get_tables(query):
 def get_data_path(query, dir='.'):
     """Get path object for temporary LAMDA data."""
     data = Path(query).stem + '.dat'
-    return Path(dir, data).expanduser()
+    return Path(dir, data).expanduser().resolve()
 
 
 def ensure_qn(qn):
