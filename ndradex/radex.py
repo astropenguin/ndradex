@@ -15,14 +15,13 @@ ERROR_OUTPUT = ('NaN',) * N_VARS
 
 
 # main function
-def run(input, radex='radex-uni', dir='.', timeout=5,
+def run(input, radex='radex-uni', timeout=5,
         logfile='radex.log', encoding='utf-8'):
     """Run RADEX and get result as tuple of string.
 
     Args:
         input (str or sequence)
         radex (str or path, optional)
-        dir (str or path, optional)
         timeout (int, optional)
         logfile (str or path, optional)
         encoding (str, optional)
@@ -38,8 +37,8 @@ def run(input, radex='radex-uni', dir='.', timeout=5,
         return ERROR_OUTPUT
 
     try:
-        cp = sprun([radex], input=input, cwd=dir, stdout=PIPE,
-                   stderr=PIPE, timeout=timeout, check=True)
+        cp = sprun([radex], input=input, timeout=timeout,
+                   stdout=PIPE, stderr=PIPE, check=True)
         return ensure_output(cp, outfile, encoding)
     except FileNotFoundError:
         logger.warning('RADEX path or moldata does not exist')
