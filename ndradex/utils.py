@@ -1,12 +1,15 @@
 __all__ = ['bar',
+           'runner',
            'random_hex',
            'set_defaults']
 
 # from standard library
 import sys
+from concurrent import futures
 from functools import wraps
 from inspect import signature
 from logging import getLogger
+from multiprocessing import cpu_count
 from random import getrandbits
 logger = getLogger(__name__)
 
@@ -65,3 +68,11 @@ def bar(*args, **kwargs):
 def random_hex(length=8):
     """Random hexadecimal string of given length."""
     return f'{getrandbits(length*4):x}'
+
+
+def runner(n_proc=None):
+    """Multiprocessing task runnner."""
+    if n_proc is None:
+        n_proc = cpu_count() - 1
+
+    return futures.ProcessPoolExecutor(n_proc)
