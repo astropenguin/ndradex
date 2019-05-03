@@ -1,7 +1,7 @@
 __all__ = ['run']
 
 # from standard library
-from enum import Enum
+from enum import Enum, auto
 from itertools import product
 from tempfile import TemporaryDirectory
 
@@ -13,9 +13,9 @@ import xarray as xr
 
 # module constants
 class Dims(Enum):
-    QN_ul = ''
-    T_kin = ''
-    N_mol = ''
+    QN_ul = auto()
+    T_kin = auto()
+    N_mol = auto()
     n_H2  = 'H2'
     n_pH2 = 'p-H2'
     n_oH2 = 'o-H2'
@@ -23,21 +23,21 @@ class Dims(Enum):
     n_H   = 'H'
     n_He  = 'He'
     n_Hp  = 'H+'
-    T_bg  = ''
-    dv    = ''
-    geom  = ''
+    T_bg  = auto()
+    dv    = auto()
+    geom  = auto()
 
 class Vars(Enum):
-    E_u   = 'E_u'
-    freq  = 'freq'
-    wavel = 'wavel'
-    T_ex  = 'T_ex'
-    tau   = 'tau'
-    T_r   = 'T_r'
-    pop_u = 'pop_u'
-    pop_l = 'pop_l'
-    I     = 'I'
-    F     = 'F'
+    E_u   = auto()
+    freq  = auto()
+    wavel = auto()
+    T_ex  = auto()
+    tau   = auto()
+    T_r   = auto()
+    pop_u = auto()
+    pop_l = auto()
+    I     = auto()
+    F     = auto()
 
 
 # main function
@@ -57,10 +57,10 @@ def run(query, QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3,
 def generate_inputs(lamda, empty):
     """Generate RADEX input string iteratively."""
     freq_lim = lamda.freq_lim
-    template = get_template(lamda, coords)
+    template = get_input_template(lamda, empty)
 
     dims, coords = empty.dims, empty.coords
-    flatargs = product(*(coords[dim].values for dim in dims]))
+    flatargs = product(*(coords[dim].values for dim in dims))
 
     for args in flatargs:
         kwargs = dict(zip(dims, args))
@@ -99,7 +99,7 @@ def get_input_template(lamda, empty):
     n_dims = [dim for dim in empty.dims if dim.startswith('n_')
               and not np.any(np.isnan(empty.coords[dim]))]
 
-    template = [f'{lamda}', f'{lamda}.out.{{id}}',
+    template = [f'{lamda}', f'{lamda}.{{id}}.out',
                 '{freq_lim}', '{T_kin}', str(len(n_dims))]
 
     for dim in n_dims:
