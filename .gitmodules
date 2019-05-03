@@ -1,3 +1,6 @@
 [submodule "etc"]
 	path = etc
 	url = https://github.com/astropenguin/pipenv-analysis-configs
+[submodule "ndradex/bin"]
+	path = ndradex/bin
+	url = https://github.com/astropenguin/radex-install
