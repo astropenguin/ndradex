@@ -57,17 +57,16 @@ def run(query, QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3,
 # sub functions
 def generate_inputs(lamda, empty):
     """Generate RADEX input string iteratively."""
-    freq_lim = lamda.freq_lim
     template = get_input_template(lamda, empty)
 
-    dims, coords = empty.dims, empty.coords
-    flatargs = product(*(coords[dim].values for dim in dims))
-
-    for args in flatargs:
-        kwargs = dict(zip(dims, args))
-        kwargs['id'] = ndradex.utils.random_hex()
-        kwargs['freq_lim'] = freq_lim[kwargs['QN_ul']]
+    for kwargs in generate_kwargs(lamda, empty):
         yield template.format(**kwargs)
+
+
+def generate_radex_paths(lamda, empty):
+    """Generate RADEX path iteratively."""
+    for kwargs in generate_kwargs(lamda, empty):
+        yield 'radex-' + kwargs['geom']
 
 
 # utility functions
@@ -93,6 +92,20 @@ def get_empty_array(QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3,
     shape = [c[1].size for c in coords]
 
     return xr.DataArray(np.empty(shape), coords)
+
+
+def generate_kwargs(lamda, empty):
+    """Generate keyword args for RADEX input iteratively."""
+    freq_lim = lamda.freq_lim
+
+    dims, coords = empty.dims, empty.coords
+    flatargs = product(*(coords[dim].values for dim in dims))
+
+    for args in flatargs:
+        kwargs = dict(zip(dims, args))
+        kwargs['id'] = ndradex.utils.random_hex()
+        kwargs['freq_lim'] = freq_lim[kwargs['QN_ul']]
+        yield kwargs
 
 
 def get_input_template(lamda, empty):
