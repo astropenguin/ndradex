@@ -52,6 +52,11 @@ def run(query, QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3,
     with TemporaryDirectory(dir='.') as tempdir:
         with ndradex.db.LAMDA(query, tempdir) as lamda:
             inputs = generate_inputs(lamda, empty)
+            radexs = generate_radex_paths(lamda, empty)
+            dataset = get_empty_dataset(lamda, empty)
+            calculate(inputs, radexs, dataset, tempdir)
+
+    return finalize(dataset, squeeze)
 
 
 # sub functions
@@ -67,6 +72,50 @@ def generate_radex_paths(lamda, empty):
     """Generate RADEX path iteratively."""
     for kwargs in generate_kwargs(lamda, empty):
         yield 'radex-' + kwargs['geom']
+
+
+def get_empty_dataset(lamda, empty):
+    """Make an empty xarray.Dataset for storing DataArrays."""
+    dataset = xr.Dataset({var.name:empty.copy() for var in Vars})
+    dataset.coords['description'] = repr(lamda)
+    return dataset
+
+
+def calculate(inputs, radex_paths, dataset, dir='.', n_proc=None):
+    """Run grid RADEX calculation and store results into a dataset."""
+    total = np.prod(list(dataset.dims.values()))
+    outfile = Path(dir, 'grid.out').expanduser().resolve()
+
+    with ndradex.utils.runner(n_proc) as runner:
+        mapped = runner.map(ndradex.radex.run, inputs, radex_paths)
+
+        with outfile.open('w', buffering=1) as f:
+            for output in ndradex.utils.bar(mapped, total=total):
+                f.write(','.join(output)+'\n')
+
+    names = [var.name for var in Vars]
+    df = pd.read_csv(outfile, header=None, names=names)
+
+    for name in names:
+        da = dataset[name]
+        da.values = df[name].to_numpy().reshape(da.shape)
+
+
+def finalize(dataset, squeeze=True):
+    """Do finalization before returning a dataset."""
+    if not squeeze:
+        return dataset
+
+    for dim in dataset.dims:
+        coord = dataset.coords[dim]
+
+        if np.issubdtype(coord.dtype, np.str_):
+            continue
+
+        if np.any(np.isnan(coord)):
+            del dataset.coords[dim]
+
+    return dataset.squeeze()
 
 
 # utility functions
