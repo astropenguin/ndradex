@@ -3,6 +3,7 @@ __all__ = ['run']
 # from standard library
 from enum import Enum, auto
 from itertools import product
+from pathlib import Path
 from tempfile import TemporaryDirectory
 
 # from dependent packages
