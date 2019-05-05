@@ -113,9 +113,9 @@ def get_tables(query):
 
     data = []
     for row in transitions:
-        J_u = ensure_qn(levels.loc[row['Upper']]['J'])
-        J_l = ensure_qn(levels.loc[row['Lower']]['J'])
-        data.append(f'{J_u}-{J_l}')
+        qn_u = ensure_qn(levels.loc[row['Upper']]['J'])
+        qn_l = ensure_qn(levels.loc[row['Lower']]['J'])
+        data.append(f'{qn_u}-{qn_l}')
 
     transitions.add_column(Column(data, 'QN_ul'))
     transitions.add_index('QN_ul')
