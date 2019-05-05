@@ -19,15 +19,15 @@ RADEX_BINDIR = Path(ndradex.__path__[0], 'bin')
 
 
 # main function
-def run(input, radex=None, timeout=5, cleanup=True,
+def run(input, radex=None, cleanup=True, timeout=None,
         logfile='radex.log', encoding='utf-8'):
     """Run RADEX and get result as tuple of string.
 
     Args:
         input (str or sequence)
         radex (str or path, optional)
-        timeout (int, optional)
         cleanup (bool, optional)
+        timeout (int, optional)
         logfile (str or path, optional)
         encoding (str, optional)
 
