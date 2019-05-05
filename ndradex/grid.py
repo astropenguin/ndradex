@@ -173,6 +173,7 @@ def get_input_template(lamda, empty):
 
 
 def ensure_values(values, unit=None):
+    """Ensure the type of output and the unit of values."""
     # lazy import of astropy-related things
     from astropy import units as u
 

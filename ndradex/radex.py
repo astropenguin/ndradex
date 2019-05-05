@@ -68,7 +68,7 @@ def run(input, radex=None, timeout=5, cleanup=True,
 
 # utility functions
 def ensure_input(input, encoding='utf-8'):
-    """Ensure that the type of input is list."""
+    """Ensure the type of input and the path of outfile."""
     if isinstance(input, (list, tuple)):
         outfile = input[1]
         input = '\n'.join(input).encode(encoding)
