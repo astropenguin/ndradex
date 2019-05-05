@@ -7,6 +7,7 @@ logger = getLogger(__name__)
 
 # from dependent packages
 import ndradex
+import numpy as np
 
 
 class LAMDA:
@@ -67,6 +68,31 @@ class LAMDA:
         e_up = self._transitions['E_u(K)']
         self._e_up = dict(zip(self.qn_ul, e_up))
         return self._e_up
+
+    @property
+    def n_crit(self):
+        """Critical densities in units of cm^-3."""
+        # lazy import of astropy-related things
+        from astroquery.lamda.utils import ncrit
+
+        if hasattr(self, '_n_crit'):
+            return self._n_crit
+
+        tables = (self._collrates, self._transitions, self._levels)
+
+        funcs = []
+        for qn_ul in self.qn_ul:
+            index_u = self._transitions.loc[qn_ul]['Upper']
+            index_l = self._transitions.loc[qn_ul]['Lower']
+
+            @np.vectorize
+            def func(temperature):
+                return ncrit(tables, index_u, index_l, temperature).value
+
+            funcs.append(func)
+
+        self._n_crit = dict(zip(self.qn_ul, funcs))
+        return self._n_crit
 
     def __enter__(self):
         """Create a temporary LAMDA data inside a context block."""
