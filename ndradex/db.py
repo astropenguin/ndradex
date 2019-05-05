@@ -4,6 +4,7 @@ __all__ = ['LAMDA']
 import warnings
 from logging import getLogger
 from pathlib import Path
+from urllib.parse import urlparse
 logger = getLogger(__name__)
 
 # from dependent packages
@@ -129,16 +130,8 @@ def get_tables(query):
     """
     # lazy import of astropy-related things
     from astropy.table import Column
-    from astroquery.lamda import Lamda
-    from astroquery.lamda import parse_lamda_datafile
 
-    path = Path(query).expanduser().resolve()
-
-    if path.exists():
-        collrates, transitions, levels = parse_lamda_datafile(path)
-    else:
-        collrates, transitions, levels = Lamda.query(path.stem)
-
+    collrates, transitions, levels = get_raw_tables(query)
     levels.add_index('Level')
 
     data = []
@@ -150,6 +143,28 @@ def get_tables(query):
     transitions.add_column(Column(data, 'QN_ul'))
     transitions.add_index('QN_ul')
     return collrates, transitions, levels
+
+
+def get_raw_tables(query):
+    """(Down)load LAMDA data as astropy tables."""
+    # lazy import of astropy-related things
+    from astroquery.lamda import Lamda
+    from astroquery.lamda import parse_lamda_datafile
+
+    if query.startswith('http'):
+        name = Path(urlparse(query).path).stem
+        Lamda.molecule_dict[name] = query
+        return Lamda.query(name)
+
+    path = Path(query).expanduser().resolve()
+
+    if path.exists():
+        return parse_lamda_datafile(path)
+
+    try:
+        return Lamda.query(query)
+    except:
+        raise ValueError(query)
 
 
 def get_data_path(query, dir='.'):
