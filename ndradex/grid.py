@@ -70,8 +70,10 @@ def generate_inputs(lamda, empty):
 
 def generate_radex_paths(lamda, empty):
     """Generate RADEX path iteratively."""
+    path = ndradex.radex.RADEX_BINDIR
+
     for kwargs in generate_kwargs(lamda, empty):
-        yield 'radex-' + kwargs['geom']
+        yield path / f'radex-{kwargs[Dims.geom.name]}'
 
 
 def get_empty_dataset(lamda, empty):
