@@ -11,6 +11,7 @@ import ndradex
 import numpy as np
 import pandas as pd
 import xarray as xr
+from tqdm.autonotebook import tqdm
 
 # module constants
 class Dims(Enum):
@@ -92,7 +93,7 @@ def _run(inputs, radex_paths, dataset, dir='.', n_proc=None):
         mapped = runner.map(ndradex.radex.run, inputs, radex_paths)
 
         with outfile.open('w', buffering=1) as f:
-            for output in ndradex.utils.bar(mapped, total=total):
+            for output in tqdm(mapped, total=total):
                 f.write(','.join(output)+'\n')
 
     names = [var.name for var in Vars]
