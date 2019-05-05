@@ -39,4 +39,9 @@ config = _load_config()
 
 
 # import modules
-from .lamda import *
+from . import utils
+from . import db
+from . import radex
+from . import grid
+from .utils import *
+from .grid import *
