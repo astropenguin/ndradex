@@ -19,7 +19,7 @@ RADEX_BINDIR = Path(ndradex.__path__[0], 'bin')
 
 
 # main function
-def run(input, radex='radex-uni', timeout=5,
+def run(input, radex=None, timeout=5, cleanup=True,
         logfile='radex.log', encoding='utf-8'):
     """Run RADEX and get result as tuple of string.
 
@@ -27,6 +27,7 @@ def run(input, radex='radex-uni', timeout=5,
         input (str or sequence)
         radex (str or path, optional)
         timeout (int, optional)
+        cleanup (bool, optional)
         logfile (str or path, optional)
         encoding (str, optional)
 
@@ -60,8 +61,9 @@ def run(input, radex='radex-uni', timeout=5,
         logger.warning('RADEX version is not valid')
         return ERROR_OUTPUT
     finally:
-        remove_file(logfile)
-        remove_file(outfile)
+        if cleanup:
+            remove_file(logfile)
+            remove_file(outfile)
 
 
 # utility functions
