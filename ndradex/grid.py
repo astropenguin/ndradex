@@ -43,7 +43,7 @@ class Vars(Enum):
 
 
 # main function
-@ndradex.utils.set_defaults(**ndradex.config['radex'])
+@ndradex.utils.set_defaults(**ndradex.config['grid'])
 def run(query, QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3, n_pH2=None,
         n_oH2=None, n_e=None, n_H=None, n_He=None, n_Hp=None, T_bg=2.73,
         dv=1.0, geom='uni', *, squeeze=True, timeout=None, n_procs=None):
