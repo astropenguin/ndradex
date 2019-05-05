@@ -123,6 +123,31 @@ class LAMDA:
 
 
 # utility functions
+def list_available(path):
+    """List names of datafiles and transitions in Markdown."""
+    # lazy import of astropy-related things
+    from astroquery.lamda import Lamda
+
+    names, descs, trans = [], [], []
+    for name in Lamda.molecule_dict:
+        try:
+            lamda = LAMDA(name)
+        except:
+            continue
+
+        names.append(f'`{name}`')
+        descs.append(lamda.desc)
+        trans.append(', '.join(f'`{q}`' for q in lamda.qn_ul))
+
+    with open(path, 'w') as f:
+        f.write('| Query name | Description | Transitions (QN_ul) |\n')
+        f.write('| --- | --- | --- |\n')
+
+        items = list(zip(names, descs, trans))
+        for item in sorted(items, key=lambda item: len(item[2])):
+            f.write('| {0} | {1} | {2} |\n'.format(*item))
+
+
 def get_tables(query):
     """(Down)load LAMDA data as astropy tables.
 
