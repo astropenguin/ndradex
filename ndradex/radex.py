@@ -8,10 +8,14 @@ from subprocess import run as sprun
 from subprocess import CalledProcessError, TimeoutExpired
 logger = getLogger(__name__)
 
+# from dependent packages
+import ndradex
+
 # module constants
 N_VARS = 10
 RADEX_VERSION = '30nov2011'
 ERROR_OUTPUT = ('NaN',) * N_VARS
+RADEX_BINDIR = Path(ndradex.__path__[0], 'bin')
 
 
 # main function
@@ -30,6 +34,9 @@ def run(input, radex='radex-uni', timeout=5,
         output (tuple of str)
 
     """
+    if radex is None:
+        radex = RADEX_BINDIR / 'radex-uni'
+
     try:
         input, outfile = ensure_input(input, encoding)
     except (AttributeError, IndexError, TypeError):
