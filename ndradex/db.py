@@ -123,31 +123,6 @@ class LAMDA:
 
 
 # utility functions
-def list_available(path):
-    """List names of datafiles and transitions in Markdown."""
-    # lazy import of astropy-related things
-    from astroquery.lamda import Lamda
-
-    names, descs, trans = [], [], []
-    for name in Lamda.molecule_dict:
-        try:
-            lamda = LAMDA(name)
-        except:
-            continue
-
-        names.append(f'`{name}`')
-        descs.append(lamda.desc)
-        trans.append(', '.join(f'`{q}`' for q in lamda.qn_ul))
-
-    with open(path, 'w') as f:
-        f.write('| Query name | Description | Transitions (QN_ul) |\n')
-        f.write('| --- | --- | --- |\n')
-
-        items = list(zip(names, descs, trans))
-        for item in sorted(items, key=lambda item: len(item[2])):
-            f.write('| {0} | {1} | {2} |\n'.format(*item))
-
-
 def get_tables(query):
     """(Down)load LAMDA data as astropy tables.
 
@@ -221,3 +196,36 @@ def ensure_qn(qn):
 
     # add parenthesis if at least one comma exists
     return re.sub(r'(.*,.*)', r'(\1)', qn)
+
+
+def list_available(path, max_transitions=None):
+    """List names of datafiles and transitions in Markdown."""
+    # lazy import of astropy-related things
+    from astroquery.lamda import Lamda
+
+    def sorter(name):
+        name = re.sub(r'[a-z]-(.*)', r'\1', name)
+        return ''.join(re.findall(r'[a-z]', name))
+
+    names, descs, trans = [], [], []
+    for name in sorted(Lamda.molecule_dict, key=sorter):
+        try:
+            lamda = LAMDA(name)
+        except:
+            continue
+
+        names.append(f'`{name}`')
+        descs.append(lamda.desc)
+        trans.append([f'`{q}`' for q in lamda.qn_ul])
+
+    with open(path, 'w') as f:
+        f.write('| Query name | Description | Transitions (QN_ul) |\n')
+        f.write('| --- | --- | --- |\n')
+
+        for name, desc, tran in zip(names, descs, trans):
+            if max_transitions is None or len(tran) <= max_transitions:
+                tran = ', '.join(tran)
+            else:
+                tran = ', '.join(tran[:max_transitions]) + ', ...'
+
+            f.write(f'| {name} | {desc} | {tran} |\n')
