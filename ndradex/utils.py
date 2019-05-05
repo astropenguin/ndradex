@@ -57,9 +57,9 @@ def random_hex(length=8):
     return f'{getrandbits(length*4):x}'
 
 
-def runner(n_proc=None):
+def runner(n_procs=None):
     """Multiprocessing task runnner."""
-    if n_proc is None:
-        n_proc = cpu_count() - 1
+    if n_procs is None:
+        n_procs = cpu_count() - 1
 
-    return futures.ProcessPoolExecutor(n_proc)
+    return futures.ProcessPoolExecutor(n_procs)
