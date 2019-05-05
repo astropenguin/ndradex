@@ -66,6 +66,7 @@ def run(input, radex='radex-uni', timeout=5,
 
 # utility functions
 def ensure_input(input, encoding='utf-8'):
+    """Ensure that the type of input is list."""
     if isinstance(input, (list, tuple)):
         outfile = input[1]
         input = '\n'.join(input).encode(encoding)
@@ -77,6 +78,7 @@ def ensure_input(input, encoding='utf-8'):
 
 
 def ensure_output(cp, outfile, encoding='utf-8'):
+    """Ensure that the RADEX output is valid."""
     if RADEX_VERSION not in cp.stdout.decode(encoding):
         raise RuntimeError('RADEX version is not valid')
 
