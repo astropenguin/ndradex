@@ -1,6 +1,5 @@
-__all__ = ['runner',
-           'random_hex',
-           'set_defaults']
+__all__ = ['save_dataset',
+           'load_dataset']
 
 # from standard library
 from concurrent import futures
@@ -10,6 +9,9 @@ from logging import getLogger
 from multiprocessing import cpu_count
 from random import getrandbits
 logger = getLogger(__name__)
+
+# from dependent packages
+import xarray as xr
 
 
 # utility classes
@@ -52,6 +54,16 @@ class set_defaults:
 
 
 # utility functions
+def save_dataset(dataset, path):
+    """Save dataset to a netCDF."""
+    dataset.to_netcdf(path)
+
+
+def load_dataset(path):
+    """Load a netCDF to a dataset."""
+    return xr.open_dataset(path)
+
+
 def random_hex(length=8):
     """Random hexadecimal string of given length."""
     return f'{getrandbits(length*4):x}'
