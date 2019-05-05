@@ -1,11 +1,9 @@
-[cache]
-enable = true
-maxnum = 1000000
+[grid]
+squeeze = true
+timeout = 30
+n_procs = 2
 
-[radex]
-radex-uni  = "radex-uni"
-radex-lvg  = "radex-lvg"
-radex-slab = "radex-slab"
-
-[alias]
-"CO" = "co.dat"
+[lamda]
+CO = 'co'
+CS = 'cs@lique'
+H13CN = 'https://home.strw.leidenuniv.nl/~moldata/datafiles/h13cn@xpol.dat'
