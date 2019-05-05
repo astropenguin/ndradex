@@ -87,12 +87,12 @@ def get_empty_dataset(lamda, empty):
 
 def _run(inputs, radexs, dataset, dir='.', timeout=None, n_procs=None):
     """Run grid RADEX calculation and store results into a dataset."""
+    iters = (inputs, radexs)
     total = np.prod(list(dataset.dims.values()))
     outfile = Path(dir, 'grid.out').expanduser().resolve()
 
     with ndradex.utils.runner(n_procs) as runner:
-        iterables = (inputs, radexs)
-        mapped = runner.map(ndradex.radex.run, *iterables, timeout=timeout)
+        mapped = runner.map(ndradex.radex.run, *iters, timeout=timeout)
 
         with outfile.open('w', buffering=1) as f:
             for output in tqdm(mapped, total=total):
