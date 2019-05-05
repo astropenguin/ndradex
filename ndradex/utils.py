@@ -1,10 +1,8 @@
-__all__ = ['bar',
-           'runner',
+__all__ = ['runner',
            'random_hex',
            'set_defaults']
 
 # from standard library
-import sys
 from concurrent import futures
 from functools import wraps
 from inspect import signature
@@ -12,9 +10,6 @@ from logging import getLogger
 from multiprocessing import cpu_count
 from random import getrandbits
 logger = getLogger(__name__)
-
-# from dependent packages
-from tqdm import tqdm, tqdm_notebook
 
 
 # utility classes
@@ -57,14 +52,6 @@ class set_defaults:
 
 
 # utility functions
-def bar(*args, **kwargs):
-    """Wrapper of tqdm for in both GUI and CUI."""
-    if 'ipykernel' in sys.modules:
-        return tqdm_notebook(*args, **kwargs)
-    else:
-        return tqdm(*args, **kwargs)
-
-
 def random_hex(length=8):
     """Random hexadecimal string of given length."""
     return f'{getrandbits(length*4):x}'
