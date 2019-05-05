@@ -1,6 +1,7 @@
 __all__ = ['LAMDA']
 
 # from standard library
+import warnings
 from logging import getLogger
 from pathlib import Path
 logger = getLogger(__name__)
@@ -15,8 +16,11 @@ class LAMDA:
         if query in ndradex.config['alias']:
             query = ndradex.config['alias'][query]
 
-        tables = get_tables(query)
-        path = get_data_path(query, dir)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+
+            tables = get_tables(query)
+            path = get_data_path(query, dir)
 
         self._collrates = tables[0]
         self._transitions = tables[1]
