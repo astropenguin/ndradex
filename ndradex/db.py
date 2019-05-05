@@ -14,8 +14,8 @@ import numpy as np
 
 class LAMDA:
     def __init__(self, query, dir='.'):
-        if query in ndradex.config['alias']:
-            query = ndradex.config['alias'][query]
+        if query in ndradex.config['lamda']:
+            query = ndradex.config['lamda'][query]
 
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
