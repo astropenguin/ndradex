@@ -43,9 +43,10 @@ class Vars(Enum):
 
 
 # main function
+@ndradex.utils.set_defaults(**ndradex.config['radex'])
 def run(query, QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3, n_pH2=None,
-        n_oH2=None, n_e=None, n_H=None, n_He=None, n_Hp=None,
-        T_bg=2.73, dv=1.0, geom='uni', *, squeeze=True, n_proc=None):
+        n_oH2=None, n_e=None, n_H=None, n_He=None, n_Hp=None, T_bg=2.73,
+        dv=1.0, geom='uni', *, squeeze=True, timeout=None, n_procs=None):
     """Run grid RADEX calculation and get results as xarray.Dataset."""
     empty = get_empty_array(QN_ul, T_kin, N_mol, n_H2, n_pH2, n_oH2,
                             n_e, n_H, n_He, n_Hp, T_bg, dv, geom)
@@ -55,7 +56,7 @@ def run(query, QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3, n_pH2=None,
             inputs = generate_inputs(lamda, empty)
             radexs = generate_radex_paths(lamda, empty)
             dataset = get_empty_dataset(lamda, empty)
-            _run(inputs, radexs, dataset, tempdir, n_proc)
+            _run(inputs, radexs, dataset, tempdir, timeout, n_procs)
 
     return finalize(dataset, squeeze)
 
@@ -84,13 +85,14 @@ def get_empty_dataset(lamda, empty):
     return dataset
 
 
-def _run(inputs, radex_paths, dataset, dir='.', n_proc=None):
+def _run(inputs, radexs, dataset, dir='.', timeout=None, n_procs=None):
     """Run grid RADEX calculation and store results into a dataset."""
     total = np.prod(list(dataset.dims.values()))
     outfile = Path(dir, 'grid.out').expanduser().resolve()
 
-    with ndradex.utils.runner(n_proc) as runner:
-        mapped = runner.map(ndradex.radex.run, inputs, radex_paths)
+    with ndradex.utils.runner(n_procs) as runner:
+        iterables = (inputs, radexs)
+        mapped = runner.map(ndradex.radex.run, *iterables, timeout=timeout)
 
         with outfile.open('w', buffering=1) as f:
             for output in tqdm(mapped, total=total):
