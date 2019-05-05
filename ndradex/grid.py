@@ -47,7 +47,102 @@ class Vars(Enum):
 def run(query, QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3, n_pH2=None,
         n_oH2=None, n_e=None, n_H=None, n_He=None, n_Hp=None, T_bg=2.73,
         dv=1.0, geom='uni', *, squeeze=True, timeout=None, n_procs=None):
-    """Run grid RADEX calculation and get results as xarray.Dataset."""
+    """Run RADEX grid calculation and get results as xarray.Dataset.
+
+    This is the main function of ndRADEX. It provides 13 parameters
+    which can be griddable (i.e., both scalar and array are accepted).
+    The output is an xarray's Dataset of multi-dimensional DataArrays
+    whose shapes are the product of gridded parameters (i.e., argument
+    of parameter is array-like and its length is more than one).
+    For example, if you run RADEX grid calculation for CO (1-0) with
+    kinetic temperatures of [100, 200, 300, 400, 500] K, and H2
+    densities of [1e3, 1e4, 1e5] cm^-3, then the shepe is (5, 3).
+    For more information: https://github.com/astropenguin/ndradex/wiki
+
+    Args:
+        query (str): Name of LAMDA datafile (e.g., 'co' or 'co.dat').
+            You can also specify the path or URL of the datafile.
+        QN_ul (str, griddable): Name(s) of transition (e.g., '1-0').
+        T_kin (int or float, griddable): Value(s) of kinetic temperature
+            in units of K.
+        N_mol (int or float, griddable): Value(s) of column density of
+            molecule (or atom) in units of cm^-2.
+        n_H2 (int or float, griddable): Value(s) of H2 density in units
+            of cm^-3. Do not specify together with n_pH2 and n_OH2.
+        n_pH2 (int or float, griddable): Value(s) of para-H2 density
+            in units of cm^-3. Do not specify together with n_H2.
+            This parameter is not activated by default.
+        n_oH2 (int or float, griddable): Value(s) of ortho-H2 density
+            in units of cm^-3. Do not specify together with n_H2.
+            This parameter is not activated by default.
+        n_e (int or float, griddable): Value(s) of electron density
+            in units of cm^-3. This parameter is not activated by default.
+        n_H (int or float, griddable): Value(s) of atomic hydrogen density
+            in units of cm^-3. This parameter is not activated by default.
+        n_He (int or float, griddable): Value(s) of atomic helium density
+            in units of cm^-3. This parameter is not activated by default.
+        n_Hp (int or float, griddable): Value(s) of ionized hydrogen density
+            in units of cm^-3. This parameter is not activated by default.
+        T_bg (int or float, griddable): Value(s) of background temperature
+            in units of K.
+        dv (int or float, griddable): Value(s) of FWHM width of a line
+            in units of km s^-1.
+        geom (str, griddable): Name(s) of geometry for photon escape
+            probability. Either 'uni', 'lvg', or 'slab' is acccepted.
+        squeeze (bool, optional): If True (default), then dimensions
+            whose length is only one are dropped.
+        timeout (int, optional): Timeout of a RADEX run in units of second.
+            Default is None (unlimited run time is permitted).
+        n_procs (int, optional): Number of processes for asynchronous
+            RADEX calculations. Default is None (<number of CPU count>-1).
+
+    Returns:
+        dataset (xarray.Dataset): Dataset which contains DataArrays of:
+            E_u: upper state energy in units of K,
+            freq: transition frequency in units of GHz,
+            wavel: transition wavelength in units of um,
+            T_ex: excitation temperature in units of K,
+            tau: opacity of line,
+            T_r: peak intensity in units of K
+            pop_u: upper state population
+            pop_l: lower state population,
+            I: flux of line in units of K km s^-1,
+            F: flux of line in units of erg s^-1 cm^-2.
+
+    Examples:
+        To get the values of CO J=[1-0, 2-1] @ T_kin = [100, 200, 300,
+        400, 500] K, n_H2 = [1e3, 1e4, 1e5] cm^-3, N_CO = 1e15 cm^-2,
+        T_bg = 2.73 K, and dv = 1.0 km s^-1:
+
+            >>> dataset = run('co', ['1-0', '2-1'],
+                              T_kin=[100, 200, 300, 400, 500],
+                              n_H2=[1e3, 1e4, 1e5],
+                              N_mol=1e15, T_bg=2.73, dv=1.0)
+            >>> print(dataset)
+            <xarray.Dataset>
+            Dimensions:      (QN_ul: 2, T_kin: 5, n_H2: 3)
+            Coordinates:
+            * QN_ul        (QN_ul) <U3 '1-0' '2-1'
+            * T_kin        (T_kin) int64 100 200 300 400 500
+                N_mol        float64 1e+15
+            * n_H2         (n_H2) float64 1e+03 1e+04 1e+05
+                T_bg         float64 2.73
+                dv           float64 1.0
+                geom         <U3 'uni'
+                description  <U9 'LAMDA(CO)'
+            Data variables:
+                E_u          (QN_ul, T_kin, n_H2) float64 5.5 ...
+                freq         (QN_ul, T_kin, n_H2) float64 115.3 ...
+                wavel        (QN_ul, T_kin, n_H2) float64 2.601e+03 ...
+                T_ex         (QN_ul, T_kin, n_H2) float64 132.5 ...
+                tau          (QN_ul, T_kin, n_H2) float64 0.009966 ...
+                T_r          (QN_ul, T_kin, n_H2) float64 1.278 ...
+                pop_u        (QN_ul, T_kin, n_H2) float64 0.4934 ...
+                pop_l        (QN_ul, T_kin, n_H2) float64 0.1715 ...
+                I            (QN_ul, T_kin, n_H2) float64 1.36 ...
+                F            (QN_ul, T_kin, n_H2) float64 2.684e-08 ...
+
+    """
     empty = get_empty_array(QN_ul, T_kin, N_mol, n_H2, n_pH2, n_oH2,
                             n_e, n_H, n_He, n_Hp, T_bg, dv, geom)
 
@@ -86,7 +181,7 @@ def get_empty_dataset(lamda, empty):
 
 
 def _run(inputs, radexs, dataset, dir='.', timeout=None, n_procs=None):
-    """Run grid RADEX calculation and store results into a dataset."""
+    """Run RADEX grid calculation and store results into a dataset."""
     iters = (inputs, radexs)
     total = np.prod(list(dataset.dims.values()))
     outfile = Path(dir, 'grid.out').expanduser().resolve()
@@ -127,7 +222,7 @@ def finalize(dataset, squeeze=True):
 def get_empty_array(QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3,
                     n_pH2=None, n_oH2=None, n_e=None, n_H=None,
                     n_He=None, n_Hp=None, T_bg=2.73, dv=1.0, geom='uni'):
-    """Make an empty xarray.DataArray for storing grid RADEX results."""
+    """Make an empty xarray.DataArray for storing RADEX grid results."""
     values = {Dims.QN_ul: ensure_values(QN_ul),
               Dims.T_kin: ensure_values(T_kin, 'K'),
               Dims.N_mol: ensure_values(N_mol, 'cm^-2'),
