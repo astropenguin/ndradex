@@ -42,9 +42,9 @@ class Vars(Enum):
 
 
 # main function
-def run(query, QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3,
-        n_pH2=None, n_oH2=None, n_e=None, n_H=None, n_He=None,
-        n_Hp=None, T_bg=2.73, dv=1.0, geom='uni', squeeze=True):
+def run(query, QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3, n_pH2=None,
+        n_oH2=None, n_e=None, n_H=None, n_He=None, n_Hp=None,
+        T_bg=2.73, dv=1.0, geom='uni', *, squeeze=True, n_proc=None):
     """Run grid RADEX calculation and get results as xarray.Dataset."""
     empty = get_empty_array(QN_ul, T_kin, N_mol, n_H2, n_pH2, n_oH2,
                             n_e, n_H, n_He, n_Hp, T_bg, dv, geom)
@@ -54,7 +54,7 @@ def run(query, QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3,
             inputs = generate_inputs(lamda, empty)
             radexs = generate_radex_paths(lamda, empty)
             dataset = get_empty_dataset(lamda, empty)
-            calculate(inputs, radexs, dataset, tempdir)
+            _run(inputs, radexs, dataset, tempdir, n_proc)
 
     return finalize(dataset, squeeze)
 
@@ -83,7 +83,7 @@ def get_empty_dataset(lamda, empty):
     return dataset
 
 
-def calculate(inputs, radex_paths, dataset, dir='.', n_proc=None):
+def _run(inputs, radex_paths, dataset, dir='.', n_proc=None):
     """Run grid RADEX calculation and store results into a dataset."""
     total = np.prod(list(dataset.dims.values()))
     outfile = Path(dir, 'grid.out').expanduser().resolve()
