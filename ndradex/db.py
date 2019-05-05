@@ -29,6 +29,8 @@ class LAMDA:
         self._levels = tables[2]
         self._data_path = path
 
+        self.desc = self._levels.meta['molecule']
+
     @property
     def qn_ul(self):
         """List of transition quantum numbers."""
@@ -117,8 +119,7 @@ class LAMDA:
         return str(self._data_path)
 
     def __repr__(self):
-        name = self._levels.meta['molecule']
-        return f'LAMDA({name})'
+        return f'LAMDA({self.desc})'
 
 
 # utility functions
