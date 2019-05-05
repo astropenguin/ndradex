@@ -1,2 +1,2 @@
-graft ndradex/data
-graft ndradex/bin
+include ndradex/bin/Makefile
+include ndradex/data/config.toml
