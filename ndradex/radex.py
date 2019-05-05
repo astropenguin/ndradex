@@ -23,16 +23,32 @@ def run(input, radex=None, cleanup=True, timeout=None,
         logfile='radex.log', encoding='utf-8'):
     """Run RADEX and get result as tuple of string.
 
+    Note that this function only reads the last line of RADEX outfile.
+    This means that only the values of the transition at the highest
+    frequency spacified in the RADEX input will be returned.
+
     Args:
-        input (str or sequence)
-        radex (str or path, optional)
-        cleanup (bool, optional)
-        timeout (int, optional)
-        logfile (str or path, optional)
-        encoding (str, optional)
+        input (str or sequence): RADEX input. See examples below.
+        radex (str or path, optional): RADEX path. If not spacified,
+            then the builtin RADEX with uniform geometry will be used.
+        cleanup (bool, optional): If True (default), then the RADEX outfile
+            (e.g. radex.out) and logfile (e.g., radex.log) will be deleted.
+        timeout (int, optional): Timeout of a RADEX run in units of second.
+            Default is None (unlimited run time is permitted).
+        logfile (str or path, optional): Path of logfile. This is only used
+            for identifying the path of logfile in the cleanup method.
+        encoding (str, optional): File encofing. Default is utf-8.
 
     Returns:
-        output (tuple of str)
+        output (tuple of str): RADEX output values.
+
+    Examples:
+        To get the values of CO(1-0) @ T_kin = 100 K, n_H2 = 1e3 cm^-3,
+        N_CO = 1e15 cm^-2, T_bg = 2.73 K, and dv = 1.0 km s^-1:
+
+            >>> input = ['co.dat', 'radex.out', '110 120', '100',
+                        '1', 'H2', '1e3', '2.73', '1e15', '1.0', 0]
+            >>> output = run(input)
 
     """
     if radex is None:
