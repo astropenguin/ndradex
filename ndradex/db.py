@@ -1,6 +1,7 @@
 __all__ = ['LAMDA']
 
 # from standard library
+import re
 import warnings
 from logging import getLogger
 from pathlib import Path
@@ -175,9 +176,22 @@ def get_data_path(query, dir='.'):
 
 def ensure_qn(qn):
     """Trim unnecessary characters from QN string."""
-    qn = qn.strip('" ')
+    # trim (double)quotation mark
+    qn = re.sub(r'\'|"', '', qn)
 
-    try:
-        return str(int(qn))
-    except ValueError:
-        return qn
+    # trim space of both ends
+    qn = re.sub(r'^\s+|\s+$', '', qn)
+
+    # convert space or underscore to comma
+    qn = re.sub(r'\s+|_', ',', qn)
+
+    # trim unnecessary zero of int (e.g., 01 -> 1)
+    pat = re.compile(r'^0([0-9])$')
+    qn = ','.join(pat.sub(r'\1', _) for _ in qn.split(','))
+
+    # trim unnecessary zero of float (e.g., 3.50 -> 3.5)
+    pat = re.compile(r'([0-9]+.[0-9]+)')
+    qn = ','.join(pat.sub(r'\1', _) for _ in qn.split(','))
+
+    # add parenthesis if at least one comma exists
+    return re.sub(r'(.*,.*)', r'(\1)', qn)
