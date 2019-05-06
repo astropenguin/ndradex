@@ -1,9 +1,8 @@
 [grid]
-squeeze = true
 timeout = 30
 n_procs = 2
 
 [lamda]
-CO = 'co'
-CS = 'cs@lique'
-H13CN = 'https://home.strw.leidenuniv.nl/~moldata/datafiles/h13cn@xpol.dat'
+CO = "co"
+CS = "cs@lique"
+H13CN = "https://home.strw.leidenuniv.nl/~moldata/datafiles/h13cn@xpol.dat"

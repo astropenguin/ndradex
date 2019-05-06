@@ -47,14 +47,14 @@ class Vars(Enum):
 def run(query, QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3, n_pH2=None,
         n_oH2=None, n_e=None, n_H=None, n_He=None, n_Hp=None, T_bg=2.73,
         dv=1.0, geom='uni', *, squeeze=True, timeout=None, n_procs=None):
-    """Run RADEX grid calculation and get results as xarray.Dataset.
+    """Run grid RADEX calculation and get results as xarray.Dataset.
 
     This is the main function of ndRADEX. It provides 13 parameters
     which can be griddable (i.e., both scalar and array are accepted).
     The output is an xarray's Dataset of multi-dimensional DataArrays
     whose shapes are the product of gridded parameters (i.e., argument
     of parameter is array-like and its length is more than one).
-    For example, if you run RADEX grid calculation for CO (1-0) with
+    For example, if you run grid RADEX calculation for CO (1-0) with
     kinetic temperatures of [100, 200, 300, 400, 500] K, and H2
     densities of [1e3, 1e4, 1e5] cm^-3, then the shepe is (5, 3).
     For more information: https://github.com/astropenguin/ndradex/wiki
@@ -181,7 +181,7 @@ def get_empty_dataset(lamda, empty):
 
 
 def _run(inputs, radexs, dataset, dir='.', timeout=None, n_procs=None):
-    """Run RADEX grid calculation and store results into a dataset."""
+    """Run grid RADEX calculation and store results into a dataset."""
     iters = (inputs, radexs)
     total = np.prod(list(dataset.dims.values()))
     outfile = Path(dir, 'grid.out').expanduser().resolve()
@@ -222,7 +222,7 @@ def finalize(dataset, squeeze=True):
 def get_empty_array(QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3,
                     n_pH2=None, n_oH2=None, n_e=None, n_H=None,
                     n_He=None, n_Hp=None, T_bg=2.73, dv=1.0, geom='uni'):
-    """Make an empty xarray.DataArray for storing RADEX grid results."""
+    """Make an empty xarray.DataArray for storing grid RADEX results."""
     values = {Dims.QN_ul: ensure_values(QN_ul),
               Dims.T_kin: ensure_values(T_kin, 'K'),
               Dims.N_mol: ensure_values(N_mol, 'cm^-2'),
