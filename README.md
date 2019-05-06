@@ -178,13 +178,15 @@ Sometimes datafile names are not intuitive (for example, name of CS datafile is 
 For convenience, you can define aliases of datafile names like:
 
 ```toml
+# config.toml
+
 [lamda]
 CO = "co"
 CS = "cs@lique"
 H13CN = "https://home.strw.leidenuniv.nl/~moldata/datafiles/h13cn@xpol.dat"
 ```
 
-As shown in the third example, you can also specify the file path or URL on the right hand.
+As shown in the third example, you can also specify URL or local file path on the right hand.
 After the customization, you can use these aliases in the `run()` function:
 
 ```python
