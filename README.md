@@ -5,7 +5,7 @@
 [![Travis](https://img.shields.io/travis/astropenguin/ndradex/master.svg?label=Travis%20CI)](https://travis-ci.org/astropenguin/ndradex)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg?label=License)](LICENSE)
 
-:zap: Python package for RADEX grid calculation (i.e., N-dimension RADEX)
+:zap: Python package for RADEX grid calculation
 
 ## TL;DR
 
@@ -60,7 +60,7 @@ In this case, other parameters like line width, background temperature are defau
 The geometry of escape probability is uniform (`'uni'`) by default.
 You can change these values with custom config (see customizations below).
 
-The output is a [xarray]'s Dataset with zero dimension:
+The output is a [xarray]'s Dataset with no dimension:
 
 ```python
 >>> print(ds)
@@ -163,7 +163,7 @@ As mentioned above, you can change the default values of the `run()` function li
 
 [grid]
 T_bg = 10 # change default background temp to 10 K
-geom = lvg # change default geometry to LVG
+geom = "lvg" # change default geometry to LVG
 timeout = 30
 n_procs = 2
 ```
