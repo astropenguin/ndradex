@@ -167,7 +167,7 @@ def generate_inputs(lamda, empty):
 
 def generate_radex_paths(lamda, empty):
     """Generate RADEX path iteratively."""
-    path = str(ndradex.radex.RADEX_BINDIR/'radex-{geom}')
+    path = str(ndradex.RADEX_BINPATH/'radex-{geom}')
 
     for kwargs in generate_kwargs(lamda, empty):
         yield path.format(geom=kwargs[Dims.geom.name])

@@ -1,4 +1,4 @@
-__all__ = ['run']
+__all__ = []
 
 # from standard library
 from logging import getLogger
@@ -13,9 +13,7 @@ import ndradex
 
 # module constants
 N_VARS = 10
-RADEX_VERSION = '30nov2011'
 ERROR_OUTPUT = ('NaN',) * N_VARS
-RADEX_BINDIR = Path(ndradex.__path__[0], 'bin')
 
 
 # main function
@@ -52,7 +50,7 @@ def run(input, radex=None, cleanup=True, timeout=None,
 
     """
     if radex is None:
-        radex = RADEX_BINDIR / 'radex-uni'
+        radex = ndradex.RADEX_BINPATH / 'radex-uni'
 
     try:
         input, outfile = ensure_input(input, encoding)
@@ -97,7 +95,7 @@ def ensure_input(input, encoding='utf-8'):
 
 def ensure_output(cp, outfile, encoding='utf-8'):
     """Ensure that the RADEX output is valid."""
-    if RADEX_VERSION not in cp.stdout.decode(encoding):
+    if ndradex.RADEX_VERSION not in cp.stdout.decode(encoding):
         raise RuntimeError('RADEX version is not valid')
 
     with open(outfile, encoding=encoding) as f:

@@ -2,17 +2,15 @@ __version__ = '0.1.1'
 __author__  = 'astropenguin'
 
 
-# load config
+# load user config
 def _load_config():
-    # standard library
+    # from standard library
     import os
     from collections import defaultdict
-    from logging import getLogger
     from shutil import copy
     from pathlib import Path
-    logger = getLogger(__name__)
 
-    # dependent packages
+    # from dependent packages
     import toml
 
     if 'NDRADEX_PATH' in os.environ:
@@ -22,14 +20,12 @@ def _load_config():
         user = Path.home() / '.config' / 'ndradex'
 
     config = 'config.toml'
-    data = Path(__path__[0]) / 'data'
+    data = Path(__path__[0], 'data')
 
     if not user.exists():
-        logger.info(f'creating {user}')
         user.mkdir(parents=True)
 
     if not (user/config).exists():
-        logger.info(f'creating {user/config}')
         copy(data/config, user/config)
 
     with (user/config).open() as f:
@@ -38,10 +34,26 @@ def _load_config():
 config = _load_config()
 
 
+# package constants
+def _get_constants():
+    # from standard library
+    import os
+    from pathlib import Path
+
+    if 'NDRADEX_BINPATH' in os.environ:
+        path = os.environ.get('NDRADEX_BINPATH')
+        radex_binpath = Path(path).expanduser().resolve()
+    else:
+        radex_binpath = Path(__path__[0], 'bin')
+
+    radex_version = '30nov2011'
+    return radex_binpath, radex_version
+
+RADEX_BINPATH, RADEX_VERSION = _get_constants()
+
+
 # import modules
-from . import utils
-from . import db
-from . import radex
-from . import grid
 from .utils import *
+from .radex import *
+from .db import *
 from .grid import *
