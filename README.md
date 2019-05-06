@@ -32,7 +32,7 @@ You can install ndRADEX with pip:
 $ pip install ndradex
 ```
 
-Please make sure that all requirements are met before installation.
+Please make sure that all requirements are met before the installation.
 
 ## Usages
 
@@ -142,10 +142,10 @@ You can save and load the dataset like:
 
 ```python
 # save results to a netCDF file
-ndradex.save_dataset(ds, 'results.nc')
+>>> ndradex.save_dataset(ds, 'results.nc')
 
 # load results from a netCDF file
-ds = ndradex.load_dataset('results.nc')
+>>> ds = ndradex.load_dataset('results.nc')
 ```
 
 ## Customizations
