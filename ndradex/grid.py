@@ -11,7 +11,7 @@ import ndradex
 import numpy as np
 import pandas as pd
 import xarray as xr
-from tqdm.autonotebook import tqdm
+from tqdm import tqdm
 
 # module constants
 class Dims(Enum):
@@ -44,9 +44,10 @@ class Vars(Enum):
 
 # main function
 @ndradex.utils.set_defaults(**ndradex.config['grid'])
-def run(query, QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3, n_pH2=None,
-        n_oH2=None, n_e=None, n_H=None, n_He=None, n_Hp=None, T_bg=2.73,
-        dv=1.0, geom='uni', *, squeeze=True, timeout=None, n_procs=None):
+def run(query, QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3,
+        n_pH2=None, n_oH2=None, n_e=None, n_H=None,
+        n_He=None, n_Hp=None, T_bg=2.73, dv=1.0, geom='uni',
+        *, squeeze=True, bar=True, timeout=None, n_procs=None):
     """Run grid RADEX calculation and get results as xarray.Dataset.
 
     This is the main function of ndRADEX. It provides 13 parameters
@@ -91,6 +92,8 @@ def run(query, QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3, n_pH2=None,
             probability. Either 'uni', 'lvg', or 'slab' is acccepted.
         squeeze (bool, optional): If True (default), then dimensions
             whose length is only one are dropped.
+        bar (bool, optional): If True (default), then a bar is shown
+            during the calculation to show the progress.
         timeout (int, optional): Timeout of a RADEX run in units of second.
             Default is None (unlimited run time is permitted).
         n_procs (int, optional): Number of processes for asynchronous
@@ -151,7 +154,8 @@ def run(query, QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3, n_pH2=None,
             inputs = generate_inputs(lamda, empty)
             radexs = generate_radex_paths(lamda, empty)
             dataset = get_empty_dataset(lamda, empty)
-            _run(inputs, radexs, dataset, tempdir, timeout, n_procs)
+            _run(inputs, radexs, dataset, dir=tempdir,
+                 bar=bar, timeout=timeout, n_procs=n_procs)
 
     return finalize(dataset, squeeze)
 
@@ -180,7 +184,8 @@ def get_empty_dataset(lamda, empty):
     return dataset
 
 
-def _run(inputs, radexs, dataset, dir='.', timeout=None, n_procs=None):
+def _run(inputs, radexs, dataset, *, dir='.',
+         bar=True, timeout=None, n_procs=None):
     """Run grid RADEX calculation and store results into a dataset."""
     iters = (inputs, radexs)
     total = np.prod(list(dataset.dims.values()))
@@ -190,7 +195,7 @@ def _run(inputs, radexs, dataset, dir='.', timeout=None, n_procs=None):
         mapped = runner.map(ndradex.radex.run, *iters, timeout=timeout)
 
         with outfile.open('w', buffering=1) as f:
-            for output in tqdm(mapped, total=total):
+            for output in tqdm(mapped, total=total, disable=not bar):
                 f.write(','.join(output)+'\n')
 
     names = [var.name for var in Vars]
