@@ -196,7 +196,7 @@ def _run(inputs, radexs, dataset, *, dir='.',
          tqdm(total=total, disable=not progress) as bar:
         # write outputs to a single file
         for output in runner.map(ndradex.radex.run, *iters):
-                f.write(','.join(output)+'\n')
+            f.write(','.join(output)+'\n')
             bar.update(1)
 
     names = [var.name for var in Vars]
