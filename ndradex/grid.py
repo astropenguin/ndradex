@@ -2,7 +2,7 @@ __all__ = ['run']
 
 # from standard library
 from enum import Enum, auto
-from itertools import product
+from itertools import product, repeat
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -187,16 +187,17 @@ def get_empty_dataset(lamda, empty):
 def _run(inputs, radexs, dataset, *, dir='.',
          bar=True, timeout=None, n_procs=None):
     """Run grid RADEX calculation and store results into a dataset."""
-    iters = (inputs, radexs)
+    iters = (inputs, radexs, repeat(timeout))
     total = np.prod(list(dataset.dims.values()))
     outfile = Path(dir, 'grid.out').expanduser().resolve()
 
-    with ndradex.utils.runner(n_procs) as runner:
-        mapped = runner.map(ndradex.radex.run, *iters, timeout=timeout)
-
-        with outfile.open('w', buffering=1) as f:
-            for output in tqdm(mapped, total=total, disable=not bar):
+    with outfile.open('w', buffering=1) as f, \
+         ndradex.utils.runner(n_procs) as runner, \
+         tqdm(total=total, disable=not bar) as bar:
+        # write outputs to a single file
+        for output in runner.map(ndradex.radex.run, *iters):
                 f.write(','.join(output)+'\n')
+            bar.update(1)
 
     names = [var.name for var in Vars]
     df = pd.read_csv(outfile, header=None, names=names)
