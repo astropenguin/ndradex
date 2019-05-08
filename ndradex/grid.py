@@ -149,13 +149,17 @@ def run(query, QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3,
     empty = get_empty_array(QN_ul, T_kin, N_mol, n_H2, n_pH2, n_oH2,
                             n_e, n_H, n_He, n_Hp, T_bg, dv, geom)
 
-    with TemporaryDirectory(dir='.') as tempdir:
-        with ndradex.db.LAMDA(query, tempdir) as lamda:
-            inputs = generate_inputs(lamda, empty)
-            radexs = generate_radex_paths(lamda, empty)
-            dataset = get_empty_dataset(lamda, empty)
-            _run(inputs, radexs, dataset, dir=tempdir,
-                 progress=progress, timeout=timeout, n_procs=n_procs)
+    with TemporaryDirectory(dir='.') as tempdir, \
+         ndradex.db.LAMDA(query, tempdir) as lamda:
+        # make an empty dataset and flattened args
+        dataset = get_empty_dataset(lamda, empty)
+        iterables = [generate_inputs(lamda, empty),
+                     generate_radex_paths(lamda, empty),
+                     repeat(timeout)]
+
+        # run RADEX with multiprocess and update dataset
+        execute(dataset, *iterables, dir=tempdir,
+                progress=progress, n_procs=n_procs)
 
     return finalize(dataset, squeeze)
 
@@ -184,10 +188,8 @@ def get_empty_dataset(lamda, empty):
     return dataset
 
 
-def _run(inputs, radexs, dataset, *, dir='.',
-         progress=True, timeout=None, n_procs=None):
+def execute(dataset, *iterables, dir='.', progress=True, n_procs=None):
     """Run grid RADEX calculation and store results into a dataset."""
-    iters = (inputs, radexs, repeat(timeout))
     total = np.prod(list(dataset.dims.values()))
     outfile = Path(dir, 'grid.out').expanduser().resolve()
 
@@ -195,7 +197,7 @@ def _run(inputs, radexs, dataset, *, dir='.',
          ndradex.utils.runner(n_procs) as runner, \
          tqdm(total=total, disable=not progress) as bar:
         # write outputs to a single file
-        for output in runner.map(ndradex.radex.run, *iters):
+        for output in runner.map(ndradex.radex.run, *iterables):
             f.write(','.join(output)+'\n')
             bar.update(1)
 
