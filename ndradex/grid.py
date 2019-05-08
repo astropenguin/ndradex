@@ -46,8 +46,8 @@ class Vars(Enum):
 @ndradex.utils.set_defaults(**ndradex.config['grid'])
 def run(query, QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3,
         n_pH2=None, n_oH2=None, n_e=None, n_H=None,
-        n_He=None, n_Hp=None, T_bg=2.73, dv=1.0, geom='uni',
-        *, squeeze=True, bar=True, timeout=None, n_procs=None):
+        n_He=None, n_Hp=None, T_bg=2.73, dv=1.0, geom='uni', *,
+        squeeze=True, progress=True, timeout=None, n_procs=None):
     """Run grid RADEX calculation and get results as xarray.Dataset.
 
     This is the main function of ndRADEX. It provides 13 parameters
@@ -92,8 +92,8 @@ def run(query, QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3,
             probability. Either 'uni', 'lvg', or 'slab' is acccepted.
         squeeze (bool, optional): If True (default), then dimensions
             whose length is only one are dropped.
-        bar (bool, optional): If True (default), then a bar is shown
-            during the calculation to show the progress.
+        progress (bool, optional): If True (default), then a bar is
+            shown during the calculation to show the progress.
         timeout (int, optional): Timeout of a RADEX run in units of second.
             Default is None (unlimited run time is permitted).
         n_procs (int, optional): Number of processes for asynchronous
@@ -155,7 +155,7 @@ def run(query, QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3,
             radexs = generate_radex_paths(lamda, empty)
             dataset = get_empty_dataset(lamda, empty)
             _run(inputs, radexs, dataset, dir=tempdir,
-                 bar=bar, timeout=timeout, n_procs=n_procs)
+                 progress=progress, timeout=timeout, n_procs=n_procs)
 
     return finalize(dataset, squeeze)
 
@@ -185,7 +185,7 @@ def get_empty_dataset(lamda, empty):
 
 
 def _run(inputs, radexs, dataset, *, dir='.',
-         bar=True, timeout=None, n_procs=None):
+         progress=True, timeout=None, n_procs=None):
     """Run grid RADEX calculation and store results into a dataset."""
     iters = (inputs, radexs, repeat(timeout))
     total = np.prod(list(dataset.dims.values()))
@@ -193,7 +193,7 @@ def _run(inputs, radexs, dataset, *, dir='.',
 
     with outfile.open('w', buffering=1) as f, \
          ndradex.utils.runner(n_procs) as runner, \
-         tqdm(total=total, disable=not bar) as bar:
+         tqdm(total=total, disable=not progress) as bar:
         # write outputs to a single file
         for output in runner.map(ndradex.radex.run, *iters):
                 f.write(','.join(output)+'\n')
