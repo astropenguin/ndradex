@@ -91,7 +91,7 @@ Data variables:
 You can access each result value like:
 
 ```python
-flux = ds['F'].values
+>>> flux = ds['F'].values
 ```
 
 ### Grid RADEX run
@@ -99,8 +99,8 @@ flux = ds['F'].values
 As a natural extension, you can run grid RADEX calculation like:
 
 ```python
-ds = ndradex.run('co', ['1-0', '2-1'], T_kin=[100, 200, 300],
-                 N_mol=1e15, n_H2=[1e3, 1e4, 1e5, 1e6, 1e7])
+>>> ds = ndradex.run('co', ['1-0', '2-1'], T_kin=[100, 200, 300],
+                     N_mol=1e15, n_H2=[1e3, 1e4, 1e5, 1e6, 1e7])
 ```
 
 There are 13 parameters which can be griddable:
@@ -190,7 +190,7 @@ As shown in the third example, you can also specify URL or local file path on th
 After the customization, you can use these aliases in the `run()` function:
 
 ```python
-ds = ndradex.run('CS', '1-0', ...) # equiv to cs@lique
+>>> ds = ndradex.run('CS', '1-0', ...) # equiv to cs@lique
 ```
 
 ## References
