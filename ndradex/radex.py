@@ -17,7 +17,7 @@ ERROR_OUTPUT = ('NaN',) * N_VARS
 
 
 # main function
-def run(input, radex=None, cleanup=True, timeout=None,
+def run(input, radex=None, timeout=None, cleanup=True,
         logfile='radex.log', encoding='utf-8'):
     """Run RADEX and get result as tuple of string.
 
@@ -29,10 +29,10 @@ def run(input, radex=None, cleanup=True, timeout=None,
         input (str or sequence): RADEX input. See examples below.
         radex (str or path, optional): RADEX path. If not spacified,
             then the builtin RADEX with uniform geometry will be used.
-        cleanup (bool, optional): If True (default), then the RADEX outfile
-            (e.g. radex.out) and logfile (e.g., radex.log) will be deleted.
         timeout (int, optional): Timeout of a RADEX run in units of second.
             Default is None (unlimited run time is permitted).
+        cleanup (bool, optional): If True (default), then the RADEX outfile
+            (e.g. radex.out) and logfile (e.g., radex.log) will be deleted.
         logfile (str or path, optional): Path of logfile. This is only used
             for identifying the path of logfile in the cleanup method.
         encoding (str, optional): File encofing. Default is utf-8.
