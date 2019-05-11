@@ -14,3 +14,11 @@ def test_radex_single_run():
     ds = ndradex.run('co', '1-0')
     assert np.isclose(ds['I'], 1.36)
     assert np.isclose(ds['F'], 2.684e-8)
+
+
+def test_radex_grid_run():
+    pass
+
+
+def test_dataset_io():
+    pass
