@@ -29,6 +29,7 @@ python_version = "3.7"
 
 [scripts]
 jupyter = "jupyter notebook"
+test = "pytest"
 distribute = """
 bash -c 'python setup.py sdist
 twine upload dist/$(python setup.py --fullname).tar.gz'
