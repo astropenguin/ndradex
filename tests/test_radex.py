@@ -10,7 +10,7 @@ def test_binary_existences():
     assert (ndradex.RADEX_BINPATH/'radex-slab').exists()
 
 
-def test_radex_run():
+def test_radex_single_run():
     ds = ndradex.run('co', '1-0')
     assert np.isclose(ds['I'], 1.36)
     assert np.isclose(ds['F'], 2.684e-8)
