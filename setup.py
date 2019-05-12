@@ -6,12 +6,13 @@ from subprocess import PIPE
 # from dependent packages
 from setuptools import setup
 
+# module constants
+RADEX_BUILD = ['make', 'build', 'LOGFILE=/dev/null', 'MAXITER=999999']
 
 # custom build
 class Build(build):
     def run(self):
-        cmd = ['make', 'build', 'LOGFILE=/dev/null']
-        cp = sprun(cmd, stdout=PIPE, stderr=PIPE,
+        cp = sprun(RADEX_BUILD, stdout=PIPE, stderr=PIPE,
                    cwd='ndradex/bin', check=True)
         build.run(self)
 
