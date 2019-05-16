@@ -15,7 +15,7 @@ The output will be multi-dimensional arrays, which may be useful for parameter s
 ## Features
 
 - **Grid calculation:** ndRADEX has a simple `run()` function, where all parameters of RADEX can be griddable (i.e., they can be list-like with length of more than one).
-- **Builtin RADEX:** ndRADEX provides builtin RADEX binaries in the package, which are automatically built during the package installation. You don't need any additional setups.
+- **Builtin RADEX:** ndRADEX provides builtin RADEX binaries in the package, which are automatically downloaded and built during the package installation. You don't need any additional setups.
 - **Multiprocessing:** ndRADEX supports multiprocessing RADEX run by default. At least twice speedup is expected compared to single processing.
 - **Handy I/O:** The output of ndRADEX is a [xarray]'s Dataset, a standard multi-dimensional data structure as well as [pandas]. You can handle it in the same manner as NumPy and pandas (i.e., element-wise operation, save/load data, plotting, etc).
 
@@ -52,9 +52,9 @@ For example, to get RADEX results of CO(1-0) with kinetic temperature of 100 K, 
 ```
 
 where `'co'` is a name of [LAMDA] datafile without extension (.dat), and `'1-0'` is a name of transition.
-All available values are listed in [List of available LAMDA datafiles and transitions](https://github.com/astropenguin/ndradex/wiki/List-of-available-LAMDA-datafiles-and-transitions).
+The available values are listed in [List of available LAMDA datafiles and transitions](https://github.com/astropenguin/ndradex/wiki/List-of-available-LAMDA-datafiles-and-transitions).
 Note that you don't need to any download datafiles:
-ndRADEX automatically does this.
+ndRADEX automatically manage this.
 
 In this case, other parameters like line width, background temperature are default values defined in the function.
 The geometry of escape probability is uniform (`'uni'`) by default.
@@ -106,7 +106,7 @@ As a natural extension, you can run grid RADEX calculation like:
 There are 13 parameters which can be griddable:
 `QN_ul` (transition name), `T_kin` (kinetic temeperature), `N_mol` (column density), `n_H2` (H2 density), `n_pH2` (para-H2 density), `n_oH2` (ortho-H2 density), `n_e` (electron density), `n_H` (atomic hydrogen density), `n_He` (Helium density), `n_Hp` (ionized hydrogen density), `T_bg` (background temperature), `dv` (line width), and `geom` (photon escape geometry).
 
-The output is a [xarray]'s Dataset with three dimensions of (`QN_ul`, `T_kin`, `n_H2`):
+The output of this example is a [xarray]'s Dataset with three dimensions of (`QN_ul`, `T_kin`, `n_H2`):
 
 ```python
 >>> print(ds)
