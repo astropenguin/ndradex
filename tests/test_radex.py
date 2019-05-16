@@ -16,7 +16,7 @@ COMMONS = {'N_mol': 1e15,
 
 # test functions
 def test_binary_existences():
-    """Ensure that RADEX binaries exist."""
+    """Ensure that builtin RADEX binaries exist."""
     assert (ndradex.RADEX_BINPATH/'radex-uni').exists()
     assert (ndradex.RADEX_BINPATH/'radex-lvg').exists()
     assert (ndradex.RADEX_BINPATH/'radex-slab').exists()
