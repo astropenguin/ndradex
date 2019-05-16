@@ -54,5 +54,5 @@ def test_dataset_io():
         ds_after = ndradex.load_dataset(filename)
 
         ds_bool = (ds_before==ds_after).all()
-        for var, dataarray in ds_bool.items():
+        for dataarray in ds_bool.values():
             assert dataarray
