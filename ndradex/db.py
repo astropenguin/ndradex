@@ -141,8 +141,8 @@ def get_tables(query):
 
     data = []
     for row in transitions:
-        qn_u = ensure_qn(levels.loc[row['Upper']]['J'])
-        qn_l = ensure_qn(levels.loc[row['Lower']]['J'])
+        qn_u = format_qn(levels.loc[row['Upper']]['J'])
+        qn_l = format_qn(levels.loc[row['Lower']]['J'])
         data.append(f'{qn_u}-{qn_l}')
 
     transitions.add_column(Column(data, 'QN_ul'))
@@ -178,23 +178,23 @@ def get_data_path(query, dir='.'):
     return Path(dir, data).expanduser().resolve()
 
 
-def ensure_qn(qn):
-    """Trim unnecessary characters from QN string."""
-    # trim (double)quotation mark
+def format_qn(qn):
+    """Format QN string to be well structured."""
+    # trim single/double quotes
     qn = re.sub(r'\'|"', '', qn)
 
     # trim space of both ends
     qn = re.sub(r'^\s+|\s+$', '', qn)
 
     # convert space or underscore to comma
-    qn = re.sub(r'\s+|_', ',', qn)
+    qn = re.sub(r'\s+|_+', ',', qn)
 
     # trim unnecessary zero of int (e.g., 01 -> 1)
     pat = re.compile(r'^0([0-9])$')
     qn = ','.join(pat.sub(r'\1', _) for _ in qn.split(','))
 
     # trim unnecessary zero of float (e.g., 3.50 -> 3.5)
-    pat = re.compile(r'([0-9]+.[0-9]+)')
+    pat = re.compile(r'([0-9]+.[0-9]+)0+')
     qn = ','.join(pat.sub(r'\1', _) for _ in qn.split(','))
 
     # add parenthesis if at least one comma exists
@@ -206,18 +206,18 @@ def list_available(path, max_transitions=None):
     # lazy import of astropy-related things
     from astroquery.lamda import Lamda
 
-    def sorter(name):
-        name = re.sub(r'[a-z]-(.*)', r'\1', name)
+    def sorter(item):
+        name = re.sub(r'[a-z]-(.*)', r'\1', item[0])
         return ''.join(re.findall(r'[a-z]', name))
 
     names, descs, trans = [], [], []
-    for name in sorted(Lamda.molecule_dict, key=sorter):
+    for name, url in sorted(Lamda.molecule_dict.items(), key=sorter):
         try:
             lamda = LAMDA(name)
         except:
             continue
 
-        names.append(f'`{name}`')
+        names.append(f'[`{name}`]({url})')
         descs.append(lamda.desc)
         trans.append([f'`{q}`' for q in lamda.qn_ul])
 
