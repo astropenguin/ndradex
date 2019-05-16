@@ -98,11 +98,11 @@ def run(query, QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3,
             Default is None (unlimited run time is permitted).
         n_procs (int, optional): Number of processes for asynchronous
             RADEX calculations. Default is None (<number of CPU count>-1).
-        work_dir (path-like, optional): Path of a temporary working
-            directory where intermediate files are stored. It is sure to
-            be automatically created and deleted even if the function is
-            interrupted by some errors. Default is None (it is created
-            under the OS-native temporary directory).
+        work_dir (path-like, optional): Path of working directory under
+            which a temporary directory for intermediate files is created.
+            The temporary directory is sure to be automatically created and
+            deleted even if the function is interrupted by some errors.
+            Default is None (the OS-native temporary directory is used).
 
     Returns:
         dataset (xarray.Dataset): Dataset which contains DataArrays of:
