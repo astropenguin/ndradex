@@ -3,6 +3,7 @@ __all__ = ['LAMDA']
 # from standard library
 import re
 import warnings
+from functools import wraps
 from logging import getLogger
 from pathlib import Path
 from urllib.parse import urlparse
@@ -11,6 +12,22 @@ logger = getLogger(__name__)
 # from dependent packages
 import ndradex
 import numpy as np
+
+
+def cache(func):
+    """Decorator for caching result of a method."""
+    name = '_' + func.__name__
+
+    @wraps(func)
+    def wrapped(self):
+        if hasattr(self, name):
+            return getattr(self, name)
+
+        result = func(self)
+        setattr(self, name, result)
+        return result
+
+    return wrapped
 
 
 class LAMDA:
@@ -32,59 +49,46 @@ class LAMDA:
         self.desc = self._levels.meta['molecule']
 
     @property
+    @cache
     def qn_ul(self):
         """List of transition quantum numbers."""
         return list(self._transitions['QN_ul'])
 
     @property
+    @cache
     def freq(self):
         """Transition frequencies in units of GHz."""
-        if hasattr(self, '_freq'):
-            return self._freq
-
         freq = self._transitions['Frequency']
-        self._freq = dict(zip(self.qn_ul, freq))
-        return self._freq
+        return dict(zip(self.qn_ul, freq))
 
     @property
+    @cache
     def freq_lim(self):
         """Transition frequency ranges in units of GHz."""
-        if hasattr(self, '_freq_lim'):
-            return self._freq_lim
-
         freq = self._transitions['Frequency']
         freq_lim = [f'{(1-1e-9)*f} {(1+1e-9)*f}' for f in freq]
-        self._freq_lim = dict(zip(self.qn_ul, freq_lim))
-        return self._freq_lim
+        return dict(zip(self.qn_ul, freq_lim))
 
     @property
+    @cache
     def a_coeff(self):
         """Einstein A coefficients in units of s^-1."""
-        if hasattr(self, '_a_coeff'):
-            return self._a_coeff
-
         a_coeff = self._transitions['EinsteinA']
-        self._a_coeff = dict(zip(self.qn_ul, a_coeff))
-        return self._a_coeffs
+        return dict(zip(self.qn_ul, a_coeff))
 
     @property
+    @cache
     def e_up(self):
         """Upper state energies in units of K."""
-        if hasattr(self, '_e_up'):
-            return self._e_up
-
         e_up = self._transitions['E_u(K)']
-        self._e_up = dict(zip(self.qn_ul, e_up))
-        return self._e_up
+        return dict(zip(self.qn_ul, e_up))
 
     @property
+    @cache
     def n_crit(self):
         """Critical densities in units of cm^-3."""
         # lazy import of astropy-related things
         from astroquery.lamda.utils import ncrit
-
-        if hasattr(self, '_n_crit'):
-            return self._n_crit
 
         tables = (self._collrates, self._transitions, self._levels)
 
@@ -94,13 +98,12 @@ class LAMDA:
             index_l = self._transitions.loc[qn_ul]['Lower']
 
             @np.vectorize
-            def func(temperature):
-                return ncrit(tables, index_u, index_l, temperature).value
+            def func(T_kin):
+                return ncrit(tables, index_u, index_l, T_kin).value
 
             funcs.append(func)
 
-        self._n_crit = dict(zip(self.qn_ul, funcs))
-        return self._n_crit
+        return dict(zip(self.qn_ul, funcs))
 
     def __enter__(self):
         """Create a temporary LAMDA data inside a context block."""
