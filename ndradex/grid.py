@@ -45,9 +45,9 @@ class Vars(Enum):
 # main function
 @ndradex.utils.set_defaults(**ndradex.config['grid'])
 def run(query, QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3,
-        n_pH2=None, n_oH2=None, n_e=None, n_H=None,
-        n_He=None, n_Hp=None, T_bg=2.73, dv=1.0, geom='uni', *,
-        squeeze=True, progress=True, timeout=None, n_procs=None):
+        n_pH2=None, n_oH2=None, n_e=None, n_H=None, n_He=None,
+        n_Hp=None, T_bg=2.73, dv=1.0, geom='uni', *, squeeze=True,
+        progress=True, timeout=None, n_procs=None, work_dir=None):
     """Run grid RADEX calculation and get results as xarray.Dataset.
 
     This is the main function of ndRADEX. It provides 13 parameters
@@ -98,6 +98,11 @@ def run(query, QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3,
             Default is None (unlimited run time is permitted).
         n_procs (int, optional): Number of processes for asynchronous
             RADEX calculations. Default is None (<number of CPU count>-1).
+        work_dir (path-like, optional): Path of a temporary working
+            directory where intermediate files are stored. It is sure to
+            be automatically created and deleted even if the function is
+            interrupted by some errors. Default is None (it is created
+            under the OS-native temporary directory).
 
     Returns:
         dataset (xarray.Dataset): Dataset which contains DataArrays of:
@@ -149,8 +154,8 @@ def run(query, QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3,
     empty = get_empty_array(QN_ul, T_kin, N_mol, n_H2, n_pH2, n_oH2,
                             n_e, n_H, n_He, n_Hp, T_bg, dv, geom)
 
-    with TemporaryDirectory(dir='.') as tempdir, \
-         ndradex.db.LAMDA(query, tempdir) as lamda:
+    with TemporaryDirectory(dir=work_dir) as temp_dir, \
+         ndradex.db.LAMDA(query, temp_dir) as lamda:
         # make an empty dataset and flattened args
         dataset = get_empty_dataset(lamda, empty)
         iterables = [generate_inputs(lamda, empty),
@@ -158,7 +163,7 @@ def run(query, QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3,
                      repeat(timeout)]
 
         # run RADEX with multiprocess and update dataset
-        execute(dataset, *iterables, dir=tempdir,
+        execute(dataset, *iterables, dir=temp_dir,
                 progress=progress, n_procs=n_procs)
 
     return finalize(dataset, squeeze)
