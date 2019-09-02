@@ -169,7 +169,7 @@ def get_raw_tables(query):
 
     # case 3: try to get by astroquery
     try:
-        return Lamda.query(query)
+        return Lamda.query(Path(query).stem)
     except:
         raise ValueError(query)
 
@@ -219,7 +219,7 @@ def list_available(path, max_transitions=None):
         except:
             continue
 
-        names.append(f'[`{name}`]({url})')
+        names.append(f'[`{name}.dat`]({url})')
         descs.append(lamda.desc)
         trans.append([f'`{q}`' for q in lamda.qn_ul])
 
