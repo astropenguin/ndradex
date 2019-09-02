@@ -2,6 +2,11 @@ __version__ = '0.1.8'
 __author__  = 'astropenguin'
 
 
+# ignore FutureWarning
+import warnings
+warnings.simplefilter('ignore', FutureWarning)
+
+
 # load user config
 def _load_config():
     # from standard library
