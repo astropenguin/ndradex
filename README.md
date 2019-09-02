@@ -48,10 +48,10 @@ The main funtion of ndRADEX is `ndradex.run()`.
 For example, to get RADEX results of CO(1-0) with kinetic temperature of 100 K, CO column density of 1e15 cm^-2, and H2 density of 1e3 cm^-3:
 
 ```python
->>> ds = ndradex.run('co', '1-0', 100, 1e15, 1e3)
+>>> ds = ndradex.run('co.dat', '1-0', 100, 1e15, 1e3)
 ```
 
-where `'co'` is a name of [LAMDA] datafile without extension (.dat), and `'1-0'` is a name of transition.
+where `'co.dat'` is a name of [LAMDA] datafile and `'1-0'` is a name of transition.
 The available values are listed in [List of available LAMDA datafiles and transitions](https://github.com/astropenguin/ndradex/wiki/List-of-available-LAMDA-datafiles-and-transitions).
 Note that you don't need to any download datafiles:
 ndRADEX automatically manage this.
@@ -99,7 +99,7 @@ You can access each result value like:
 As a natural extension, you can run grid RADEX calculation like:
 
 ```python
->>> ds = ndradex.run('co', ['1-0', '2-1'], T_kin=[100, 200, 300],
+>>> ds = ndradex.run('co.dat', ['1-0', '2-1'], T_kin=[100, 200, 300],
                      N_mol=1e15, n_H2=[1e3, 1e4, 1e5, 1e6, 1e7])
 ```
 
@@ -134,7 +134,7 @@ Data variables:
     F            (QN_ul, T_kin, n_H2) float64 2.684e-08 1.12e-08 ... 4.666e-08
 ```
 
-For more information, run `help(rdradex.run)` to see the docstrings.
+For more information, run `help(ndradex.run)` to see the docstrings.
 
 ### Save/load results
 
@@ -169,20 +169,18 @@ n_procs = 2
 ```
 
 You can also change the number of multiprocesses (`n_procs`) and timeout (`timeout`) here.
-By default, only two processes are allocated.
-It may be better to set a larger value if you want to accelerate the calculation.
 
 ### Setting datafile aliases
 
-Sometimes datafile names are not intuitive (for example, name of CS datafile is `cs@lique`).
+Sometimes datafile names are not intuitive (for example, name of CS datafile is `cs@lique.dat`).
 For convenience, you can define aliases of datafile names like:
 
 ```toml
 # config.toml
 
 [lamda]
-CO = "co"
-CS = "cs@lique"
+CO = "co.dat"
+CS = "cs@lique.dat"
 H13CN = "https://home.strw.leidenuniv.nl/~moldata/datafiles/h13cn@xpol.dat"
 ```
 
@@ -190,7 +188,7 @@ As shown in the third example, you can also specify URL or local file path on th
 After the customization, you can use these aliases in the `run()` function:
 
 ```python
->>> ds = ndradex.run('CS', '1-0', ...) # equiv to cs@lique
+>>> ds = ndradex.run('CS', '1-0', ...) # equiv to cs@lique.dat
 ```
 
 ## References
