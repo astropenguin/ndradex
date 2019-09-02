@@ -12,11 +12,13 @@ def _load_config():
     # from standard library
     import os
     from collections import defaultdict
-    from shutil import copy
     from pathlib import Path
 
     # from dependent packages
     import toml
+
+    # name of config
+    config = 'config.toml'
 
     if 'NDRADEX_PATH' in os.environ:
         path = os.environ.get('NDRADEX_PATH')
@@ -24,14 +26,10 @@ def _load_config():
     else:
         user = Path.home() / '.config' / 'ndradex'
 
-    config = 'config.toml'
-    data = Path(__path__[0], 'data')
-
     if not user.exists():
         user.mkdir(parents=True)
 
-    if not (user/config).exists():
-        copy(data/config, user/config)
+    (user/config).touch()
 
     with (user/config).open() as f:
         return defaultdict(dict, toml.load(f))
