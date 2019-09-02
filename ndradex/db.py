@@ -156,16 +156,18 @@ def get_raw_tables(query):
     from astroquery.lamda import Lamda
     from astroquery.lamda import parse_lamda_datafile
 
+    # case 1: try to get by URL
     if query.startswith('http'):
         name = Path(urlparse(query).path).stem
         Lamda.molecule_dict[name] = query
         return Lamda.query(name)
 
+    # case 2: try to get by local path
     path = Path(query).expanduser().resolve()
-
     if path.exists():
         return parse_lamda_datafile(path)
 
+    # case 3: try to get by astroquery
     try:
         return Lamda.query(query)
     except:
