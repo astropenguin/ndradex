@@ -180,12 +180,12 @@ For convenience, you can define aliases of datafile names like:
 # config.toml
 
 [lamda]
-CO = "co.dat"
 CS = "cs@lique.dat"
+CO = "~/your/local/co.dat"
 H13CN = "https://home.strw.leidenuniv.nl/~moldata/datafiles/h13cn@xpol.dat"
 ```
 
-As shown in the third example, you can also specify URL or local file path on the right hand.
+As shown in the second and third examples, you can also specify a local file path or a URL on the right hand.
 After the customization, you can use these aliases in the `run()` function:
 
 ```python
