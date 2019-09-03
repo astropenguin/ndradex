@@ -16,7 +16,7 @@ The output will be multi-dimensional arrays, which may be useful for parameter s
 ## Features
 
 - **Grid calculation:** ndRADEX has a simple `run()` function, where all parameters of RADEX can be griddable (i.e., they can be list-like with length of more than one).
-- **Builtin RADEX:** ndRADEX provides builtin RADEX binaries in the package, which are automatically downloaded and built during the package installation. You don't need any additional setups.
+- **Builtin RADEX:** ndRADEX provides builtin RADEX binaries in the package, which are automatically downloaded and built during the package installation. This also enables us to do RADEX calculations in the cloud such as [Google Colaboratory](https://colab.research.google.com).
 - **Multiprocessing:** ndRADEX supports multiprocessing RADEX run by default. At least twice speedup is expected compared to single processing.
 - **Handy I/O:** The output of ndRADEX is a [xarray]'s Dataset, a standard multi-dimensional data structure as well as [pandas]. You can handle it in the same manner as NumPy and pandas (i.e., element-wise operation, save/load data, plotting, etc).
 
