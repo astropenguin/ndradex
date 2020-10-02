@@ -1,0 +1,35 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - master
+      - '#11-github-actions'
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  job:
+    name: Test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          sudo apt install gfortran
+          pip install pipenv
+          pipenv install --dev
+      - name: Lint by Flake8
+        run: pipenv run flake8 tests ndradex
+      - name: Format by Black
+        run: pipenv run black --check tests ndradex
+      - name: Test by pytest
+        run : pipenv run pytest -v tests
