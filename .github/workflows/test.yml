@@ -27,6 +27,8 @@ jobs:
           sudo apt install gfortran
           pip install poetry
           poetry install
+          cd ndradex/bin
+          make build
       - name: Lint by Flake8
         run: poetry run flake8 tests ndradex
       - name: Format by Black
