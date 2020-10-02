@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      - '#11-github-actions'
   pull_request:
     branches:
       - master
