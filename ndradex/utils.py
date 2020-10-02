@@ -1,17 +1,23 @@
-__all__ = ['save_dataset',
-           'load_dataset']
+__all__ = [
+    "save_dataset",
+    "load_dataset",
+]
 
-# from standard library
+
+# standard library
 from concurrent import futures
 from functools import wraps
 from inspect import signature
 from logging import getLogger
 from multiprocessing import cpu_count
 from random import getrandbits
-logger = getLogger(__name__)
 
-# from dependent packages
+
+# dependencies
 import xarray as xr
+
+
+logger = getLogger(__name__)
 
 
 # utility classes
@@ -43,7 +49,7 @@ class set_defaults:
                 params.append(param.replace())
                 continue
 
-            if not param.name in self.defaults:
+            if param.name not in self.defaults:
                 params.append(param.replace())
                 continue
 
@@ -66,7 +72,7 @@ def load_dataset(path):
 
 def random_hex(length=8):
     """Random hexadecimal string of given length."""
-    return f'{getrandbits(length*4):x}'
+    return f"{getrandbits(length*4):x}"
 
 
 def runner(n_procs=None):

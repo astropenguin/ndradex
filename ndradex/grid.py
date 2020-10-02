@@ -1,53 +1,75 @@
-__all__ = ['run']
+__all__ = ["run"]
 
-# from standard library
+
+# standard library
 from enum import Enum, auto
 from itertools import product, repeat
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-# from dependent packages
+
+# dependencies
 import ndradex
 import numpy as np
 import pandas as pd
 import xarray as xr
 from tqdm import tqdm
 
-# module constants
+
+# constants
 class Dims(Enum):
     QN_ul = auto()
     T_kin = auto()
     N_mol = auto()
-    n_H2  = 'H2'
-    n_pH2 = 'p-H2'
-    n_oH2 = 'o-H2'
-    n_e   = 'e'
-    n_H   = 'H'
-    n_He  = 'He'
-    n_Hp  = 'H+'
-    T_bg  = auto()
-    dv    = auto()
-    geom  = auto()
+    n_H2 = "H2"
+    n_pH2 = "p-H2"
+    n_oH2 = "o-H2"
+    n_e = "e"
+    n_H = "H"
+    n_He = "He"
+    n_Hp = "H+"
+    T_bg = auto()
+    dv = auto()
+    geom = auto()
+
 
 class Vars(Enum):
-    E_u   = auto()
-    freq  = auto()
+    E_u = auto()
+    freq = auto()
     wavel = auto()
-    T_ex  = auto()
-    tau   = auto()
-    T_r   = auto()
+    T_ex = auto()
+    tau = auto()
+    T_r = auto()
     pop_u = auto()
     pop_l = auto()
-    I     = auto()
-    F     = auto()
+    I = auto()
+    F = auto()
 
 
 # main function
-@ndradex.utils.set_defaults(**ndradex.config['grid'])
-def run(query, QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3,
-        n_pH2=None, n_oH2=None, n_e=None, n_H=None, n_He=None,
-        n_Hp=None, T_bg=2.73, dv=1.0, geom='uni', *, squeeze=True,
-        progress=True, timeout=None, n_procs=None, work_dir=None):
+@ndradex.utils.set_defaults(**ndradex.config["grid"])
+def run(
+    query,
+    QN_ul,
+    T_kin=100,
+    N_mol=1e15,
+    n_H2=1e3,
+    n_pH2=None,
+    n_oH2=None,
+    n_e=None,
+    n_H=None,
+    n_He=None,
+    n_Hp=None,
+    T_bg=2.73,
+    dv=1.0,
+    geom="uni",
+    *,
+    squeeze=True,
+    progress=True,
+    timeout=None,
+    n_procs=None,
+    work_dir=None,
+):
     """Run grid RADEX calculation and get results as xarray.Dataset.
 
     This is the main function of ndRADEX. It provides 13 parameters
@@ -151,20 +173,40 @@ def run(query, QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3,
                 F            (QN_ul, T_kin, n_H2) float64 2.684e-08 ...
 
     """
-    empty = get_empty_array(QN_ul, T_kin, N_mol, n_H2, n_pH2, n_oH2,
-                            n_e, n_H, n_He, n_Hp, T_bg, dv, geom)
+    empty = get_empty_array(
+        QN_ul,
+        T_kin,
+        N_mol,
+        n_H2,
+        n_pH2,
+        n_oH2,
+        n_e,
+        n_H,
+        n_He,
+        n_Hp,
+        T_bg,
+        dv,
+        geom,
+    )
 
-    with TemporaryDirectory(dir=work_dir) as temp_dir, \
-         ndradex.db.LAMDA(query, temp_dir) as lamda:
-        # make an empty dataset and flattened args
-        dataset = get_empty_dataset(lamda, empty)
-        iterables = [generate_inputs(lamda, empty),
-                     generate_radex_paths(lamda, empty),
-                     repeat(timeout)]
+    with TemporaryDirectory(dir=work_dir) as temp_dir:
+        with ndradex.db.LAMDA(query, temp_dir) as lamda:
+            # make an empty dataset and flattened args
+            dataset = get_empty_dataset(lamda, empty)
+            iterables = [
+                generate_inputs(lamda, empty),
+                generate_radex_paths(lamda, empty),
+                repeat(timeout),
+            ]
 
-        # run RADEX with multiprocess and update dataset
-        execute(dataset, *iterables, dir=temp_dir,
-                progress=progress, n_procs=n_procs)
+            # run RADEX with multiprocess and update dataset
+            execute(
+                dataset,
+                *iterables,
+                dir=temp_dir,
+                progress=progress,
+                n_procs=n_procs,
+            )
 
     return finalize(dataset, squeeze)
 
@@ -180,7 +222,7 @@ def generate_inputs(lamda, empty):
 
 def generate_radex_paths(lamda, empty):
     """Generate RADEX path iteratively."""
-    path = str(ndradex.RADEX_BINPATH/'radex-{geom}')
+    path = str(ndradex.RADEX_BINPATH / "radex-{geom}")
 
     for kwargs in generate_kwargs(lamda, empty):
         yield path.format(geom=kwargs[Dims.geom.name])
@@ -188,22 +230,22 @@ def generate_radex_paths(lamda, empty):
 
 def get_empty_dataset(lamda, empty):
     """Make an empty xarray.Dataset for storing DataArrays."""
-    dataset = xr.Dataset({var.name:empty.copy() for var in Vars})
-    dataset.coords['description'] = repr(lamda)
+    dataset = xr.Dataset({var.name: empty.copy() for var in Vars})
+    dataset.coords["description"] = repr(lamda)
     return dataset
 
 
-def execute(dataset, *iterables, dir='.', progress=True, n_procs=None):
+def execute(dataset, *iterables, dir=".", progress=True, n_procs=None):
     """Run grid RADEX calculation and store results into a dataset."""
     total = np.prod(list(dataset.dims.values()))
-    outfile = Path(dir, 'grid.out').expanduser().resolve()
+    outfile = Path(dir, "grid.out").expanduser().resolve()
 
-    with outfile.open('w', buffering=1) as f, \
-         ndradex.utils.runner(n_procs) as runner, \
-         tqdm(total=total, disable=not progress) as bar:
+    with outfile.open("w", buffering=1) as f, ndradex.utils.runner(
+        n_procs
+    ) as runner, tqdm(total=total, disable=not progress) as bar:
         # write outputs to a single file
         for output in runner.map(ndradex.radex.run, *iterables):
-            f.write(','.join(output)+'\n')
+            f.write(",".join(output) + "\n")
             bar.update(1)
 
     names = [var.name for var in Vars]
@@ -232,23 +274,37 @@ def finalize(dataset, squeeze=True):
 
 
 # utility functions
-def get_empty_array(QN_ul, T_kin=100, N_mol=1e15, n_H2=1e3,
-                    n_pH2=None, n_oH2=None, n_e=None, n_H=None,
-                    n_He=None, n_Hp=None, T_bg=2.73, dv=1.0, geom='uni'):
+def get_empty_array(
+    QN_ul,
+    T_kin=100,
+    N_mol=1e15,
+    n_H2=1e3,
+    n_pH2=None,
+    n_oH2=None,
+    n_e=None,
+    n_H=None,
+    n_He=None,
+    n_Hp=None,
+    T_bg=2.73,
+    dv=1.0,
+    geom="uni",
+):
     """Make an empty xarray.DataArray for storing grid RADEX results."""
-    values = {Dims.QN_ul: ensure_values(QN_ul),
-              Dims.T_kin: ensure_values(T_kin, 'K'),
-              Dims.N_mol: ensure_values(N_mol, 'cm^-2'),
-              Dims.n_H2:  ensure_values(n_H2, 'cm^-3'),
-              Dims.n_pH2: ensure_values(n_pH2, 'cm^-3'),
-              Dims.n_oH2: ensure_values(n_oH2, 'cm^-3'),
-              Dims.n_e:   ensure_values(n_e, 'cm^-3'),
-              Dims.n_H:   ensure_values(n_H, 'cm^-3'),
-              Dims.n_He:  ensure_values(n_He, 'cm^-3'),
-              Dims.n_Hp:  ensure_values(n_Hp, 'cm^-3'),
-              Dims.T_bg:  ensure_values(T_bg, 'K'),
-              Dims.dv:    ensure_values(dv, 'km/s'),
-              Dims.geom:  ensure_values(geom)}
+    values = {
+        Dims.QN_ul: ensure_values(QN_ul),
+        Dims.T_kin: ensure_values(T_kin, "K"),
+        Dims.N_mol: ensure_values(N_mol, "cm^-2"),
+        Dims.n_H2: ensure_values(n_H2, "cm^-3"),
+        Dims.n_pH2: ensure_values(n_pH2, "cm^-3"),
+        Dims.n_oH2: ensure_values(n_oH2, "cm^-3"),
+        Dims.n_e: ensure_values(n_e, "cm^-3"),
+        Dims.n_H: ensure_values(n_H, "cm^-3"),
+        Dims.n_He: ensure_values(n_He, "cm^-3"),
+        Dims.n_Hp: ensure_values(n_Hp, "cm^-3"),
+        Dims.T_bg: ensure_values(T_bg, "K"),
+        Dims.dv: ensure_values(dv, "km/s"),
+        Dims.geom: ensure_values(geom),
+    }
 
     coords = [(dim.name, values[dim]) for dim in Dims]
     shape = [c[1].size for c in coords]
@@ -265,24 +321,32 @@ def generate_kwargs(lamda, empty):
 
     for args in flatargs:
         kwargs = dict(zip(dims, args))
-        kwargs['id'] = ndradex.utils.random_hex()
-        kwargs['freq_lim'] = freq_lim[kwargs['QN_ul']]
+        kwargs["id"] = ndradex.utils.random_hex()
+        kwargs["freq_lim"] = freq_lim[kwargs["QN_ul"]]
         yield kwargs
 
 
 def get_input_template(lamda, empty):
     """Make template string for RADEX input."""
-    n_dims = [dim for dim in empty.dims if dim.startswith('n_')
-              and not np.any(np.isnan(empty.coords[dim]))]
+    n_dims = [
+        dim
+        for dim in empty.dims
+        if dim.startswith("n_") and not np.any(np.isnan(empty.coords[dim]))
+    ]
 
-    template = [f'{lamda}', f'{lamda}.{{id}}.out',
-                '{freq_lim}', '{T_kin}', str(len(n_dims))]
+    template = [
+        f"{lamda}",
+        f"{lamda}.{{id}}.out",
+        "{freq_lim}",
+        "{T_kin}",
+        str(len(n_dims)),
+    ]
 
     for dim in n_dims:
-        template.extend([Dims[dim].value, f'{{{dim}}}'])
+        template.extend([Dims[dim].value, f"{{{dim}}}"])
 
-    template.extend(['{T_bg}', '{N_mol}', '{dv}', '0'])
-    return '\n'.join(template)
+    template.extend(["{T_bg}", "{N_mol}", "{dv}", "0"])
+    return "\n".join(template)
 
 
 def ensure_values(values, unit=None):
@@ -299,7 +363,7 @@ def ensure_values(values, unit=None):
 
     values = np.asarray(values)
 
-    if values.size==1 and not values.shape:
+    if values.size == 1 and not values.shape:
         return values[np.newaxis]
     else:
         return values
