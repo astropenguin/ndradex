@@ -1,0 +1,29 @@
+name: PyPI
+
+on:
+  release:
+    types:
+      - created
+
+jobs:
+  job:
+    name: PyPI
+    runs-on: ubuntu-latest
+    env:
+      TWINE_USERNAME: __token__
+      TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Install dependencies
+        run: |
+          pip install poetry
+          poetry install
+      - name: Publish package
+        run: |
+          poetry run twine upload dist/*
