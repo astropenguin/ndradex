@@ -1,24 +1,35 @@
 __all__ = []
 
-# from standard library
+
+# standard library
 from logging import getLogger
 from pathlib import Path
 from subprocess import PIPE
 from subprocess import run as sprun
 from subprocess import CalledProcessError, TimeoutExpired
-logger = getLogger(__name__)
 
-# from dependent packages
+
+# dependencies
 import ndradex
 
-# module constants
+
+# constants
 N_VARS = 10
-ERROR_OUTPUT = ('NaN',) * N_VARS
+ERROR_OUTPUT = ("NaN",) * N_VARS
+
+
+logger = getLogger(__name__)
 
 
 # main function
-def run(input, radex=None, timeout=None, cleanup=True,
-        logfile='radex.log', encoding='utf-8'):
+def run(
+    input,
+    radex=None,
+    timeout=None,
+    cleanup=True,
+    logfile="radex.log",
+    encoding="utf-8",
+):
     """Run RADEX and get result as tuple of string.
 
     Note that this function only reads the last line of RADEX outfile.
@@ -50,29 +61,35 @@ def run(input, radex=None, timeout=None, cleanup=True,
 
     """
     if radex is None:
-        radex = ndradex.RADEX_BINPATH / 'radex-uni'
+        radex = ndradex.RADEX_BINPATH / "radex-uni"
 
     try:
         input, outfile = ensure_input(input, encoding)
     except (AttributeError, IndexError, TypeError):
-        logger.warning('RADEX did not run due to invalid input')
+        logger.warning("RADEX did not run due to invalid input")
         return ERROR_OUTPUT
 
     try:
-        cp = sprun([radex], input=input, timeout=timeout,
-                   stdout=PIPE, stderr=PIPE, check=True)
+        cp = sprun(
+            [radex],
+            input=input,
+            timeout=timeout,
+            stdout=PIPE,
+            stderr=PIPE,
+            check=True,
+        )
         return ensure_output(cp, outfile, encoding)
     except FileNotFoundError:
-        logger.warning('RADEX path or moldata does not exist')
+        logger.warning("RADEX path or moldata does not exist")
         return ERROR_OUTPUT
     except CalledProcessError:
-        logger.warning('RADEX failed due to invalid input')
+        logger.warning("RADEX failed due to invalid input")
         return ERROR_OUTPUT
     except TimeoutExpired:
-        logger.warning('RADEX interrupted due to timeout')
+        logger.warning("RADEX interrupted due to timeout")
         return ERROR_OUTPUT
     except RuntimeError:
-        logger.warning('RADEX version is not valid')
+        logger.warning("RADEX version is not valid")
         return ERROR_OUTPUT
     finally:
         if cleanup:
@@ -81,22 +98,22 @@ def run(input, radex=None, timeout=None, cleanup=True,
 
 
 # utility functions
-def ensure_input(input, encoding='utf-8'):
+def ensure_input(input, encoding="utf-8"):
     """Ensure the type of input and the path of outfile."""
     if isinstance(input, (list, tuple)):
         outfile = input[1]
-        input = '\n'.join(input).encode(encoding)
+        input = "\n".join(input).encode(encoding)
     else:
-        outfile = input.split('\n')[1]
+        outfile = input.split("\n")[1]
         input = input.encode(encoding)
 
     return input, outfile
 
 
-def ensure_output(cp, outfile, encoding='utf-8'):
+def ensure_output(cp, outfile, encoding="utf-8"):
     """Ensure that the RADEX output is valid."""
     if ndradex.RADEX_VERSION not in cp.stdout.decode(encoding):
-        raise RuntimeError('RADEX version is not valid')
+        raise RuntimeError("RADEX version is not valid")
 
     with open(outfile, encoding=encoding) as f:
         return f.readlines()[-1].split()[-N_VARS:]
