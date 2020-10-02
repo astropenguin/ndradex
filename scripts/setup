@@ -1,18 +1,18 @@
 #!/bin/bash -eu
 
 
-# Install package dependencies with Pipenv
-if ! type pipenv >/dev/null 2>&1
+# Install package dependencies with Poetry
+if ! type poetry >/dev/null 2>&1
 then
-    echo "Pipenv is not installed"
+    echo "Poetry is not installed"
     exit 1
 fi
 
-pipenv install --dev
+poetry install
 
 
 # Install IPython kernel to Jupyter
-pipenv run python -m ipykernel install \
+poetry run python -m ipykernel install \
     --user \
     --name "python-$(basename $PWD)" \
     --display-name "Python ($(basename $PWD))"
@@ -33,6 +33,6 @@ cat << EOS > .vscode/settings.json
     "python.linting.lintOnSave": true,
     "python.linting.flake8Enabled": true,
     "python.linting.pylintEnabled": false,
-    "python.pythonPath": "$(pipenv run which python)",
+    "python.pythonPath": "$(poetry run which python)",
 }
 EOS
