@@ -2,34 +2,41 @@ __all__ = []
 
 
 # standard library
-from logging import getLogger
+from logging import getLogger, Logger
 from pathlib import Path
-from subprocess import PIPE
+from subprocess import CompletedProcess, PIPE
 from subprocess import run as sprun
 from subprocess import CalledProcessError, TimeoutExpired
+from typing import Optional, Sequence, Tuple, Union
 
 
 # dependencies
-import ndradex
+from . import RADEX_BINPATH, RADEX_VERSION
 
 
 # constants
-N_VARS = 10
-ERROR_OUTPUT = ("NaN",) * N_VARS
+N_VARS: int = 10
+ERROR_OUTPUT: Sequence[str] = ("NaN",) * N_VARS
 
 
-logger = getLogger(__name__)
+# type aliases
+InputLike = Union[Sequence[str], str]
+PathLike = Union[Path, str]
 
 
-# main function
+# logger
+logger: Logger = getLogger(__name__)
+
+
+# main features
 def run(
-    input,
-    radex=None,
-    timeout=None,
-    cleanup=True,
-    logfile="radex.log",
-    encoding="utf-8",
-):
+    input: InputLike,
+    radex: Optional[PathLike] = None,
+    timeout: Optional[int] = None,
+    cleanup: bool = True,
+    logfile: PathLike = "radex.log",
+    encoding: str = "utf-8",
+) -> Sequence[str]:
     """Run RADEX and get result as tuple of string.
 
     Note that this function only reads the last line of RADEX outfile.
@@ -37,19 +44,19 @@ def run(
     frequency spacified in the RADEX input will be returned.
 
     Args:
-        input (str or sequence): RADEX input. See examples below.
-        radex (str or path, optional): RADEX path. If not spacified,
-            then the builtin RADEX with uniform geometry will be used.
-        timeout (int, optional): Timeout of a RADEX run in units of second.
+        input: RADEX input. See examples below.
+        radex: RADEX path. If not spacified, then the builtin
+            RADEX with uniform geometry will be used.
+        timeout: Timeout of a RADEX run in units of second.
             Default is None (unlimited run time is permitted).
-        cleanup (bool, optional): If True (default), then the RADEX outfile
+        cleanup: If True (default), then the RADEX outfile
             (e.g. radex.out) and logfile (e.g., radex.log) will be deleted.
-        logfile (str or path, optional): Path of logfile. This is only used
-            for identifying the path of logfile in the cleanup method.
-        encoding (str, optional): File encofing. Default is utf-8.
+        logfile: Path of logfile. This is only used for
+            identifying the path of logfile in the cleanup method.
+        encoding: File encofing. Default is utf-8.
 
     Returns:
-        output (tuple of str): RADEX output values.
+        RADEX output values as a tuple of strings.
 
     Examples:
         To get the values of CO(1-0) @ T_kin = 100 K, n_H2 = 1e3 cm^-3,
@@ -61,7 +68,7 @@ def run(
 
     """
     if radex is None:
-        radex = ndradex.RADEX_BINPATH / "radex-uni"
+        radex = RADEX_BINPATH / "radex-uni"
 
     try:
         input, outfile = ensure_input(input, encoding)
@@ -97,8 +104,8 @@ def run(
             remove_file(outfile)
 
 
-# utility functions
-def ensure_input(input, encoding="utf-8"):
+# utility features
+def ensure_input(input: InputLike, encoding: str = "utf-8") -> Tuple[str, str]:
     """Ensure the type of input and the path of outfile."""
     if isinstance(input, (list, tuple)):
         outfile = input[1]
@@ -110,16 +117,20 @@ def ensure_input(input, encoding="utf-8"):
     return input, outfile
 
 
-def ensure_output(cp, outfile, encoding="utf-8"):
+def ensure_output(
+    cp: CompletedProcess,
+    outfile: str,
+    encoding: str = "utf-8",
+) -> Sequence[str]:
     """Ensure that the RADEX output is valid."""
-    if ndradex.RADEX_VERSION not in cp.stdout.decode(encoding):
+    if RADEX_VERSION not in cp.stdout.decode(encoding):
         raise RuntimeError("RADEX version is not valid")
 
     with open(outfile, encoding=encoding) as f:
         return f.readlines()[-1].split()[-N_VARS:]
 
 
-def remove_file(path):
+def remove_file(path: PathLike) -> None:
     """Remove file forcibly (i.e., rm -f <path>)."""
     try:
         Path(path).unlink()
