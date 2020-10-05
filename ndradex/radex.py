@@ -41,11 +41,11 @@ def run(
 
     Note that this function only reads the last line of RADEX outfile.
     This means that only the values of the transition at the highest
-    frequency spacified in the RADEX input will be returned.
+    frequency specified in the RADEX input will be returned.
 
     Args:
         input: RADEX input. See examples below.
-        radex: RADEX path. If not spacified, then the builtin
+        radex: RADEX path. If not specified, then the builtin
             RADEX with uniform geometry will be used.
         timeout: Timeout of a RADEX run in units of second.
             Default is None (unlimited run time is permitted).
@@ -53,7 +53,7 @@ def run(
             (e.g. radex.out) and logfile (e.g., radex.log) will be deleted.
         logfile: Path of logfile. This is only used for
             identifying the path of logfile in the cleanup method.
-        encoding: File encofing. Default is utf-8.
+        encoding: File encoding. Default is utf-8.
 
     Returns:
         RADEX output values as a tuple of strings.
