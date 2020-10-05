@@ -2,11 +2,11 @@
 
 [![](https://img.shields.io/pypi/v/ndradex.svg?label=PyPI&style=flat-square)](https://pypi.org/pypi/ndradex/)
 [![](https://img.shields.io/pypi/pyversions/ndradex.svg?label=Python&color=yellow&style=flat-square)](https://pypi.org/pypi/ndradex/)
-[![Travis](https://img.shields.io/travis/astropenguin/ndradex/master.svg?label=Travis%20CI&style=flat-square)](https://travis-ci.org/astropenguin/ndradex)
+[![Test](https://img.shields.io/github/workflow/status/astropenguin/ndradex/Test?logo=github&label=Test&style=flat-square)](https://github.com/astropenguin/ndradex/actions)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg?label=License&style=flat-square)](LICENSE)
-[![DOI](https://img.shields.io/badge/DOI-10.5281/zenodo.3384095-blue?style=flat-square)](https://doi.org/10.5281/zenodo.3384095)
+[![DOI](https://img.shields.io/badge/DOI-10.5281/zenodo.3384031-blue?style=flat-square)](https://doi.org/10.5281/zenodo.3384031)
 
-:zap: Python package for RADEX grid calculation
+Python package for RADEX grid calculation
 
 ## TL;DR
 
@@ -22,7 +22,7 @@ The output will be multi-dimensional arrays, which may be useful for parameter s
 
 ## Requirements
 
-- Python 3.6 or 3.7
+- Python 3.6, 3.7, or 3.8 (tested by the author)
 - gfortran (necessary to build RADEX)
 
 ## Installation
@@ -105,7 +105,7 @@ As a natural extension, you can run grid RADEX calculation like:
 ```
 
 There are 13 parameters which can be griddable:
-`QN_ul` (transition name), `T_kin` (kinetic temeperature), `N_mol` (column density), `n_H2` (H2 density), `n_pH2` (para-H2 density), `n_oH2` (ortho-H2 density), `n_e` (electron density), `n_H` (atomic hydrogen density), `n_He` (Helium density), `n_Hp` (ionized hydrogen density), `T_bg` (background temperature), `dv` (line width), and `geom` (photon escape geometry).
+`QN_ul` (transition name), `T_kin` (kinetic temperature), `N_mol` (column density), `n_H2` (H2 density), `n_pH2` (para-H2 density), `n_oH2` (ortho-H2 density), `n_e` (electron density), `n_H` (atomic hydrogen density), `n_He` (Helium density), `n_Hp` (ionized hydrogen density), `T_bg` (background temperature), `dv` (line width), and `geom` (photon escape geometry).
 
 The output of this example is a [xarray]'s Dataset with three dimensions of (`QN_ul`, `T_kin`, `n_H2`):
 

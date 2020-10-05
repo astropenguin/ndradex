@@ -32,4 +32,4 @@ class Build(build):
 
 # main script
 if __name__ == "__main__":
-    setup(cmdclass=dict(build=build))
+    setup(cmdclass=dict(build=Build))
