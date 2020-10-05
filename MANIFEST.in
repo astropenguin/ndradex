@@ -2,4 +2,3 @@ include ndradex/bin/Makefile
 include ndradex/bin/radex-uni
 include ndradex/bin/radex-lvg
 include ndradex/bin/radex-slab
-include ndradex/data/config.toml
