@@ -79,7 +79,7 @@ def run(
     of parameter is array-like and its length is more than one).
     For example, if you run grid RADEX calculation for CO (1-0) with
     kinetic temperatures of [100, 200, 300, 400, 500] K, and H2
-    densities of [1e3, 1e4, 1e5] cm^-3, then the shepe is (5, 3).
+    densities of [1e3, 1e4, 1e5] cm^-3, then the shape is (5, 3).
     For more information: https://github.com/astropenguin/ndradex/wiki
 
     Args:
@@ -111,7 +111,7 @@ def run(
         dv (int or float, griddable): Value(s) of FWHM width of a line
             in units of km s^-1.
         geom (str, griddable): Name(s) of geometry for photon escape
-            probability. Either 'uni', 'lvg', or 'slab' is acccepted.
+            probability. Either 'uni', 'lvg', or 'slab' is accepted.
         squeeze (bool, optional): If True (default), then dimensions
             whose length is only one are dropped.
         progress (bool, optional): If True (default), then a bar is
