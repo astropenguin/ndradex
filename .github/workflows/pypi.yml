@@ -26,4 +26,5 @@ jobs:
           poetry install
       - name: Publish package
         run: |
+          poetry run python setup.py sdist
           poetry run twine upload dist/*
