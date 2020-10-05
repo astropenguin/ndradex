@@ -1,24 +1,39 @@
 __all__ = ["LAMDA"]
 
 
-# from standard library
+# standard library
 import re
 import warnings
 from functools import wraps
-from logging import getLogger
+from logging import getLogger, Logger
 from pathlib import Path
+from typing import Callable, Dict, List, Optional, Tuple, Union
 from urllib.parse import urlparse
 
 
-# from dependent packages
-import ndradex
+# dependencies
 import numpy as np
+from astropy.table import Column, Table
+from astroquery.lamda import (
+    Lamda,
+    parse_lamda_datafile,
+    utils,
+    write_lamda_datafile,
+)
+from . import config
 
 
-logger = getLogger(__name__)
+# type aliases
+PathLike = Union[Path, str]
+Tables = Tuple[Dict[str, Table], Table, Table]
 
 
-def cache(func):
+# logger
+logger: Logger = getLogger(__name__)
+
+
+# main features
+def cache(func: Callable) -> Callable:
     """Decorator for caching result of a method."""
     name = "_" + func.__name__
 
@@ -35,9 +50,9 @@ def cache(func):
 
 
 class LAMDA:
-    def __init__(self, query, dir="."):
-        if query in ndradex.config["lamda"]:
-            query = ndradex.config["lamda"][query]
+    def __init__(self, query: str, dir: PathLike = ".") -> None:
+        if query in config["lamda"]:
+            query = config["lamda"][query]
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -54,20 +69,20 @@ class LAMDA:
 
     @property
     @cache
-    def qn_ul(self):
+    def qn_ul(self) -> List[str]:
         """List of transition quantum numbers."""
         return list(self._transitions["QN_ul"])
 
     @property
     @cache
-    def freq(self):
+    def freq(self) -> Dict[str, float]:
         """Transition frequencies in units of GHz."""
         freq = self._transitions["Frequency"]
         return dict(zip(self.qn_ul, freq))
 
     @property
     @cache
-    def freq_lim(self):
+    def freq_lim(self) -> Dict[str, str]:
         """Transition frequency ranges in units of GHz."""
         freq = self._transitions["Frequency"]
         freq_lim = [f"{(1-1e-9)*f} {(1+1e-9)*f}" for f in freq]
@@ -75,25 +90,22 @@ class LAMDA:
 
     @property
     @cache
-    def a_coeff(self):
+    def a_coeff(self) -> Dict[str, float]:
         """Einstein A coefficients in units of s^-1."""
         a_coeff = self._transitions["EinsteinA"]
         return dict(zip(self.qn_ul, a_coeff))
 
     @property
     @cache
-    def e_up(self):
+    def e_up(self) -> Dict[str, float]:
         """Upper state energies in units of K."""
         e_up = self._transitions["E_u(K)"]
         return dict(zip(self.qn_ul, e_up))
 
     @property
     @cache
-    def n_crit(self):
+    def n_crit(self) -> Dict[str, Callable]:
         """Critical densities in units of cm^-3."""
-        # lazy import of astropy-related things
-        from astroquery.lamda.utils import ncrit
-
         tables = (self._collrates, self._transitions, self._levels)
 
         funcs = []
@@ -103,43 +115,37 @@ class LAMDA:
 
             @np.vectorize
             def func(T_kin):
-                return ncrit(tables, index_u, index_l, T_kin).value
+                return utils.ncrit(tables, index_u, index_l, T_kin).value
 
             funcs.append(func)
 
         return dict(zip(self.qn_ul, funcs))
 
-    def __enter__(self):
+    def __enter__(self) -> "LAMDA":
         """Create a temporary LAMDA data inside a context block."""
-        # lazy import of astropy-related things
-        from astroquery.lamda import write_lamda_datafile
-
         tables = (self._collrates, self._transitions, self._levels)
         write_lamda_datafile(self._data_path, tables)
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
         """Delete a temporary LAMDA data outside a context block."""
         self._data_path.unlink()
 
-    def __str__(self):
+    def __str__(self) -> "str":
         return str(self._data_path)
 
-    def __repr__(self):
+    def __repr__(self) -> "str":
         return f"LAMDA({self.desc})"
 
 
 # utility functions
-def get_tables(query):
+def get_tables(query: str) -> Tables:
     """(Down)load LAMDA data as astropy tables.
 
     This will also add a column of transition quantum
     numbers (i.e., 1-0) to the transition table (QN_ul).
 
     """
-    # lazy import of astropy-related things
-    from astropy.table import Column
-
     collrates, transitions, levels = get_raw_tables(query)
     levels.add_index("Level")
 
@@ -154,12 +160,8 @@ def get_tables(query):
     return collrates, transitions, levels
 
 
-def get_raw_tables(query):
+def get_raw_tables(query: str) -> Tables:
     """(Down)load LAMDA data as astropy tables."""
-    # lazy import of astropy-related things
-    from astroquery.lamda import Lamda
-    from astroquery.lamda import parse_lamda_datafile
-
     # case 1: try to get by URL
     if query.startswith("http"):
         name = Path(urlparse(query).path).stem
@@ -178,13 +180,13 @@ def get_raw_tables(query):
         raise ValueError(query)
 
 
-def get_data_path(query, dir="."):
+def get_data_path(query: str, dir: PathLike = ".") -> Path:
     """Get path object for temporary LAMDA data."""
     data = Path(query).stem + ".dat"
     return Path(dir, data).expanduser().resolve()
 
 
-def format_qn(qn):
+def format_qn(qn: str) -> str:
     """Format QN string to be well structured."""
     # trim single/double quotes
     qn = re.sub(r'\'|"', "", qn)
@@ -207,10 +209,11 @@ def format_qn(qn):
     return re.sub(r"(.*,.*)", r"(\1)", qn)
 
 
-def list_available(path, max_transitions=None):
+def list_available(
+    path: PathLike,
+    max_transitions: Optional[int] = None,
+) -> None:
     """List names of datafiles and transitions in Markdown."""
-    # lazy import of astropy-related things
-    from astroquery.lamda import Lamda
 
     def sorter(item):
         name = re.sub(r"[a-z]-(.*)", r"\1", item[0])
