@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ndradex"
-version = "0.2.1"
+version = "0.2.2"
 description = "Python package for RADEX grid calculation"
 authors = ["Akio Taniguchi <taniguchi@a.phys.nagoya-u.ac.jp>"]
 license = "MIT"
