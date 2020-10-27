@@ -1,5 +1,5 @@
 __version__ = "0.2.2"
-__author__ = "astropenguin"
+__author__ = "Akio Taniguchi"
 
 
 # ignore FutureWarning
