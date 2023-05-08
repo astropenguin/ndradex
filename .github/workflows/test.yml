@@ -1,38 +1,38 @@
-name: Test
+name: Tests
 
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
     branches:
-      - master
+      - main
 
 jobs:
   job:
-    name: Test
+    name: Test (Python ${{ matrix.python }})
     runs-on: ubuntu-latest
+    env:
+      POETRY_VIRTUALENVS_CREATE: false
     strategy:
+      fail-fast: false
       matrix:
-        python-version: [3.6, 3.7, 3.8]
+        python: ["3.8", "3.9", "3.10", "3.11"]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           submodules: true
-      - name: Setup Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
+          python-version: ${{ matrix.python }}
+      - name: Install project dependencies
         run: |
           sudo apt install gfortran
           pip install poetry
           poetry install
           cd ndradex/bin
           make build
-      - name: Lint by Flake8
-        run: poetry run flake8 tests ndradex
-      - name: Format by Black
-        run: poetry run black --check tests ndradex
-      - name: Test by pytest
-        run : poetry run pytest -v tests
+      - name: Test code's formatting (Black)
+        run: black --check ndradex tests
+      - name: Test code's execution (pytest)
+        run: pytest -v tests
