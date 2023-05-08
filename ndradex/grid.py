@@ -18,9 +18,9 @@ from tqdm import tqdm
 
 # constants
 class Dims(Enum):
-    QN_ul = auto()
-    T_kin = auto()
-    N_mol = auto()
+    QN_ul = "QN_ul"
+    T_kin = "T_kin"
+    N_mol = "N_mol"
     n_H2 = "H2"
     n_pH2 = "p-H2"
     n_oH2 = "o-H2"
@@ -28,9 +28,9 @@ class Dims(Enum):
     n_H = "H"
     n_He = "He"
     n_Hp = "H+"
-    T_bg = auto()
-    dv = auto()
-    geom = auto()
+    T_bg = "T_bg"
+    dv = "dv"
+    geom = "geom"
 
 
 class Vars(Enum):
