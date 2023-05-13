@@ -58,6 +58,35 @@ def _get_constants():
 RADEX_BINPATH, RADEX_VERSION = _get_constants()
 
 
+# install builtin RADEX
+def _install_radex() -> None:
+    # from standard library
+    from subprocess import PIPE, run
+
+    if (
+        (RADEX_BINPATH / "radex-uni").exists()
+        and (RADEX_BINPATH / "radex-lvg").exists()
+        and (RADEX_BINPATH / "radex-slab").exists()
+    ):
+        return
+
+    run(
+        args=[
+            "make",
+            "build",
+            "LOGFILE=/dev/null",
+            "MAXITER=999999",
+        ],
+        stdout=PIPE,
+        stderr=PIPE,
+        cwd=RADEX_BINPATH,
+        check=True,
+    )
+
+
+_install_radex()
+
+
 # submodules
 from .utils import *  # noqa
 from .radex import *  # noqa
