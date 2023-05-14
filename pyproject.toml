@@ -15,7 +15,6 @@ netcdf4 = "^1.6"
 numpy = "^1.22"
 pandas = "^1.5"
 pandas-stubs = "^1.5"
-toml = "^0.10"
 tomlkit = "^0.11"
 tqdm = "^4.60"
 typing-extensions = "^4.0"
@@ -25,6 +24,9 @@ xarray = "^2022.1"
 black = "^23.3"
 ipython = "^8.12"
 pytest = "^7.3"
+
+[tool.pyright]
+typeCheckingMode = "basic"
 
 [build-system]
 requires = ["poetry-core"]

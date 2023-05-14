@@ -2,9 +2,11 @@ __all__ = ["run"]
 
 
 # standard library
+from concurrent.futures import ProcessPoolExecutor
 from enum import Enum, auto
 from itertools import product, repeat
 from pathlib import Path
+from random import getrandbits
 from tempfile import TemporaryDirectory
 
 
@@ -34,7 +36,6 @@ from .consts import (
 )
 from .db import LAMDA
 from .radex import run as run_radex
-from .utils import random_hex, get_runner
 
 
 # constants
@@ -262,10 +263,10 @@ def execute(dataset, *iterables, dir=".", progress=True, n_procs=None):
 
     # fmt: off
     with tqdm(total=total, disable=not progress) as bar, \
-         outfile.open("w", buffering=1) as f, \
-         get_runner(n_procs) as runner:
+         ProcessPoolExecutor(n_procs) as executor, \
+         outfile.open("w", buffering=1) as f:
     # fmt: on
-        for output in runner.map(run_radex, *iterables):
+        for output in executor.map(run_radex, *iterables):
             f.write(",".join(output) + "\n")
             bar.update(1)
 
@@ -342,7 +343,7 @@ def generate_kwargs(lamda, empty):
 
     for args in flatargs:
         kwargs = dict(zip(dims, args))
-        kwargs["id"] = random_hex()
+        kwargs["id"] = get_random_hex(8)
         kwargs["freq_lim"] = freq_lim[kwargs["QN_ul"]]
         yield kwargs
 
@@ -388,3 +389,8 @@ def ensure_values(values, unit=None):
         return values[np.newaxis]
     else:
         return values
+
+
+def get_random_hex(length: int = 8) -> str:
+    """Return a random hexadecimal string of given length."""
+    return f"{getrandbits(length * 4):x}"
