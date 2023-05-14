@@ -4,8 +4,7 @@ __all__ = []
 # standard library
 from logging import getLogger
 from pathlib import Path
-from subprocess import PIPE
-from subprocess import run as sprun
+from subprocess import PIPE, run as sprun
 from subprocess import CalledProcessError, TimeoutExpired
 
 
@@ -19,6 +18,21 @@ ERROR_OUTPUT = ("NaN",) * N_VARS
 
 
 logger = getLogger(__name__)
+
+
+# builtin RADEX installation
+sprun(
+    args=[
+        "make",
+        "build",
+        "LOGFILE=/dev/null",
+        "MAXITER=999999",
+    ],
+    stdout=PIPE,
+    stderr=PIPE,
+    cwd=RADEX_BIN,
+    check=True,
+)
 
 
 # main function
