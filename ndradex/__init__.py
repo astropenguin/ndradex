@@ -88,6 +88,7 @@ _install_radex()
 
 
 # submodules
+from . import consts
 from .utils import *  # noqa
 from .radex import *  # noqa
 from .db import *  # noqa
