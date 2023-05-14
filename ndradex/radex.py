@@ -1,6 +1,3 @@
-__all__ = []
-
-
 # standard library
 from logging import getLogger
 from pathlib import Path
@@ -9,7 +6,7 @@ from subprocess import CalledProcessError, TimeoutExpired
 
 
 # dependencies
-from .consts import RADEX_BIN, RADEX_VERSION
+from .consts import NDRADEX, RADEX_BIN, RADEX_VERSION
 
 
 # constants
@@ -20,22 +17,6 @@ ERROR_OUTPUT = ("NaN",) * N_VARS
 logger = getLogger(__name__)
 
 
-# builtin RADEX installation
-sprun(
-    args=[
-        "make",
-        "build",
-        "LOGFILE=/dev/null",
-        "MAXITER=999999",
-    ],
-    stdout=PIPE,
-    stderr=PIPE,
-    cwd=RADEX_BIN,
-    check=True,
-)
-
-
-# main function
 def run(
     input,
     radex=None,
@@ -111,7 +92,31 @@ def run(
             remove_file(outfile)
 
 
-# utility functions
+def build(force: bool = False) -> None:
+    """Build the builtin RADEX binaries."""
+    if force:
+        sprun(
+            args=["make", "clean"],
+            cwd=NDRADEX / "bin",
+            stdout=PIPE,
+            stderr=PIPE,
+            check=True,
+        )
+
+    sprun(
+        args=[
+            "make",
+            "build",
+            "RADEX_LOGFILE=/dev/null",
+            "RADEX_MAXITER=999999",
+        ],
+        cwd=NDRADEX / "bin",
+        stdout=PIPE,
+        stderr=PIPE,
+        check=True,
+    )
+
+
 def ensure_input(input, encoding="utf-8"):
     """Ensure the type of input and the path of outfile."""
     if isinstance(input, (list, tuple)):
