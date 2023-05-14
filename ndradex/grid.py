@@ -238,7 +238,7 @@ def generate_inputs(lamda, empty):
     template = get_input_template(lamda, empty)
 
     for kwargs in generate_kwargs(lamda, empty):
-        yield template.format(**kwargs)
+        yield template.format(**kwargs).split("\n")
 
 
 def generate_radex_paths(lamda, empty):

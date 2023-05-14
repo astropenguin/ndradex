@@ -1,66 +1,58 @@
 # standard library
 from pathlib import Path
-from tempfile import TemporaryDirectory
 
 
 # dependencies
-import numpy as np
-import ndradex
+from ndradex.consts import RADEX_BIN
+from ndradex.db import LAMDA
+from ndradex.radex import run
 
 
-# constants
-COMMONS = {
-    "N_mol": 1e15,
-    "n_H2": 1e3,
-    "T_bg": 2.73,
-    "dv": 1.0,
-    "geom": "uni",
-}
+# test data
+radex_input = [
+    "co.dat",
+    "radex.out",
+    "110 120",
+    "100",
+    "1",
+    "H2",
+    "1e3",
+    "2.73",
+    "1e15",
+    "1.0",
+    "0",
+]
+radex_output = [
+    "5.5",
+    "115.2712",
+    "2600.7576",
+    "132.463",
+    "9.966E-03",
+    "1.278E+00",
+    "4.934E-01",
+    "1.715E-01",
+    "1.360E+00",
+    "2.684E-08",
+]
 
 
 # test functions
-def test_binary_existences():
-    """Ensure that builtin RADEX binaries exist."""
-    assert (ndradex.consts.RADEX_BIN / "radex-uni").exists()
-    assert (ndradex.consts.RADEX_BIN / "radex-lvg").exists()
-    assert (ndradex.consts.RADEX_BIN / "radex-slab").exists()
+def test_run() -> None:
+    with LAMDA(radex_input[0]):
+        output = run(radex_input, RADEX_BIN / "radex-1")
 
+    # test non-existence of the input/output files
+    assert not Path(radex_input[0]).exists()
+    assert not Path(radex_input[1]).exists()
 
-def test_radex_single_run():
-    """Ensure that the output of RADEX single run is correct."""
-    ds = ndradex.run("co.dat", "1-0", 100, **COMMONS)
-    assert np.isclose(ds["I"], 1.36)
-    assert np.isclose(ds["F"], 2.684e-8)
-
-
-def test_radex_grid_run():
-    """Ensure that the output of RADEX grid run is correct."""
-    ds = ndradex.run(
-        "co.dat",
-        ["1-0", "2-1", "3-2"],
-        [100, 200, 300],
-        **COMMONS,
-    )
-    assert np.isclose(ds["I"].sel(QN_ul="1-0", T_kin=100), 1.36)
-    assert np.isclose(ds["F"].sel(QN_ul="1-0", T_kin=100), 2.684e-8)
-
-
-def test_work_dir():
-    """Ensure that work_dir option works correctly."""
-    with TemporaryDirectory(dir=".") as work_dir:
-        ndradex.run("co.dat", "1-0", 100, work_dir=work_dir)
-        assert not list(Path(work_dir).glob("*"))
-
-
-def test_dataset_io():
-    """Ensure that I/O functions works correctly."""
-    with TemporaryDirectory(dir=".") as temp_dir:
-        filename = Path(temp_dir) / "test.nc"
-
-        ds_before = ndradex.run("co.dat", "1-0", 100)
-        ndradex.save_dataset(ds_before, filename)
-        ds_after = ndradex.load_dataset(filename)
-
-        ds_bool = (ds_before == ds_after).all()
-        for dataarray in ds_bool.values():
-            assert dataarray
+    # test equality of the output values
+    assert output[0] == radex_output[0]
+    assert output[1] == radex_output[1]
+    assert output[2] == radex_output[2]
+    assert output[3] == radex_output[3]
+    assert output[4] == radex_output[4]
+    assert output[5] == radex_output[5]
+    assert output[6] == radex_output[6]
+    assert output[7] == radex_output[7]
+    assert output[8] == radex_output[8]
+    assert output[9] == radex_output[9]

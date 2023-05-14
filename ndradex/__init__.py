@@ -23,3 +23,7 @@ from .db import *
 from .grid import *
 from .io import *
 from .radex import *
+
+
+# builtin RADEX binaries
+radex.build()
