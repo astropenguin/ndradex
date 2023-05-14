@@ -1,7 +1,7 @@
 __all__ = ["LAMDA"]
 
 
-# from standard library
+# tandard library
 import re
 import warnings
 from functools import wraps
@@ -10,9 +10,9 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 
-# from dependent packages
-import ndradex
+# dependencies
 import numpy as np
+from .consts import LAMDA_ALIASES
 
 
 logger = getLogger(__name__)
@@ -36,8 +36,7 @@ def cache(func):
 
 class LAMDA:
     def __init__(self, query, dir="."):
-        if query in ndradex.config["lamda"]:
-            query = ndradex.config["lamda"][query]
+        query = LAMDA_ALIASES.get(query, query)
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")

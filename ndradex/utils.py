@@ -75,7 +75,7 @@ def random_hex(length=8):
     return f"{getrandbits(length*4):x}"
 
 
-def runner(n_procs=None):
+def get_runner(n_procs=None):
     """Multiprocessing task runnner."""
     if n_procs is None:
         n_procs = cpu_count() - 1
