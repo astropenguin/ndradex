@@ -91,8 +91,8 @@ def run(
         return ERROR_OUTPUT
     finally:
         if cleanup:
-            remove_file(logfile)
-            remove_file(outfile)
+            Path(logfile).unlink(missing_ok=True)
+            Path(outfile).unlink(missing_ok=True)
 
 
 def build(force: bool = False) -> None:
@@ -139,11 +139,3 @@ def ensure_output(cp, outfile, encoding="utf-8"):
 
     with open(outfile, encoding=encoding) as f:
         return f.readlines()[-1].split()[-N_VARS:]
-
-
-def remove_file(path):
-    """Remove file forcibly (i.e., rm -f <path>)."""
-    try:
-        Path(path).unlink()
-    except FileNotFoundError:
-        pass
