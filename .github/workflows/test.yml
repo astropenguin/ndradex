@@ -27,11 +27,9 @@ jobs:
           python-version: ${{ matrix.python }}
       - name: Install project dependencies
         run: |
-          sudo apt install gfortran
+          sudo apt-get install gfortran
           pip install poetry
           poetry install
-          cd ndradex/bin
-          make build
       - name: Test code's formatting (Black)
         run: black --check ndradex tests
       - name: Test code's execution (pytest)
