@@ -260,12 +260,11 @@ def execute(dataset, *iterables, dir=".", progress=True, n_procs=None):
     total = np.prod(list(dataset.dims.values()))
     outfile = Path(dir, "grid.out").expanduser().resolve()
 
-    with (
-        outfile.open("w", buffering=1) as f,
-        get_runner(n_procs) as runner,
-        tqdm(total=total, disable=not progress) as bar,
-    ):
-        # write outputs to a single file
+    # fmt: off
+    with tqdm(total=total, disable=not progress) as bar, \
+         outfile.open("w", buffering=1) as f, \
+         get_runner(n_procs) as runner:
+    # fmt: on
         for output in runner.map(run_radex, *iterables):
             f.write(",".join(output) + "\n")
             bar.update(1)
