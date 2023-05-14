@@ -9,11 +9,32 @@ from tempfile import TemporaryDirectory
 
 
 # dependencies
-import ndradex
 import numpy as np
 import pandas as pd
 import xarray as xr
 from tqdm import tqdm
+from .consts import (
+    DV,
+    ESC,
+    N_E,
+    N_H,
+    N_H2,
+    N_HE,
+    N_HP,
+    N_MOL,
+    N_OH2,
+    N_PARALLEL,
+    N_PH2,
+    PROGRESS,
+    RADEX_BIN,
+    SQUEEZE,
+    T_BG,
+    T_KIN,
+    TIMEOUT,
+)
+from .db import LAMDA
+from .radex import run as run_radex
+from .utils import random_hex, get_runner
 
 
 # constants
@@ -47,27 +68,26 @@ class Vars(Enum):
 
 
 # main function
-@ndradex.utils.set_defaults(**ndradex.config["grid"])
 def run(
     query,
     QN_ul,
-    T_kin=100,
-    N_mol=1e15,
-    n_H2=1e3,
-    n_pH2=None,
-    n_oH2=None,
-    n_e=None,
-    n_H=None,
-    n_He=None,
-    n_Hp=None,
-    T_bg=2.73,
-    dv=1.0,
-    geom="uni",
+    T_kin=T_KIN,
+    N_mol=N_MOL,
+    n_H2=N_H2,
+    n_pH2=N_PH2,
+    n_oH2=N_OH2,
+    n_e=N_E,
+    n_H=N_H,
+    n_He=N_HE,
+    n_Hp=N_HP,
+    T_bg=T_BG,
+    dv=DV,
+    geom=ESC,
     *,
-    squeeze=True,
-    progress=True,
-    timeout=None,
-    n_procs=None,
+    squeeze=SQUEEZE,
+    progress=PROGRESS,
+    timeout=TIMEOUT,
+    n_procs=N_PARALLEL,
     work_dir=None,
 ):
     """Run grid RADEX calculation and get results as xarray.Dataset.
@@ -190,7 +210,7 @@ def run(
     )
 
     with TemporaryDirectory(dir=work_dir) as temp_dir:
-        with ndradex.db.LAMDA(query, temp_dir) as lamda:
+        with LAMDA(query, temp_dir) as lamda:
             # make an empty dataset and flattened args
             dataset = get_empty_dataset(lamda, empty)
             iterables = [
@@ -222,7 +242,7 @@ def generate_inputs(lamda, empty):
 
 def generate_radex_paths(lamda, empty):
     """Generate RADEX path iteratively."""
-    path = str(ndradex.RADEX_BINPATH / "radex-{geom}")
+    path = str(RADEX_BIN / "radex-{geom}")
 
     for kwargs in generate_kwargs(lamda, empty):
         yield path.format(geom=kwargs[Dims.geom.name])
@@ -240,11 +260,12 @@ def execute(dataset, *iterables, dir=".", progress=True, n_procs=None):
     total = np.prod(list(dataset.dims.values()))
     outfile = Path(dir, "grid.out").expanduser().resolve()
 
-    with outfile.open("w", buffering=1) as f, ndradex.utils.runner(
-        n_procs
-    ) as runner, tqdm(total=total, disable=not progress) as bar:
-        # write outputs to a single file
-        for output in runner.map(ndradex.radex.run, *iterables):
+    # fmt: off
+    with tqdm(total=total, disable=not progress) as bar, \
+         outfile.open("w", buffering=1) as f, \
+         get_runner(n_procs) as runner:
+    # fmt: on
+        for output in runner.map(run_radex, *iterables):
             f.write(",".join(output) + "\n")
             bar.update(1)
 
@@ -276,18 +297,18 @@ def finalize(dataset, squeeze=True):
 # utility functions
 def get_empty_array(
     QN_ul,
-    T_kin=100,
-    N_mol=1e15,
-    n_H2=1e3,
-    n_pH2=None,
-    n_oH2=None,
-    n_e=None,
-    n_H=None,
-    n_He=None,
-    n_Hp=None,
-    T_bg=2.73,
-    dv=1.0,
-    geom="uni",
+    T_kin,
+    N_mol,
+    n_H2,
+    n_pH2,
+    n_oH2,
+    n_e,
+    n_H,
+    n_He,
+    n_Hp,
+    T_bg,
+    dv,
+    geom,
 ):
     """Make an empty xarray.DataArray for storing grid RADEX results."""
     values = {
@@ -321,7 +342,7 @@ def generate_kwargs(lamda, empty):
 
     for args in flatargs:
         kwargs = dict(zip(dims, args))
-        kwargs["id"] = ndradex.utils.random_hex()
+        kwargs["id"] = random_hex()
         kwargs["freq_lim"] = freq_lim[kwargs["QN_ul"]]
         yield kwargs
 
