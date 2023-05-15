@@ -4,7 +4,7 @@ __all__ = ["LAMDA"]
 # tandard library
 import re
 import warnings
-from functools import wraps
+from functools import partial, wraps
 from logging import getLogger
 from pathlib import Path
 from urllib.parse import urlparse
@@ -93,20 +93,20 @@ class LAMDA:
         # lazy import of astropy-related things
         from astroquery.lamda.utils import ncrit
 
-        tables = (self._collrates, self._transitions, self._levels)
+        @np.vectorize
+        def func(T_kin, index_u, index_l):
+            tables = (self._collrates, self._transitions, self._levels)
+            return ncrit(tables, index_u, index_l, T_kin).value
 
-        funcs = []
+        funcs = {}
+
         for qn_ul in self.qn_ul:
             index_u = self._transitions.loc[qn_ul]["Upper"]
             index_l = self._transitions.loc[qn_ul]["Lower"]
 
-            @np.vectorize
-            def func(T_kin):
-                return ncrit(tables, index_u, index_l, T_kin).value
+            funcs[qn_ul] = partial(func, index_u=index_u, index_l=index_l)
 
-            funcs.append(func)
-
-        return dict(zip(self.qn_ul, funcs))
+        return funcs
 
     def __enter__(self):
         """Create a temporary LAMDA data inside a context block."""
