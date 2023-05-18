@@ -10,7 +10,7 @@ homepage = "https://github.com/astropenguin/ndradex/"
 documentation = "https://astropenguin.github.io/ndradex/"
 
 [tool.poetry.dependencies]
-python = ">3.8, <3.12"
+python = ">=3.8, <3.12"
 astropy = "^5.0"
 astroquery = "^0.4"
 netcdf4 = "^1.6"
