@@ -1,0 +1,7 @@
+#!/bin/bash -eu
+
+# auto-generate package guide
+sphinx-apidoc -efT -o docs/_apidoc ndradex
+
+# build website
+sphinx-build -a docs docs/_build

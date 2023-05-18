@@ -1,39 +1,37 @@
 # ndRADEX
 
-[![](https://img.shields.io/pypi/v/ndradex.svg?label=PyPI&style=flat-square)](https://pypi.org/pypi/ndradex/)
-[![](https://img.shields.io/pypi/pyversions/ndradex.svg?label=Python&color=yellow&style=flat-square)](https://pypi.org/pypi/ndradex/)
-[![Test](https://img.shields.io/github/workflow/status/astropenguin/ndradex/Test?logo=github&label=Test&style=flat-square)](https://github.com/astropenguin/ndradex/actions)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg?label=License&style=flat-square)](LICENSE)
-[![DOI](https://img.shields.io/badge/DOI-10.5281/zenodo.3384031-blue?style=flat-square)](https://doi.org/10.5281/zenodo.3384031)
+[![Release](https://img.shields.io/pypi/v/ndradex?label=Release&color=cornflowerblue&style=flat-square)](https://pypi.org/project/ndradex/)
+[![Python](https://img.shields.io/pypi/pyversions/ndradex?label=Python&color=cornflowerblue&style=flat-square)](https://pypi.org/project/ndradex/)
+[![Downloads](https://img.shields.io/pypi/dm/ndradex?label=Downloads&color=cornflowerblue&style=flat-square)](https://pepy.tech/project/ndradex)
+[![DOI](https://img.shields.io/badge/DOI-10.5281/zenodo.3384031-cornflowerblue?style=flat-square)](https://doi.org/10.5281/zenodo.3384031)
+[![Tests](https://img.shields.io/github/actions/workflow/status/astropenguin/ndradex/tests.yaml?label=Tests&style=flat-square)](https://github.com/astropenguin/ndradex/actions)
 
-Python package for RADEX grid calculation
+Multidimensional grid RADEX calculator
 
-## TL;DR
+## Overview
 
-ndRADEX is a Python package which can run [RADEX], non-LTE molecular radiative transfer code, with parameters of multiple values (i.e., RADEX with grid parameters).
-The output will be multi-dimensional arrays, which may be useful for parameter search of physical conditions in comparison with observed values.
+ndRADEX is a Python package which can run [RADEX], non-LTE molecular radiative transfer code, with multiple grid parameters.
+The output will be multidimensional arrays provided by [xarray], which would be useful for parameter search of physical conditions in comparison with observed values.
 
-## Features
+### Features
 
 - **Grid calculation:** ndRADEX has a simple `run()` function, where all parameters of RADEX can be griddable (i.e., they can be list-like with length of more than one).
-- **Builtin RADEX:** ndRADEX provides builtin RADEX binaries in the package, which are automatically downloaded and built during the package installation. This also enables us to do RADEX calculations in the cloud such as [Google Colaboratory](https://colab.research.google.com).
+- **Builtin RADEX:** ndRADEX provides builtin RADEX binaries in the package, which are automatically downloaded and built on the first import. This also enables us to do RADEX calculations in the cloud such as [Google Colaboratory](https://colab.research.google.com).
 - **Multiprocessing:** ndRADEX supports multiprocessing RADEX run by default. At least twice speedup is expected compared to single processing.
-- **Handy I/O:** The output of ndRADEX is a [xarray]'s Dataset, a standard multi-dimensional data structure as well as [pandas]. You can handle it in the same manner as NumPy and pandas (i.e., element-wise operation, save/load data, plotting, etc).
+- **Handy I/O:** The output of ndRADEX is a [xarray]'s Dataset, a standard multidimensional data structure as well as [pandas]. You can handle it in the same manner as NumPy and pandas (i.e., element-wise operation, save/load data, plotting, etc).
 
-## Requirements
+### Requirements
 
-- Python 3.6, 3.7, or 3.8 (tested by the author)
+- Python 3.8-3.11 (tested by the author)
 - gfortran (necessary to build RADEX)
 
-## Installation
+### Installation
 
 You can install ndRADEX with pip:
 
 ```shell
 $ pip install ndradex
 ```
-
-Please make sure that all requirements are met before the installation.
 
 ## Usages
 
@@ -43,22 +41,22 @@ Within Python, import the package like:
 >>> import ndradex
 ```
 
-### Single RADEX run
+### Single RADEX calculation
 
-The main funtion of ndRADEX is `ndradex.run()`.
-For example, to get RADEX results of CO(1-0) with kinetic temperature of 100 K, CO column density of 1e15 cm^-2, and H2 density of 1e3 cm^-3:
+The main function of ndRADEX is `ndradex.run()`.
+For example, to get RADEX results of CO(1-0) with kinetic temperature of 100.0 K, CO column density of 1e15 cm^-2, and H2 density of 1e3 cm^-3:
 
 ```python
->>> ds = ndradex.run('co.dat', '1-0', 100, 1e15, 1e3)
+>>> ds = ndradex.run("co.dat", "1-0", 100.0, 1e15, 1e3)
 ```
 
-where `'co.dat'` is a name of [LAMDA] datafile and `'1-0'` is a name of transition.
+where `"co.dat"` is a name of [LAMDA] datafile and `"1-0"` is a name of transition.
 The available values are listed in [List of available LAMDA datafiles and transitions](https://github.com/astropenguin/ndradex/wiki/List-of-available-LAMDA-datafiles-and-transitions).
-Note that you don't need to any download datafiles:
+Note that you do not need to any download datafiles:
 ndRADEX automatically manage this.
 
 In this case, other parameters like line width, background temperature are default values defined in the function.
-The geometry of escape probability is uniform (`'uni'`) by default.
+The geometry of escape probability is uniform (`"uni"`) by default.
 You can change these values with custom config (see customizations below).
 
 The output is a [xarray]'s Dataset with no dimension:
@@ -92,15 +90,15 @@ Data variables:
 You can access each result value like:
 
 ```python
->>> flux = ds['F'].values
+>>> flux = ds["F"].values
 ```
 
-### Grid RADEX run
+### Grid RADEX calculation
 
 As a natural extension, you can run grid RADEX calculation like:
 
 ```python
->>> ds = ndradex.run('co.dat', ['1-0', '2-1'], T_kin=[100, 200, 300],
+>>> ds = ndradex.run("co.dat", ["1-0", "2-1"], T_kin=[100.0, 200.0, 300.0],
                      N_mol=1e15, n_H2=[1e3, 1e4, 1e5, 1e6, 1e7])
 ```
 
@@ -137,23 +135,23 @@ Data variables:
 
 For more information, run `help(ndradex.run)` to see the docstrings.
 
-### Save/load results
+### Save and load results
 
 You can save and load the dataset like:
 
 ```python
 # save results to a netCDF file
->>> ndradex.save_dataset(ds, 'results.nc')
+>>> ndradex.save_dataset(ds, "results.nc")
 
 # load results from a netCDF file
->>> ds = ndradex.load_dataset('results.nc')
+>>> ds = ndradex.load_dataset("results.nc")
 ```
 
-## Customizations
+## Customization
 
 For the first time you import ndRADEX, the custom configuration file is created as `~/.config/ndradex/config.toml`.
 By editing this, you can customize the following two settings of ndRADEX.
-Note that you can change the path of configuration file by setting an environment variable, `NDRADEX_PATH`.
+Note that you can change the path of configuration directory by setting an environment variable, `NDRADEX_DIR`.
 
 ### Changing default values
 
@@ -162,11 +160,11 @@ As mentioned above, you can change the default values of the `run()` function li
 ```toml
 # config.toml
 
-[grid]
-T_bg = 10 # change default background temp to 10 K
-geom = "lvg" # change default geometry to LVG
-timeout = 30
-n_procs = 2
+[defaults]
+T_bg = 10.0  # change default background temp to 10.0 K
+geom = "lvg"  # change default geometry to LVG
+timeout = 60.0
+n_procs = 8
 ```
 
 You can also change the number of multiprocesses (`n_procs`) and timeout (`timeout`) here.
@@ -179,7 +177,7 @@ For convenience, you can define aliases of datafile names like:
 ```toml
 # config.toml
 
-[lamda]
+[lamda.aliaes]
 CS = "cs@lique.dat"
 CO = "~/your/local/co.dat"
 H13CN = "https://home.strw.leidenuniv.nl/~moldata/datafiles/h13cn@xpol.dat"
@@ -189,15 +187,8 @@ As shown in the second and third examples, you can also specify a local file pat
 After the customization, you can use these aliases in the `run()` function:
 
 ```python
->>> ds = ndradex.run('CS', '1-0', ...) # equiv to cs@lique.dat
+>>> ds = ndradex.run("CS", "1-0", ...)  # equiv to cs@lique.dat
 ```
-
-## References
-
-- [RADEX]
-- [LAMDA]
-- [xarray]
-- [pandas]
 
 [xarray]: http://xarray.pydata.org/en/stable/
 [RADEX]: https://home.strw.leidenuniv.nl/~moldata/radex.html
