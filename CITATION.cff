@@ -3,7 +3,7 @@ message: "If you use this software, please cite it as below."
 
 title: "ndradex"
 abstract: "Multidimensional grid RADEX calculator"
-version: 0.3.0
+version: 0.3.1
 date-released: 2023-05-19
 license: "MIT"
 doi: "10.5281/zenodo.3384031"
