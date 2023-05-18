@@ -4,7 +4,7 @@
 [![Python](https://img.shields.io/pypi/pyversions/ndradex?label=Python&color=cornflowerblue&style=flat-square)](https://pypi.org/project/ndradex/)
 [![Downloads](https://img.shields.io/pypi/dm/ndradex?label=Downloads&color=cornflowerblue&style=flat-square)](https://pepy.tech/project/ndradex)
 [![DOI](https://img.shields.io/badge/DOI-10.5281/zenodo.3384031-cornflowerblue?style=flat-square)](https://doi.org/10.5281/zenodo.3384031)
-[![Tests](https://img.shields.io/github/actions/workflow/status/astropenguin/ndradex/tests.yml?label=Tests&style=flat-square)](https://github.com/astropenguin/ndradex/actions)
+[![Tests](https://img.shields.io/github/actions/workflow/status/astropenguin/ndradex/tests.yaml?label=Tests&style=flat-square)](https://github.com/astropenguin/ndradex/actions)
 
 Multidimensional grid RADEX calculator
 
