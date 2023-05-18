@@ -5,7 +5,7 @@ __all__ = [
     "RADEX_VERSION",
     "LAMDA_ALIASES",
     "DV",
-    "ESC",
+    "GEOM",
     "N_H2",
     "N_MOL",
     "T_BG",
@@ -89,8 +89,8 @@ RADEX_VERSION = "30nov2011"
 DV = getval(NDRADEX_CONFIG, "defaults.dv", 1.0)
 """Default value for the ``dv`` argument."""
 
-ESC = getval(NDRADEX_CONFIG, "defaults.esc", "1")
-"""Default value for the ``esc`` argument."""
+GEOM = getval(NDRADEX_CONFIG, "defaults.geom", "uni")
+"""Default value for the ``geom`` argument."""
 
 N_H2 = getval(NDRADEX_CONFIG, "defaults.n_H2", 1e3)
 """Default value for the ``n_H2`` argument."""
@@ -107,13 +107,13 @@ PROGRESS = getval(NDRADEX_CONFIG, "defaults.progress", True)
 SQUEEZE = getval(NDRADEX_CONFIG, "defaults.squeeze", True)
 """Default value for the ``squeeze`` argument."""
 
-TIMEOUT = getval(NDRADEX_CONFIG, "defaults.timeout", 30)
+TIMEOUT = getval(NDRADEX_CONFIG, "defaults.timeout", 30.0)
 """Default value for the ``timeout`` argument."""
 
 T_BG = getval(NDRADEX_CONFIG, "defaults.T_bg", 2.73)
 """Default value for the ``T_bg`` argument."""
 
-T_KIN = getval(NDRADEX_CONFIG, "defaults.T_kin", 100)
+T_KIN = getval(NDRADEX_CONFIG, "defaults.T_kin", 100.0)
 """Default value for the ``T_kin`` argument."""
 
 

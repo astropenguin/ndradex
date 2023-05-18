@@ -17,7 +17,7 @@ import xarray as xr
 from tqdm import tqdm
 from .consts import (
     DV,
-    ESC,
+    GEOM,
     N_E,
     N_H,
     N_H2,
@@ -83,7 +83,7 @@ def run(
     n_Hp=N_HP,
     T_bg=T_BG,
     dv=DV,
-    geom=ESC,
+    geom=GEOM,
     *,
     squeeze=SQUEEZE,
     progress=PROGRESS,
