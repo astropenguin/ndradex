@@ -6,6 +6,7 @@ authors = ["Akio Taniguchi <taniguchi@a.phys.nagoya-u.ac.jp>"]
 keywords = ["astronomy", "radio-astronomy", "radex"]
 license = "MIT"
 homepage = "https://github.com/astropenguin/ndradex/"
+documentation = "https://astropenguin.github.io/ndradex/"
 
 [tool.poetry.dependencies]
 python = ">3.8, <3.12"
@@ -23,7 +24,10 @@ xarray = "^2022.1"
 [tool.poetry.dev-dependencies]
 black = "^23.3"
 ipython = "^8.12"
+myst-parser = "^1.0"
+pydata-sphinx-theme = "^0.13"
 pytest = "^7.3"
+sphinx = "^6.2"
 
 [tool.pyright]
 typeCheckingMode = "basic"
