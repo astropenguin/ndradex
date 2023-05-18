@@ -5,7 +5,7 @@ import ndradex
 # test functions
 def test_version():
     """Make sure the version is valid."""
-    assert ndradex.__version__ == "0.3.0"
+    assert ndradex.__version__ == "0.3.1"
 
 
 def test_author():
