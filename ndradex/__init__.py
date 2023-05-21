@@ -3,6 +3,7 @@ __all__ = [
     "db",
     "grid",
     "io",
+    "lamda",
     "radex",
     "LAMDA",
     "run",
@@ -18,6 +19,7 @@ from . import consts
 from . import db
 from . import grid
 from . import io
+from . import lamda
 from . import radex
 from .db import *
 from .grid import *
