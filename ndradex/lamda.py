@@ -1,26 +1,32 @@
-__all__ = ["LAMDA"]
+__all__ = ["LAMDA", "get_lamda"]
 
 
 # standard library
 from dataclasses import dataclass, field
 from pathlib import Path
+from re import compile
 from tempfile import NamedTemporaryFile
-from typing import IO, Dict, Tuple, Union
+from typing import IO, Dict, Optional, Tuple, Union
 
 
 # dependencies
 from astropy.table import Table
-from astroquery.lamda import parse_lamda_datafile, write_lamda_datafile
+from astroquery.lamda import Lamda, parse_lamda_datafile, write_lamda_datafile
+from requests_cache import CachedSession
 from typing_extensions import Self
+from .consts import LAMDA_ALIASES
 
 
 # type hints
 PathLike = Union[Path, str]
 Tables = Tuple[Dict[str, Table], Table, Table]
+Timeout = Optional[float]
 
 
 # constants
 DAT = ".dat"
+HTTP_SESSION = CachedSession("ndradex", use_cache_dir=True)
+URL_REGEX = compile(r"https?://")
 
 
 @dataclass
@@ -42,7 +48,7 @@ class LAMDA:
     @classmethod
     def from_datafile(cls, datafile: PathLike) -> Self:
         """Create a LAMDA object from a datafile."""
-        datafile = Path(datafile).expanduser().with_suffix(DAT)
+        datafile = Path(datafile).expanduser()
         tables = parse_lamda_datafile(datafile)
         return cls.from_tables(tables)  # type: ignore
 
@@ -67,3 +73,44 @@ class LAMDA:
         self.to_datafile(file.name)
         return file
 
+
+def get_lamda(query: PathLike, *, cache: bool = True, timeout: Timeout = None) -> LAMDA:
+    """Create a LAMDA object."""
+    if isinstance(query, Path):
+        query_ = str(query)
+    else:
+        query_ = LAMDA_ALIASES.get(query, query)
+
+    if URL_REGEX.match(query_):
+        return get_lamda_by_url(query_, cache=cache, timeout=timeout)
+
+    try:
+        return get_lamda_by_path(query_)
+    except FileNotFoundError:
+        return get_lamda_by_name(query_, cache=cache, timeout=timeout)
+
+
+def get_lamda_by_name(query: str, *, cache: bool, timeout: Timeout) -> LAMDA:
+    """Create a LAMDA object by a datafile name."""
+    tables = Lamda.query(query.rstrip(DAT), cache=cache, timeout=timeout)
+    return LAMDA.from_tables(tables)  # type: ignore
+
+
+def get_lamda_by_path(query: PathLike) -> LAMDA:
+    """Create a LAMDA object by a local datafile path."""
+    return LAMDA.from_datafile(query)
+
+
+def get_lamda_by_url(query: str, *, cache: bool, timeout: Timeout) -> LAMDA:
+    """Create a LAMDA object by a datafile URL."""
+    if cache:
+        response = HTTP_SESSION.get(query, timeout=timeout, expire_after=-1)
+    else:
+        response = HTTP_SESSION.get(query, timeout=timeout, expire_after=0)
+
+    if not response.ok:
+        raise FileNotFoundError(query)
+
+    with NamedTemporaryFile("w", suffix=DAT) as file:
+        file.write(response.text)
+        return LAMDA.from_datafile(file.name)
