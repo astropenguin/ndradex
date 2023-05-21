@@ -74,31 +74,28 @@ class LAMDA:
         return file
 
 
-def get_lamda(query: PathLike, *, cache: bool = True, timeout: Timeout = None) -> LAMDA:
+def get_lamda(query: str, *, cache: bool = True, timeout: Timeout = None) -> LAMDA:
     """Create a LAMDA object."""
-    if isinstance(query, Path):
-        query_ = str(query)
-    else:
-        query_ = LAMDA_ALIASES.get(query, query)
+    query = LAMDA_ALIASES.get(query, query)
 
-    if URL_REGEX.match(query_):
-        return get_lamda_by_url(query_, cache=cache, timeout=timeout)
+    if URL_REGEX.match(query):
+        return get_lamda_by_url(query, cache=cache, timeout=timeout)
 
     try:
-        return get_lamda_by_path(query_)
+        return get_lamda_by_path(query)
     except FileNotFoundError:
-        return get_lamda_by_name(query_, cache=cache, timeout=timeout)
+        return get_lamda_by_name(query, cache=cache, timeout=timeout)
+
+
+def get_lamda_by_path(query: str) -> LAMDA:
+    """Create a LAMDA object by a local datafile path."""
+    return LAMDA.from_datafile(query)
 
 
 def get_lamda_by_name(query: str, *, cache: bool, timeout: Timeout) -> LAMDA:
     """Create a LAMDA object by a datafile name."""
-    tables = Lamda.query(query.rstrip(DAT), cache=cache, timeout=timeout)
+    tables = Lamda.query(Path(query).stem, cache=cache, timeout=timeout)
     return LAMDA.from_tables(tables)  # type: ignore
-
-
-def get_lamda_by_path(query: PathLike) -> LAMDA:
-    """Create a LAMDA object by a local datafile path."""
-    return LAMDA.from_datafile(query)
 
 
 def get_lamda_by_url(query: str, *, cache: bool, timeout: Timeout) -> LAMDA:
