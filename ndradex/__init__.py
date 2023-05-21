@@ -5,7 +5,6 @@ __all__ = [
     "io",
     "lamda",
     "radex",
-    "LAMDA",
     "run",
     "save_dataset",
     "load_dataset",
@@ -21,10 +20,8 @@ from . import grid
 from . import io
 from . import lamda
 from . import radex
-from .db import *
 from .grid import *
 from .io import *
-from .radex import *
 
 
 # builtin RADEX binaries
