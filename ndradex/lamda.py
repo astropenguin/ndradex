@@ -28,11 +28,11 @@ TransitionLike = Union[int, str, Tuple[LevelLike, LevelLike]]
 # constants
 DATAFILE_SUFFIX = ".dat"
 HTTP_SESSION = CachedSession("ndradex", use_cache_dir=True)
-LEVEL_ID = "Level"
-LEVEL_NAME_ID = "J"
-TRANSITION_ID = "Transition"
+LEVEL_COLUMN = "Level"
+LEVEL_NAME_COLUMN = "J"
+TRANSITION_COLUMN = "Transition"
 TRANSITION_SEP = "-"
-UPPER_LOWER_ID = ["Upper", "Lower"]
+UPPER_LOWER_COLUMNS = ["Upper", "Lower"]
 URL_REGEX = compile(r"https?://")
 
 
@@ -90,11 +90,11 @@ class LAMDA:
 
     def __post_init__(self) -> None:
         """Set default indexes to the tables."""
-        self.levels.add_index(LEVEL_ID, unique=True)
-        self.transitions.add_index(TRANSITION_ID, unique=True)
+        self.levels.add_index(LEVEL_COLUMN, unique=True)
+        self.transitions.add_index(TRANSITION_COLUMN, unique=True)
 
         for table in self.colliders.values():
-            table.add_index(TRANSITION_ID, unique=True)
+            table.add_index(TRANSITION_COLUMN, unique=True)
 
 
 def get_lamda(query: str, *, cache: bool = True, timeout: Timeout = None) -> LAMDA:
@@ -158,8 +158,8 @@ def get_level(query: LevelLike, lamda: LAMDA) -> int:
         return query
 
     level = query.strip()
-    frame = lamda.levels.to_pandas(False).set_index(LEVEL_NAME_ID)
-    return frame[LEVEL_ID].loc[level]
+    frame = lamda.levels.to_pandas(False).set_index(LEVEL_NAME_COLUMN)
+    return frame[LEVEL_COLUMN].loc[level]
 
 
 def get_transition(query: TransitionLike, lamda: LAMDA) -> int:
@@ -175,5 +175,5 @@ def get_transition(query: TransitionLike, lamda: LAMDA) -> int:
 
     upper = get_level(query[0], lamda)
     lower = get_level(query[1], lamda)
-    frame = lamda.transitions.to_pandas(False).set_index(UPPER_LOWER_ID)
-    return frame[TRANSITION_ID].loc[(upper, lower)]
+    frame = lamda.transitions.to_pandas(False).set_index(UPPER_LOWER_COLUMNS)
+    return frame[TRANSITION_COLUMN].loc[(upper, lower)]
