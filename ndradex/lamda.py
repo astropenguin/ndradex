@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from re import compile
 from tempfile import NamedTemporaryFile
-from typing import IO, Dict, Optional, Tuple, Union
+from typing import Any, Callable, Dict, IO, Optional, List, Tuple, Union, overload
 
 
 # dependencies
@@ -32,7 +32,7 @@ LEVEL_COLUMN = "Level"
 LEVEL_NAME_COLUMN = "J"
 TRANSITION_COLUMN = "Transition"
 TRANSITION_SEP = "-"
-UPPER_LOWER_COLUMNS = ["Upper", "Lower"]
+UPLOW_COLUMNS = ["Upper", "Lower"]
 URL_REGEX = compile(r"https?://")
 
 
@@ -52,13 +52,23 @@ class LAMDA:
     colliders: Dict[str, Table] = field(repr=False)
     """Tables of the collision partners."""
 
-    def level(self, query: LevelLike) -> Row:
-        """Select the row of the levels table by a query."""
-        return self.levels.loc[get_level(query, self)]
+    @property
+    def levels_(self) -> "TableSlicer":
+        """Slicer of the levels table."""
+        return TableSlicer(self.levels, get_level_id, self)
 
-    def transition(self, query: TransitionLike) -> Row:
-        """Select the row of the transitions table by a query."""
-        return self.transitions.loc[get_transition(query, self)]
+    @property
+    def transitions_(self) -> "TableSlicer":
+        """Slicer of the transitions table."""
+        return TableSlicer(self.transitions, get_transition_id, self)
+
+    @property
+    def colliders_(self) -> Dict[str, "TableSlicer"]:
+        """Slicer of the collision partner tables."""
+        return {
+            name: TableSlicer(table, get_transition_id, self)
+            for name, table in self.colliders.items()
+        }
 
     @classmethod
     def from_datafile(cls, datafile: PathLike) -> Self:
@@ -95,6 +105,51 @@ class LAMDA:
 
         for table in self.colliders.values():
             table.add_index(TRANSITION_COLUMN, unique=True)
+
+
+@dataclass
+class TableSlicer:
+    """Slicer for Astropy tables."""
+
+    table: Table
+    """Table to be sliced."""
+
+    getid: Callable[[Any, LAMDA], int] = field(repr=False)
+    """Function for getting table IDs."""
+
+    lamda: LAMDA = field(repr=False)
+    """LAMDA object for getting table IDs."""
+
+    @overload
+    def __getitem__(self, query: slice) -> Table:
+        ...
+
+    @overload
+    def __getitem__(self, query: List[Any]) -> Table:
+        ...
+
+    @overload
+    def __getitem__(self, query: Any) -> Row:
+        ...
+
+    def __getitem__(self, query: Any) -> Any:
+        """Slice the table by a query."""
+        if isinstance(query, slice):
+            if (start := query.start) is not None:
+                start = self.getid(start, self.lamda)
+
+            if (stop := query.stop) is not None:
+                stop = self.getid(stop, self.lamda)
+
+            index = slice(start, stop, query.step)
+            return Table(self.table.loc[index])
+
+        if isinstance(query, list):
+            index = [self.getid(q, self.lamda) for q in query]
+            return Table(self.table.loc[index])
+
+        index = self.getid(query, self.lamda)
+        return self.table.loc[index]
 
 
 def get_lamda(query: str, *, cache: bool = True, timeout: Timeout = None) -> LAMDA:
@@ -149,7 +204,7 @@ def get_lamda_by_url(query: str, *, cache: bool, timeout: Timeout) -> LAMDA:
         return LAMDA.from_datafile(file.name)
 
 
-def get_level(query: LevelLike, lamda: LAMDA) -> int:
+def get_level_id(query: LevelLike, lamda: LAMDA) -> int:
     """Return a level ID from a query."""
     if not isinstance(query, (int, str)):
         raise TypeError(f"Query must be {LevelLike}.")
@@ -159,10 +214,10 @@ def get_level(query: LevelLike, lamda: LAMDA) -> int:
 
     level = query.strip()
     frame = lamda.levels.to_pandas(False).set_index(LEVEL_NAME_COLUMN)
-    return frame[LEVEL_COLUMN].loc[level]
+    return int(frame[LEVEL_COLUMN].loc[level])
 
 
-def get_transition(query: TransitionLike, lamda: LAMDA) -> int:
+def get_transition_id(query: TransitionLike, lamda: LAMDA) -> int:
     """Return a transition ID from a query."""
     if not isinstance(query, (int, str, tuple)):
         raise TypeError(f"Query must be {TransitionLike}.")
@@ -173,7 +228,7 @@ def get_transition(query: TransitionLike, lamda: LAMDA) -> int:
     if isinstance(query, str):
         query = tuple(query.split(TRANSITION_SEP))
 
-    upper = get_level(query[0], lamda)
-    lower = get_level(query[1], lamda)
-    frame = lamda.transitions.to_pandas(False).set_index(UPPER_LOWER_COLUMNS)
-    return frame[TRANSITION_COLUMN].loc[(upper, lower)]
+    upper = get_level_id(query[0], lamda)
+    lower = get_level_id(query[1], lamda)
+    frame = lamda.transitions.to_pandas(False).set_index(UPLOW_COLUMNS)
+    return int(frame[TRANSITION_COLUMN].loc[(upper, lower)])
