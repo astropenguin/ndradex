@@ -10,7 +10,7 @@ from typing import IO, Dict, Optional, Tuple, Union
 
 
 # dependencies
-from astropy.table import Table
+from astropy.table import Row, Table
 from astroquery.lamda import Lamda, parse_lamda_datafile, write_lamda_datafile
 from requests_cache import CachedSession
 from typing_extensions import Self
@@ -28,6 +28,8 @@ TransitionLike = Union[int, str, Tuple[LevelLike, LevelLike]]
 # constants
 DAT = ".dat"
 HTTP_SESSION = CachedSession("ndradex", use_cache_dir=True)
+LEVEL_ID = "Level"
+TRANSITION_ID = "Transition"
 TRANSITION_SEP = "-"
 URL_REGEX = compile(r"https?://")
 
@@ -47,6 +49,14 @@ class LAMDA:
 
     colliders: Dict[str, Table] = field(repr=False)
     """Tables of the collision partners."""
+
+    def level(self, level: LevelLike) -> Row:
+        """Select the row of the table corresponding to a level."""
+        return self.levels.loc[get_level(self, level)]
+
+    def transition(self, transition: TransitionLike) -> Row:
+        """Select the row of the table corresponding to a transition."""
+        return self.transitions.loc[get_transition(self, transition)]
 
     @classmethod
     def from_datafile(cls, datafile: PathLike) -> Self:
@@ -75,6 +85,14 @@ class LAMDA:
         file = NamedTemporaryFile("w", suffix=DAT)
         self.to_datafile(file.name)
         return file
+
+    def __post_init__(self) -> None:
+        """Set default indexes to the tables."""
+        self.levels.add_index(LEVEL_ID, unique=True)
+        self.transitions.add_index(TRANSITION_ID, unique=True)
+
+        for table in self.colliders.values():
+            table.add_index(TRANSITION_ID, unique=True)
 
 
 def get_lamda(query: str, *, cache: bool = True, timeout: Timeout = None) -> LAMDA:
@@ -126,7 +144,7 @@ def get_level(lamda: LAMDA, level: LevelLike) -> int:
 
     level = level.strip()
     frame = lamda.levels.to_pandas().set_index("J")
-    return frame["Level"].loc[level]
+    return frame[LEVEL_ID].loc[level]
 
 
 def get_transition(lamda: LAMDA, transition: TransitionLike) -> int:
@@ -143,4 +161,4 @@ def get_transition(lamda: LAMDA, transition: TransitionLike) -> int:
     upper = get_level(lamda, transition[0])
     lower = get_level(lamda, transition[1])
     frame = lamda.transitions.to_pandas().set_index(["Upper", "Lower"])
-    return frame["Transition"].loc[(upper, lower)]
+    return frame[TRANSITION_ID].loc[(upper, lower)]
