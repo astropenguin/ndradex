@@ -18,14 +18,17 @@ from .consts import LAMDA_ALIASES
 
 
 # type hints
+LevelLike = Union[int, str]
 PathLike = Union[Path, str]
 Tables = Tuple[Dict[str, Table], Table, Table]
 Timeout = Optional[float]
+TransitionLike = Union[int, str, Tuple[LevelLike, LevelLike]]
 
 
 # constants
 DAT = ".dat"
 HTTP_SESSION = CachedSession("ndradex", use_cache_dir=True)
+TRANSITION_SEP = "-"
 URL_REGEX = compile(r"https?://")
 
 
@@ -111,3 +114,33 @@ def get_lamda_by_url(query: str, *, cache: bool, timeout: Timeout) -> LAMDA:
     with NamedTemporaryFile("w", suffix=DAT) as file:
         file.write(response.text)
         return LAMDA.from_datafile(file.name)
+
+
+def get_level(lamda: LAMDA, level: LevelLike) -> int:
+    """Parse a level-like object and return the corresponding ID."""
+    if not isinstance(level, (int, str)):
+        raise TypeError(f"Level must be {LevelLike}.")
+
+    if isinstance(level, int):
+        return level
+
+    level = level.strip()
+    frame = lamda.levels.to_pandas().set_index("J")
+    return frame["Level"].loc[level]
+
+
+def get_transition(lamda: LAMDA, transition: TransitionLike) -> int:
+    """Parse a transition-like object and return the corresponding ID."""
+    if not isinstance(transition, (int, str, tuple)):
+        raise TypeError(f"Transition must be {TransitionLike}.")
+
+    if isinstance(transition, int):
+        return transition
+
+    if isinstance(transition, str):
+        transition = tuple(transition.split(TRANSITION_SEP))
+
+    upper = get_level(lamda, transition[0])
+    lower = get_level(lamda, transition[1])
+    frame = lamda.transitions.to_pandas().set_index(["Upper", "Lower"])
+    return frame["Transition"].loc[(upper, lower)]
