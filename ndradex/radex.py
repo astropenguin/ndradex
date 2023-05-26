@@ -10,7 +10,7 @@ from typing import List, Optional, Sequence, Union
 
 
 # dependencies
-from .consts import NDRADEX, RADEX_VERSION
+from .consts import NDRADEX, RADEX_BIN, RADEX_VERSION
 
 
 # type hints
@@ -88,6 +88,9 @@ def run(
 
 def build(force: bool = False) -> None:
     """Build the builtin RADEX binaries."""
+    if not RADEX_BIN == NDRADEX / "bin":
+        return None
+
     if force:
         sprun(
             args=["make", "clean"],
