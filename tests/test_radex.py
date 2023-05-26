@@ -4,13 +4,12 @@ from pathlib import Path
 
 # dependencies
 from ndradex.consts import RADEX_BIN
-from ndradex.db import LAMDA
+from ndradex.lamda import get_lamda
 from ndradex.radex import run
 
 
 # test data
 radex_input = [
-    "co.dat",
     "radex.out",
     "110 120",
     "100",
@@ -38,8 +37,11 @@ radex_output = [
 
 # test functions
 def test_run() -> None:
-    with LAMDA(radex_input[0]):
-        output = run(radex_input, RADEX_BIN / "radex-1")
+    with get_lamda("co").to_tempfile() as file:
+        output = run(
+            radex=RADEX_BIN / "radex-1",
+            input=[file.name] + radex_input,
+        )
 
     # test non-existence of the input/output files
     assert not Path(radex_input[0]).exists()
