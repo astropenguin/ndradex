@@ -82,7 +82,7 @@ class LAMDA:
         tables = self.colliders, self.transitions, self.levels
         write_lamda_datafile(datafile, tables)
 
-    def persist(self) -> IO[str]:
+    def to_tempfile(self) -> IO[str]:
         """Save the LAMDA object to a temporary datafile."""
         file = NamedTemporaryFile("w", suffix=DATAFILE_SUFFIX)
         self.to_datafile(file.name)
