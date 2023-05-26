@@ -215,8 +215,8 @@ def run(
             # make an empty dataset and flattened args
             dataset = get_empty_dataset(lamda, empty)
             iterables = [
-                generate_inputs(lamda, empty),
                 generate_radex_paths(lamda, empty),
+                generate_inputs(lamda, empty),
                 repeat(timeout),
             ]
 

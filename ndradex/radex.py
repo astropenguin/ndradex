@@ -26,8 +26,8 @@ logger = getLogger(__name__)
 
 
 def run(
-    input: Sequence[str],
     radex: PathLike,
+    input: Sequence[str],
     cleanup: bool = True,
     timeout: Optional[float] = None,
 ) -> List[str]:
@@ -38,8 +38,8 @@ def run(
     of the highest-frequency transition specified in the RADEX input.
 
     Args:
+        radex: Path of the RADEX binary to be run.
         input: Input strings for RADEX. See the examples below.
-        radex: Absolute path of the RADEX binary to be run.
         cleanup: If True, the RADEX output file will be deleted.
         timeout: Timeout of the run in units of seconds.
             Default is None (unlimited run time is allowed).
