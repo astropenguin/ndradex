@@ -26,11 +26,13 @@ TransitionLike = Union[int, str, Tuple[LevelLike, LevelLike]]
 
 
 # constants
-DAT = ".dat"
+DATAFILE_SUFFIX = ".dat"
 HTTP_SESSION = CachedSession("ndradex", use_cache_dir=True)
 LEVEL_ID = "Level"
+LEVEL_NAME_ID = "J"
 TRANSITION_ID = "Transition"
 TRANSITION_SEP = "-"
+UPPER_LOWER_ID = ["Upper", "Lower"]
 URL_REGEX = compile(r"https?://")
 
 
@@ -50,13 +52,13 @@ class LAMDA:
     colliders: Dict[str, Table] = field(repr=False)
     """Tables of the collision partners."""
 
-    def level(self, level: LevelLike) -> Row:
-        """Select the row of the table corresponding to a level."""
-        return self.levels.loc[get_level(self, level)]
+    def level(self, query: LevelLike) -> Row:
+        """Select the row of the levels table by a query."""
+        return self.levels.loc[get_level(query, self)]
 
-    def transition(self, transition: TransitionLike) -> Row:
-        """Select the row of the table corresponding to a transition."""
-        return self.transitions.loc[get_transition(self, transition)]
+    def transition(self, query: TransitionLike) -> Row:
+        """Select the row of the transitions table by a query."""
+        return self.transitions.loc[get_transition(query, self)]
 
     @classmethod
     def from_datafile(cls, datafile: PathLike) -> Self:
@@ -82,7 +84,7 @@ class LAMDA:
 
     def persist(self) -> IO[str]:
         """Save the LAMDA object to a temporary datafile."""
-        file = NamedTemporaryFile("w", suffix=DAT)
+        file = NamedTemporaryFile("w", suffix=DATAFILE_SUFFIX)
         self.to_datafile(file.name)
         return file
 
@@ -129,36 +131,36 @@ def get_lamda_by_url(query: str, *, cache: bool, timeout: Timeout) -> LAMDA:
     if not response.ok:
         raise FileNotFoundError(query)
 
-    with NamedTemporaryFile("w", suffix=DAT) as file:
+    with NamedTemporaryFile("w", suffix=DATAFILE_SUFFIX) as file:
         file.write(response.text)
         return LAMDA.from_datafile(file.name)
 
 
-def get_level(lamda: LAMDA, level: LevelLike) -> int:
-    """Parse a level-like object and return the corresponding ID."""
-    if not isinstance(level, (int, str)):
-        raise TypeError(f"Level must be {LevelLike}.")
+def get_level(query: LevelLike, lamda: LAMDA) -> int:
+    """Return a level ID from a query."""
+    if not isinstance(query, (int, str)):
+        raise TypeError(f"Query must be {LevelLike}.")
 
-    if isinstance(level, int):
-        return level
+    if isinstance(query, int):
+        return query
 
-    level = level.strip()
-    frame = lamda.levels.to_pandas().set_index("J")
+    level = query.strip()
+    frame = lamda.levels.to_pandas(False).set_index(LEVEL_NAME_ID)
     return frame[LEVEL_ID].loc[level]
 
 
-def get_transition(lamda: LAMDA, transition: TransitionLike) -> int:
-    """Parse a transition-like object and return the corresponding ID."""
-    if not isinstance(transition, (int, str, tuple)):
-        raise TypeError(f"Transition must be {TransitionLike}.")
+def get_transition(query: TransitionLike, lamda: LAMDA) -> int:
+    """Return a transition ID from a query."""
+    if not isinstance(query, (int, str, tuple)):
+        raise TypeError(f"Query must be {TransitionLike}.")
 
-    if isinstance(transition, int):
-        return transition
+    if isinstance(query, int):
+        return query
 
-    if isinstance(transition, str):
-        transition = tuple(transition.split(TRANSITION_SEP))
+    if isinstance(query, str):
+        query = tuple(query.split(TRANSITION_SEP))
 
-    upper = get_level(lamda, transition[0])
-    lower = get_level(lamda, transition[1])
-    frame = lamda.transitions.to_pandas().set_index(["Upper", "Lower"])
+    upper = get_level(query[0], lamda)
+    lower = get_level(query[1], lamda)
+    frame = lamda.transitions.to_pandas(False).set_index(UPPER_LOWER_ID)
     return frame[TRANSITION_ID].loc[(upper, lower)]
