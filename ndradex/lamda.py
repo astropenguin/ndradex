@@ -152,30 +152,33 @@ class TableSlicer:
         return self.table.loc[index]
 
 
-def get_lamda(query: str, *, cache: bool = True, timeout: Timeout = None) -> LAMDA:
+def get_lamda(query: PathLike, *, cache: bool = True, timeout: Timeout = None) -> LAMDA:
     """Create a LAMDA object from a query.
 
     Args:
-        query: Query string for a datafile. Either of the following:
-            (1) name of the datafile (e.g. `"co"` or `"co.dat"`),
-            (2) path of the datafile (e.g. `"/path/to/file.dat"`),
-            or (3) URL of the datafile (e.g. `"https://example.com/co.dat"`).
-        cache: Whether to cache the query result. Defaults to `True`.
-        timeout: Timeout length in seconds. Defaults to `None` (no timeout).
+        query: Query for a datafile. Either of the following:
+            (1) name of the datafile (e.g. ``"co"`` or ``"co.dat"``),
+            (2) path of the datafile (e.g. ``"/path/to/co.dat"``),
+            or (3) URL of the datafile (e.g. ``"https://example.com/co.dat"``).
+        cache: Whether to cache the query result. Defaults to ``True``.
+        timeout: Timeout length in seconds. Defaults to ``None`` (no timeout).
 
     Returns:
         LAMDA object created from the query.
 
     """
-    query = LAMDA_ALIASES.get(query, query)
+    if isinstance(query, Path):
+        query_ = str(query)
+    else:
+        query_ = LAMDA_ALIASES.get(query, query)
 
-    if URL_REGEX.match(query):
-        return get_lamda_by_url(query, cache=cache, timeout=timeout)
+    if URL_REGEX.match(query_):
+        return get_lamda_by_url(query_, cache=cache, timeout=timeout)
 
     try:
-        return get_lamda_by_path(query)
+        return get_lamda_by_path(query_)
     except FileNotFoundError:
-        return get_lamda_by_name(query, cache=cache, timeout=timeout)
+        return get_lamda_by_name(query_, cache=cache, timeout=timeout)
 
 
 def get_lamda_by_path(query: str) -> LAMDA:

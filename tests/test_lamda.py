@@ -1,4 +1,5 @@
 # standard library
+from pathlib import Path
 from typing import Any
 
 
@@ -61,6 +62,7 @@ def test_get_lamda_by_name(name: str) -> None:
 def test_get_lamda_by_path(name: str) -> None:
     with get_lamda(name).to_tempfile() as file:
         assert get_lamda(file.name)
+        assert get_lamda(Path(file.name))
 
 
 @mark.parametrize("name, query, expected", levels)
