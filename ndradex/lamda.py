@@ -6,11 +6,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from re import compile
 from tempfile import NamedTemporaryFile
-from typing import Any, Callable, Dict, IO, Optional, List, Tuple, Union, overload
+from typing import Any, Callable, Dict, IO, Optional, List, Tuple, Union
 
 
 # dependencies
-from astropy.table import Row, Table
+from astropy.table import Table, vstack
 from astroquery.lamda import Lamda, parse_lamda_datafile, write_lamda_datafile
 from requests_cache import CachedSession
 from typing_extensions import Self
@@ -120,20 +120,8 @@ class TableSlicer:
     lamda: LAMDA = field(repr=False)
     """LAMDA object for getting table IDs."""
 
-    @overload
-    def __getitem__(self, query: slice) -> Table:
-        ...
-
-    @overload
-    def __getitem__(self, query: List[Any]) -> Table:
-        ...
-
-    @overload
-    def __getitem__(self, query: Any) -> Row:
-        ...
-
-    def __getitem__(self, query: Any) -> Any:
-        """Slice the table by a query."""
+    def index(self, query: Any) -> Union[slice, List[int], int]:
+        """Convert a query to an index for a TableLoc object."""
         if isinstance(query, slice):
             if (start := query.start) is not None:
                 start = self.getid(start, self.lamda)
@@ -141,15 +129,15 @@ class TableSlicer:
             if (stop := query.stop) is not None:
                 stop = self.getid(stop, self.lamda)
 
-            index = slice(start, stop, query.step)
-            return Table(self.table.loc[index])
+            return slice(start, stop, query.step)
+        elif isinstance(query, list):
+            return [self.getid(q, self.lamda) for q in query]
+        else:
+            return self.getid(query, self.lamda)
 
-        if isinstance(query, list):
-            index = [self.getid(q, self.lamda) for q in query]
-            return Table(self.table.loc[index])
-
-        index = self.getid(query, self.lamda)
-        return self.table.loc[index]
+    def __getitem__(self, query: Any) -> Table:
+        """Slice the table by a query."""
+        return Table(self.table.loc[self.index(query)])
 
 
 def get_lamda(query: PathLike, *, cache: bool = True, timeout: Timeout = None) -> LAMDA:
