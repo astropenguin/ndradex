@@ -186,10 +186,9 @@ def get_transition_id(query: TransitionLike, lamda: LAMDA) -> int:
     if isinstance(query, str):
         query = tuple(query.split(TRANSITION_SEP))
 
-    upper = get_level_id(query[0], lamda)
-    lower = get_level_id(query[1], lamda)
+    uplow = tuple(get_level_id(level, lamda) for level in query)
     frame = lamda.transitions.to_pandas(False).set_index(UPLOW_COLUMNS)
-    return int(frame[TRANSITION_COLUMN].loc[(upper, lower)])
+    return int(frame[TRANSITION_COLUMN].loc[uplow])
 
 
 @dataclass
