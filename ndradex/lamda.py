@@ -2,14 +2,27 @@ __all__ = ["LAMDA", "get_lamda"]
 
 
 # standard library
-from dataclasses import dataclass, field
+from contextlib import contextmanager
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from re import compile
 from tempfile import NamedTemporaryFile
-from typing import Any, Callable, ClassVar, Dict, IO, Optional, List, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    ClassVar,
+    Dict,
+    IO,
+    Generator,
+    Optional,
+    List,
+    Tuple,
+    Union,
+)
 
 
 # dependencies
+import numpy as np
 from astropy.table import Table
 from astroquery.lamda import Lamda, parse_lamda_datafile, write_lamda_datafile
 from requests_cache import CachedSession
@@ -98,13 +111,14 @@ class LAMDA:
         self.to_datafile(file.name)
         return file
 
-    def __post_init__(self) -> None:
-        """Set default indexes to the tables."""
-        self.levels.add_index(LEVEL_COLUMN, unique=True)
-        self.transitions.add_index(TRANSITION_COLUMN, unique=True)
-
-        for table in self.colliders.values():
-            table.add_index(TRANSITION_COLUMN, unique=True)
+    def to_bottom(self, transitions: List[TransitionLike]) -> Self:
+        """Move transitions to the bottom of the transition table."""
+        ids_all = self.transitions[TRANSITION_COLUMN]
+        ids_sel = self.transitions_loc[transitions][TRANSITION_COLUMN]
+        ids_mask = np.isin(ids_all, ids_sel)  # type: ignore
+        ids_diff = np.delete(ids_all, ids_mask)  # type: ignore
+        ids_new = np.append(ids_diff, ids_sel).tolist()  # type: ignore
+        return replace(self, transitions=self.transitions_loc[ids_new])
 
 
 def get_lamda(query: PathLike, *, cache: bool = True, timeout: Timeout = None) -> LAMDA:
@@ -191,6 +205,18 @@ def get_transition_id(query: TransitionLike, lamda: LAMDA) -> int:
     return int(frame[TRANSITION_COLUMN].loc[uplow])
 
 
+@contextmanager
+def set_indices(lamda: LAMDA) -> Generator[None, Any, None]:
+    """Temporarily Set indices to tables in a LAMDA object."""
+    try:
+        lamda.levels.add_index(LEVEL_COLUMN)
+        lamda.transitions.add_index(TRANSITION_COLUMN)
+        yield None
+    finally:
+        lamda.levels.remove_indices(LEVEL_COLUMN)
+        lamda.transitions.remove_indices(TRANSITION_COLUMN)
+
+
 @dataclass
 class TableLoc:
     """Custom TableLoc for LAMDA tables."""
@@ -228,4 +254,5 @@ class TableLoc:
 
     def __getitem__(self, query: Any) -> Table:
         """Slice the table by a query."""
-        return Table(self.table.loc[self.index(query)])
+        with set_indices(self.lamda):
+            return Table(self.table.loc[self.index(query)])
