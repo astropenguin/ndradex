@@ -114,7 +114,7 @@ def get_lamda(query: PathLike, *, cache: bool = True, timeout: Timeout = None) -
         query: Query for a datafile. Either of the following:
             (1) name of the datafile (e.g. ``"co"`` or ``"co.dat"``),
             (2) path of the datafile (e.g. ``"/path/to/co.dat"``),
-            or (3) URL of the datafile (e.g. ``"https://example.com/co.dat"``).
+            (3) URL of the datafile (e.g. ``"https://example.com/co.dat"``).
         cache: Whether to cache the query result. Defaults to ``True``.
         timeout: Timeout length in seconds. Defaults to ``None`` (no timeout).
 
