@@ -6,11 +6,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from re import compile
 from tempfile import NamedTemporaryFile
-from typing import Any, Callable, Dict, IO, Optional, List, Tuple, Union
+from typing import Any, Callable, ClassVar, Dict, IO, Optional, List, Tuple, Union
 
 
 # dependencies
-from astropy.table import Table, vstack
+from astropy.table import Table
 from astroquery.lamda import Lamda, parse_lamda_datafile, write_lamda_datafile
 from requests_cache import CachedSession
 from typing_extensions import Self
@@ -53,21 +53,21 @@ class LAMDA:
     """Tables of the collision partners."""
 
     @property
-    def levels_(self) -> "TableSlicer":
-        """Slicer of the levels table."""
-        return TableSlicer(self.levels, get_level_id, self)
+    def levels_loc(self) -> "TableLoc":
+        """Custom TableLoc object for the levels."""
+        return TableLoc(self.levels, self)
 
     @property
-    def transitions_(self) -> "TableSlicer":
-        """Slicer of the transitions table."""
-        return TableSlicer(self.transitions, get_transition_id, self)
+    def transitions_loc(self) -> "TableLoc":
+        """Custom TableLoc object for the transitions."""
+        return TableLoc(self.transitions, self)
 
     @property
-    def colliders_(self) -> Dict[str, "TableSlicer"]:
-        """Slicer of the collision partner tables."""
+    def colliders_loc(self) -> Dict[str, "TableLoc"]:
+        """Custom TableLoc objects for the collision partners."""
         return {
-            name: TableSlicer(table, get_transition_id, self)
-            for name, table in self.colliders.items()
+            collider: TableLoc(table, self)
+            for collider, table in self.colliders.items()
         }
 
     @classmethod
@@ -105,39 +105,6 @@ class LAMDA:
 
         for table in self.colliders.values():
             table.add_index(TRANSITION_COLUMN, unique=True)
-
-
-@dataclass
-class TableSlicer:
-    """Slicer for Astropy tables."""
-
-    table: Table
-    """Table to be sliced."""
-
-    getid: Callable[[Any, LAMDA], int] = field(repr=False)
-    """Function for getting table IDs."""
-
-    lamda: LAMDA = field(repr=False)
-    """LAMDA object for getting table IDs."""
-
-    def index(self, query: Any) -> Union[slice, List[int], int]:
-        """Convert a query to an index for a TableLoc object."""
-        if isinstance(query, slice):
-            if (start := query.start) is not None:
-                start = self.getid(start, self.lamda)
-
-            if (stop := query.stop) is not None:
-                stop = self.getid(stop, self.lamda)
-
-            return slice(start, stop, query.step)
-        elif isinstance(query, list):
-            return [self.getid(q, self.lamda) for q in query]
-        else:
-            return self.getid(query, self.lamda)
-
-    def __getitem__(self, query: Any) -> Table:
-        """Slice the table by a query."""
-        return Table(self.table.loc[self.index(query)])
 
 
 def get_lamda(query: PathLike, *, cache: bool = True, timeout: Timeout = None) -> LAMDA:
@@ -223,3 +190,43 @@ def get_transition_id(query: TransitionLike, lamda: LAMDA) -> int:
     lower = get_level_id(query[1], lamda)
     frame = lamda.transitions.to_pandas(False).set_index(UPLOW_COLUMNS)
     return int(frame[TRANSITION_COLUMN].loc[(upper, lower)])
+
+
+@dataclass
+class TableLoc:
+    """Custom TableLoc for LAMDA tables."""
+
+    table: Table
+    """Table to be sliced."""
+
+    lamda: LAMDA = field(repr=False)
+    """LAMDA object for getting table IDs."""
+
+    get_ids: ClassVar[Dict[str, Callable[[Any, LAMDA], int]]]
+    """Functions for getting an ID from a query."""
+
+    get_ids = {
+        LEVEL_COLUMN: get_level_id,
+        TRANSITION_COLUMN: get_transition_id,
+    }
+
+    def index(self, query: Any) -> Union[slice, List[int], int]:
+        """Convert a query to an index for a TableLoc object."""
+        get_id = self.get_ids[self.table.colnames[0]]
+
+        if isinstance(query, slice):
+            if (start := query.start) is not None:
+                start = get_id(start, self.lamda)
+
+            if (stop := query.stop) is not None:
+                stop = get_id(stop, self.lamda)
+
+            return slice(start, stop, query.step)
+        elif isinstance(query, list):
+            return [get_id(q, self.lamda) for q in query]
+        else:
+            return get_id(query, self.lamda)
+
+    def __getitem__(self, query: Any) -> Table:
+        """Slice the table by a query."""
+        return Table(self.table.loc[self.index(query)])
