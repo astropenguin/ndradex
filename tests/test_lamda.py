@@ -68,10 +68,10 @@ def test_get_lamda_by_path(name: str) -> None:
 @mark.parametrize("name, query, expected", levels)
 def test_levels(name: str, query: Any, expected: Any) -> None:
     lamda = get_lamda(name)
-    assert (lamda.levels_[query][LEVEL_COLUMN] == expected).all()
+    assert (lamda.levels_loc[query][LEVEL_COLUMN] == expected).all()
 
 
 @mark.parametrize("name, query, expected", transitions)
 def test_transitions(name: str, query: Any, expected: Any) -> None:
     lamda = get_lamda(name)
-    assert (lamda.transitions_[query][TRANSITION_COLUMN] == expected).all()
+    assert (lamda.transitions_loc[query][TRANSITION_COLUMN] == expected).all()
