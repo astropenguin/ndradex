@@ -4,6 +4,7 @@ __all__ = ["run"]
 # standard library
 from contextlib import contextmanager
 from logging import getLogger
+from os import devnull, getenv
 from pathlib import Path
 from subprocess import run as sprun
 from subprocess import PIPE, CalledProcessError, TimeoutExpired
@@ -21,6 +22,7 @@ Timeout = Optional[float]
 
 
 # constants
+FC = getenv("FC", "gfortran")
 N_COLUMNS = 11
 
 
@@ -106,8 +108,9 @@ def build(force: bool = False) -> None:
         args=[
             "make",
             "build",
-            "RADEX_LOGFILE=/dev/null",
-            "RADEX_MAXITER=999999",
+            f"FC={FC}",
+            f"RADEX_LOGFILE={devnull}",
+            "RADEX_MAXITER=1000000",
         ],
         cwd=NDRADEX / "bin",
         stdout=PIPE,
