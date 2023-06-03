@@ -22,6 +22,7 @@ tomlkit = "^0.11"
 tqdm = "^4.60"
 typing-extensions = "^4.0"
 xarray = "^2022.1"
+xarray-dataclasses = "^1.5"
 
 [tool.poetry.dev-dependencies]
 black = "^23.3"
