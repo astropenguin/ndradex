@@ -3,6 +3,7 @@ __all__ = ["run"]
 
 # standard library
 from concurrent.futures import ProcessPoolExecutor
+from csv import writer as csv_writer
 from enum import Enum, auto
 from itertools import product, repeat
 from pathlib import Path
@@ -25,8 +26,8 @@ from .consts import (
     N_HP,
     N_MOL,
     N_OH2,
-    N_PARALLEL,
     N_PH2,
+    N_PROCS,
     PROGRESS,
     RADEX_BIN,
     SQUEEZE,
@@ -88,7 +89,7 @@ def run(
     squeeze=SQUEEZE,
     progress=PROGRESS,
     timeout=TIMEOUT,
-    n_procs=N_PARALLEL,
+    n_procs=N_PROCS,
     work_dir=None,
 ):
     """Run grid RADEX calculation and get results as xarray.Dataset.
@@ -217,6 +218,7 @@ def run(
             iterables = [
                 generate_radex_paths(lamda, empty),
                 generate_inputs(lamda, empty),
+                repeat(1),
                 repeat(timeout),
             ]
 
@@ -266,12 +268,14 @@ def execute(dataset, *iterables, dir=".", progress=True, n_procs=None):
          ProcessPoolExecutor(n_procs) as executor, \
          outfile.open("w", buffering=1) as f:
     # fmt: on
+        writer = csv_writer(f)
+
         for output in executor.map(run_radex, *iterables):
-            f.write(",".join(output) + "\n")
+            writer.writerows(output)
             bar.update(1)
 
     names = [var.name for var in Vars]
-    df = pd.read_csv(outfile, header=None, names=names)
+    df = pd.read_csv(outfile, header=None, usecols=range(1, 11), names=names)
 
     for name in names:
         da = dataset[name]

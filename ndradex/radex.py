@@ -2,11 +2,12 @@ __all__ = ["run"]
 
 
 # standard library
+from contextlib import contextmanager
 from logging import getLogger
 from pathlib import Path
-from subprocess import PIPE, run as sprun
-from subprocess import CalledProcessError, TimeoutExpired
-from typing import List, Optional, Sequence, Union
+from subprocess import run as sprun
+from subprocess import PIPE, CalledProcessError, TimeoutExpired
+from typing import Iterator, List, Optional, Sequence, Tuple, Union
 
 
 # dependencies
@@ -14,11 +15,13 @@ from .consts import NDRADEX, RADEX_BIN, RADEX_VERSION
 
 
 # type hints
+Output = List[Tuple[str, ...]]
 PathLike = Union[Path, str]
+Timeout = Optional[float]
 
 
 # constants
-N_OUTPUT_VALUES = 10
+N_COLUMNS = 11
 
 
 # module logger
@@ -28,62 +31,61 @@ logger = getLogger(__name__)
 def run(
     radex: PathLike,
     input: Sequence[str],
-    cleanup: bool = True,
-    timeout: Optional[float] = None,
-) -> List[str]:
-    """Run RADEX and return the output as a list of strings.
+    tail: int = 1,
+    timeout: Timeout = None,
+) -> Output:
+    """Run RADEX and return an output object.
 
-    Note that the function only reads the last line of a RADEX output.
-    This means that the function will only return the values
-    of the highest-frequency transition specified in the RADEX input.
+    Note that this function only reads the last N=``tail`` line(s)
+    in a RADEX outfile: This means that it only returns the results
+    of the last N transitions written in a RADEX datafile.
 
     Args:
         radex: Path of the RADEX binary to be run.
-        input: Input strings for RADEX. See the examples below.
-        cleanup: If True, the RADEX output file will be deleted.
+        input: Input strings for the RADEX binary.
+        tail: Number of lines in a RADEX outfile to be read.
         timeout: Timeout of the run in units of seconds.
-            Default is None (unlimited run time is allowed).
+            Defaults to ``None`` (unlimited run time).
 
     Returns:
-        RADEX output as a list of strings.
+        RADEX output object (list of list of strings).
 
     Examples:
-        To get output of CO(1-0) @ T_kin = 100 K, n_H2 = 1e3 cm^-3,
-        N_CO = 1e15 cm^-2, T_bg = 2.73 K, and dv = 1.0 km s^-1::
+        To get output of CO(1-0), CO(2-1), and CO(3-2)
+        at T_kin = 100 K, n_H2 = 1e3 cm^-3, N_CO = 1e15 cm^-2,
+        T_bg = 2.73 K, and dv = 1.0 km s^-1::
 
             input = [
-                "co.dat", "radex.out", "110 120", "100",
+                "co.dat", "radex.out", "100 1000", "100",
                 "1", "H2", "1e3", "2.73", "1e15", "1.0", "0",
             ]
-            output = run(input, "/path/to/radex")
+            output = run("/path/to/radex", input, tail=3)
 
     """
-    try:
-        sprun(
-            str(radex),
-            input="\n".join(input),
-            timeout=timeout,
-            stdout=PIPE,
-            stderr=PIPE,
-            check=True,
-            text=True,
-        )
-        return finalize(input[1], cleanup)
-    except (IndexError, TypeError):
-        logger.warning("RADEX did not run due to invalid input")
-        return ["NaN"] * N_OUTPUT_VALUES
-    except FileNotFoundError:
-        logger.warning("RADEX path or moldata does not exist")
-        return ["NaN"] * N_OUTPUT_VALUES
-    except CalledProcessError:
-        logger.warning("RADEX failed due to invalid input")
-        return ["NaN"] * N_OUTPUT_VALUES
-    except TimeoutExpired:
-        logger.warning("RADEX interrupted due to timeout")
-        return ["NaN"] * N_OUTPUT_VALUES
-    except RuntimeError:
-        logger.warning("RADEX version is not valid")
-        return ["NaN"] * N_OUTPUT_VALUES
+    with cleanup(input[1]):
+        try:
+            sprun(
+                str(radex),
+                input="\n".join(input),
+                timeout=timeout,
+                stdout=PIPE,
+                stderr=PIPE,
+                check=True,
+                text=True,
+            )
+            return parse_file(input[1], tail=tail)
+        except CalledProcessError as error:
+            logger.warning(f"RADEX failed to run: {error.stderr}")
+            return parse_error(error, tail=tail)
+        except (
+            FileNotFoundError,
+            IndexError,
+            RuntimeError,
+            TimeoutExpired,
+            TypeError,
+        ) as error:
+            logger.warning(f"RADEX failed to run: {error}")
+            return parse_error(error, tail=tail)
 
 
 def build(force: bool = False) -> None:
@@ -114,16 +116,32 @@ def build(force: bool = False) -> None:
     )
 
 
-def finalize(output: PathLike, cleanup: bool) -> List[str]:
-    """Read a RADEX output file and return the final output."""
+@contextmanager
+def cleanup(*files: PathLike) -> Iterator[None]:
+    """Remove files when a context is finished."""
     try:
-        with open(output) as f:
-            lines = f.readlines()
-
-        if RADEX_VERSION not in lines[0]:
-            raise RuntimeError("RADEX version is not valid")
-
-        return lines[-1].split()[-N_OUTPUT_VALUES:]
+        yield None
     finally:
-        if cleanup:
-            Path(output).unlink(missing_ok=True)
+        for file in files:
+            Path(file).expanduser().unlink(missing_ok=True)
+
+
+def parse_error(error: Exception, tail: int) -> Output:
+    """Parse a Python error and return an output object."""
+    return [("nan",) * N_COLUMNS] * tail
+
+
+def parse_file(file: PathLike, tail: int) -> Output:
+    """Parse a RADEX output file and return an output object."""
+    with open(file) as f:
+        lines = f.readlines()
+
+    if RADEX_VERSION not in lines[0]:
+        raise RuntimeError("RADEX version is not valid")
+
+    output: Output = []
+
+    for line in lines[-tail:]:
+        output.append(tuple(line.rsplit(None, N_COLUMNS - 1)))
+
+    return output

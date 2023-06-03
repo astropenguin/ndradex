@@ -98,8 +98,8 @@ N_H2 = getval(NDRADEX_CONFIG, "defaults.n_H2", 1e3)
 N_MOL = getval(NDRADEX_CONFIG, "defaults.N_mol", 1e15)
 """Default value for the ``N_mol`` argument."""
 
-N_PARALLEL = getval(NDRADEX_CONFIG, "defaults.n_parallel", 2)
-"""Default value for the ``n_parallel`` argument."""
+N_PROCS = getval(NDRADEX_CONFIG, "defaults.n_procs", 2)
+"""Default value for the ``n_procs`` argument."""
 
 PROGRESS = getval(NDRADEX_CONFIG, "defaults.progress", True)
 """Default value for the ``progress`` argument."""
