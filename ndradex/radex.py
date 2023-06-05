@@ -39,6 +39,59 @@ RADEX_MINITER = 10
 logger = getLogger(__name__)
 
 
+def build(
+    *,
+    force: bool = False,
+    logfile: PathLike = RADEX_LOGFILE,
+    miniter: int = RADEX_MINITER,
+    maxiter: int = RADEX_MAXITER,
+    fc: PathLike = FC,
+) -> None:
+    """Build the builtin RADEX binaries.
+
+    This function builds them only when ``RADEX_BIN`` is
+    set to the package's bin (``/path/to/ndradex/bin``):
+    Otherwise, no build is run even if ``force=True``.
+
+    Args:
+        force: Whether to forcibly rebuild the binaries.
+        logfile: Path of the RADEX log file.
+        miniter: Minimum number of iterations.
+        maxiter: Maximum number of iterations.
+        fc: Path of the Fortran compiler.
+
+    Returns:
+        This function returns nothing.
+
+    """
+    if not RADEX_BIN == NDRADEX_BIN:
+        return None
+
+    if force:
+        sprun(
+            args=["make", "clean"],
+            cwd=NDRADEX / "bin",
+            stdout=PIPE,
+            stderr=PIPE,
+            check=True,
+        )
+
+    sprun(
+        args=[
+            "make",
+            "build",
+            f"FC={fc}",
+            f"RADEX_LOGFILE={logfile}",
+            f"RADEX_MINITER={miniter}",
+            f"RADEX_MAXITER={maxiter}",
+        ],
+        cwd=NDRADEX_BIN,
+        stdout=PIPE,
+        stderr=PIPE,
+        check=True,
+    )
+
+
 def run(
     radex: PathLike,
     input: Input,
@@ -131,59 +184,6 @@ def runmap(
 
     with ProcessPoolExecutor(parallel) as executor:
         yield from executor.map(run_, radexes, numbered(inputs))
-
-
-def build(
-    *,
-    force: bool = False,
-    logfile: str = RADEX_LOGFILE,
-    miniter: int = RADEX_MINITER,
-    maxiter: int = RADEX_MAXITER,
-    fc: PathLike = FC,
-) -> None:
-    """Build the builtin RADEX binaries.
-
-    This function builds them only when ``RADEX_BIN`` is
-    set to the package's bin (``/path/to/ndradex/bin``):
-    Otherwise, no build is run even if ``force=True``.
-
-    Args:
-        force: Whether to forcibly rebuild the binaries.
-        logfile: Path of the RADEX log file.
-        miniter: Minimum number of iterations.
-        maxiter: Maximum number of iterations.
-        fc: Path of the Fortran compiler.
-
-    Returns:
-        This function returns nothing.
-
-    """
-    if not RADEX_BIN == NDRADEX_BIN:
-        return None
-
-    if force:
-        sprun(
-            args=["make", "clean"],
-            cwd=NDRADEX / "bin",
-            stdout=PIPE,
-            stderr=PIPE,
-            check=True,
-        )
-
-    sprun(
-        args=[
-            "make",
-            "build",
-            f"FC={fc}",
-            f"RADEX_LOGFILE={logfile}",
-            f"RADEX_MINITER={miniter}",
-            f"RADEX_MAXITER={maxiter}",
-        ],
-        cwd=NDRADEX_BIN,
-        stdout=PIPE,
-        stderr=PIPE,
-        check=True,
-    )
 
 
 @contextmanager
