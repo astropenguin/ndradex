@@ -1,4 +1,4 @@
-__all__ = ["build", "maprun", "run"]
+__all__ = ["build", "run", "runmap"]
 
 
 # standard library
@@ -104,7 +104,7 @@ def run(
             return parse_error(error, tail=tail)
 
 
-def maprun(
+def runmap(
     radexes: Iterable[PathLike],
     inputs: Iterable[Input],
     # *,
