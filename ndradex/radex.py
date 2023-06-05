@@ -130,7 +130,7 @@ def maprun(
     run_ = partial(run, tail=tail, timeout=timeout)
 
     with ProcessPoolExecutor(parallel) as executor:
-        yield from executor.map(run_, radexes, numbering(inputs))
+        yield from executor.map(run_, radexes, numbered(inputs))
 
 
 def build(
@@ -196,7 +196,7 @@ def cleanup(*files: PathLike) -> Iterator[None]:
             Path(file).expanduser().unlink(missing_ok=True)
 
 
-def numbering(inputs: Iterable[Input]) -> Iterator[Input]:
+def numbered(inputs: Iterable[Input]) -> Iterator[Input]:
     """Add serial numbers to the names of RADEX output files."""
     for number, input in zip(count(), inputs):
         yield (input[0], f"{input[1]}.{number}", *input[2:])
