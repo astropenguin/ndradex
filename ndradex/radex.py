@@ -48,14 +48,18 @@ def run(
 ) -> Output:
     """Run RADEX and return an output object.
 
-    Note that this function only reads the last N=``tail`` line(s)
-    in a RADEX outfile: This means that it only returns the results
+    If RADEX fails to run due to an invalid input, timeout, etc,
+    this function does not raise an exception but returns
+    an output object filled with ``"nan"``.
+
+    Note that this function only reads the last N (= ``tail``) line(s)
+    in a RADEX output file: This means that it only returns the results
     of the last N transitions written in a RADEX datafile.
 
     Args:
         radex: Path of the RADEX binary to be run.
         input: Input to be passed to the RADEX binary.
-        tail: Number of lines in a RADEX outfile to be read.
+        tail: Number of lines in a RADEX output file to be read.
         timeout: Timeout of the run in units of seconds.
             Defaults to ``None`` (unlimited run time).
 
@@ -64,11 +68,11 @@ def run(
 
     Examples:
         To get output of CO(1-0), CO(2-1), and CO(3-2)
-        at T_kin = 100 K, n_H2 = 1e3 cm^-3, N_CO = 1e15 cm^-2,
-        T_bg = 2.73 K, and dv = 1.0 km s^-1::
+        at T_kin = 100 K, T_bg = 2.73 K, N = 1e15 cm^-2,
+        n_H2 = 1e3 cm^-3, and dv = 1.0 km s^-1::
 
             input = [
-                "co.dat", "radex.out", "100 1000", "100",
+                "co.dat", "radex.out", "100 400", "100",
                 "1", "H2", "1e3", "2.73", "1e15", "1.0", "0",
             ]
             output = run("/path/to/radex", input, tail=3)
