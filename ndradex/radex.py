@@ -27,8 +27,9 @@ Timeout = Optional[float]
 
 # constants
 FC = getenv("FC", "gfortran")
-N_COLUMNS = 11
+NAN = str(float("nan"))
 NDRADEX_BIN = NDRADEX / "bin"
+RADEX_COLUMNS = 11
 RADEX_LOGFILE = devnull
 RADEX_MAXITER = 1_000_000
 RADEX_MINITER = 10
@@ -199,7 +200,7 @@ def numbering(inputs: Iterable[Input]) -> Iterator[Input]:
 
 def parse_error(error: Exception, tail: int) -> Output:
     """Parse a Python error and return an output object."""
-    return [("nan",) * N_COLUMNS] * tail
+    return [(NAN,) * RADEX_COLUMNS] * tail
 
 
 def parse_file(file: PathLike, tail: int) -> Output:
@@ -213,6 +214,6 @@ def parse_file(file: PathLike, tail: int) -> Output:
     output: Output = []
 
     for line in lines[-tail:]:
-        output.append(tuple(line.rsplit(None, N_COLUMNS - 1)))
+        output.append(tuple(line.rsplit(None, RADEX_COLUMNS - 1)))
 
     return output
