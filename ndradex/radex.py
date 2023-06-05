@@ -5,11 +5,11 @@ __all__ = ["maprun", "run"]
 from concurrent.futures import ProcessPoolExecutor
 from contextlib import contextmanager
 from functools import partial
+from itertools import count
 from logging import getLogger
 from os import devnull, getenv
 from pathlib import Path
-from subprocess import run as sprun
-from subprocess import PIPE, CalledProcessError, TimeoutExpired
+from subprocess import PIPE, CalledProcessError, TimeoutExpired, run as sprun
 from typing import Iterable, Iterator, List, Optional, Sequence, Tuple, Union
 
 
@@ -121,8 +121,7 @@ def maprun(
     run_ = partial(run, tail=tail, timeout=timeout)
 
     with ProcessPoolExecutor(parallel) as executor:
-        for output in executor.map(run_, radexes, inputs):
-            yield output
+        yield from executor.map(run_, radexes, numbering(inputs))
 
 
 def build(force: bool = False) -> None:
@@ -162,6 +161,12 @@ def cleanup(*files: PathLike) -> Iterator[None]:
     finally:
         for file in files:
             Path(file).expanduser().unlink(missing_ok=True)
+
+
+def numbering(inputs: Iterable[Input]) -> Iterator[Input]:
+    """Add serial numbers to the names of RADEX output files."""
+    for number, input in zip(count(), inputs):
+        yield (input[0], f"{input[1]}.{number}", *input[2:])
 
 
 def parse_error(error: Exception, tail: int) -> Output:
