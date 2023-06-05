@@ -1,14 +1,16 @@
-__all__ = ["run"]
+__all__ = ["maprun", "run"]
 
 
 # standard library
+from concurrent.futures import ProcessPoolExecutor
 from contextlib import contextmanager
+from functools import partial
 from logging import getLogger
 from os import devnull, getenv
 from pathlib import Path
 from subprocess import run as sprun
 from subprocess import PIPE, CalledProcessError, TimeoutExpired
-from typing import Iterator, List, Optional, Sequence, Tuple, Union
+from typing import Iterable, Iterator, List, Optional, Sequence, Tuple, Union
 
 
 # dependencies
@@ -16,7 +18,9 @@ from .consts import NDRADEX, RADEX_BIN, RADEX_VERSION
 
 
 # type hints
+Input = Sequence[str]
 Output = List[Tuple[str, ...]]
+Parallel = Optional[int]
 PathLike = Union[Path, str]
 Timeout = Optional[float]
 
@@ -32,7 +36,8 @@ logger = getLogger(__name__)
 
 def run(
     radex: PathLike,
-    input: Sequence[str],
+    input: Input,
+    # *,
     tail: int = 1,
     timeout: Timeout = None,
 ) -> Output:
@@ -44,7 +49,7 @@ def run(
 
     Args:
         radex: Path of the RADEX binary to be run.
-        input: Input strings for the RADEX binary.
+        input: Input to be passed to the RADEX binary.
         tail: Number of lines in a RADEX outfile to be read.
         timeout: Timeout of the run in units of seconds.
             Defaults to ``None`` (unlimited run time).
@@ -88,6 +93,36 @@ def run(
         ) as error:
             logger.warning(f"RADEX failed to run: {error}")
             return parse_error(error, tail=tail)
+
+
+def maprun(
+    radexes: Iterable[PathLike],
+    inputs: Iterable[Input],
+    # *,
+    tail: int = 1,
+    timeout: Timeout = None,
+    parallel: Parallel = None,
+) -> Iterator[Output]:
+    """Run RADEX in parallel and generate output objects.
+
+    Args:
+        radexes: Paths of the RADEX binaries to be run.
+        inputs: Inputs to be passed to the RADEX binaries.
+        tail: Number of lines in a RADEX outfile to be read.
+        timeout: Timeout of the run in units of seconds.
+            Defaults to ``None`` (unlimited run time).
+        parallel: Number of runs in parallel.
+            Defaults to ``None`` (number of processors).
+
+    Yields:
+        RADEX output object (list of list of strings).
+
+    """
+    run_ = partial(run, tail=tail, timeout=timeout)
+
+    with ProcessPoolExecutor(parallel) as executor:
+        for output in executor.map(run_, radexes, inputs):
+            yield output
 
 
 def build(force: bool = False) -> None:
