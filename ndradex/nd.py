@@ -1,50 +1,16 @@
-__all__ = ["RADEX"]
+__all__ = []
 
 
 # standard library
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Literal as L, Tuple
 
 
 # dependencies
 import numpy as np
 from astropy.units import Quantity
-from xarray_dataclasses import AsDataset, Attr, Coordof, Data, Dataof
-
-
-# type hints
-DataDims = Tuple[
-    L["transition"],
-    L["T_kin"],
-    L["T_bg"],
-    L["N"],
-    L["n_H2"],
-    L["n_pH2"],
-    L["n_oH2"],
-    L["n_e"],
-    L["n_H"],
-    L["n_He"],
-    L["n_Hp"],
-    L["dv"],
-    L["radex"],
-]
-
-
-class Dim:
-    """Ensure data for a dim to be 1D."""
-
-    data: Any
-
-    def __post_init__(self) -> None:
-        self.data = np.atleast_1d(self.data)
-
-        if not np.ndim(self.data) == 1:
-            raise ValueError("Data for a dim must be 1D.")
-
-        try:
-            super().__post_init__()  # type: ignore
-        except AttributeError:
-            pass
+from xarray_dataclasses import AsDataset, DataModel
+from xarray_dataclasses import Attr, Coordof, Data, Dataof
 
 
 class Units:
@@ -57,242 +23,226 @@ class Units:
         if isinstance(self.data, Quantity):
             self.data = self.data.to(self.units).value
 
-        try:
-            super().__post_init__()  # type: ignore
-        except AttributeError:
-            pass
-
 
 @dataclass
-class Transition(Dim):
+class Transition:
     data: Data[L["transition"], Any]
     long_name: Attr[str] = "Transition"
 
 
 @dataclass
-class KineticTemperature(Dim, Units):
+class KineticTemperature(Units):
     data: Data[L["T_kin"], float]
     long_name: Attr[str] = "Kinetic temperature"
     units: Attr[str] = "K"
 
 
 @dataclass
-class H2Density(Dim, Units):
+class H2Density(Units):
     data: Data[L["n_H2"], float]
     long_name: Attr[str] = "H2 density"
     units: Attr[str] = "cm^-3"
 
 
 @dataclass
-class ParaH2Density(Dim, Units):
+class ParaH2Density(Units):
     data: Data[L["n_pH2"], float]
     long_name: Attr[str] = "Para-H2 density"
     units: Attr[str] = "cm^-3"
 
 
 @dataclass
-class OrthoH2Density(Dim, Units):
+class OrthoH2Density(Units):
     data: Data[L["n_oH2"], float]
     long_name: Attr[str] = "Ortho-H2 density"
     units: Attr[str] = "cm^-3"
 
 
 @dataclass
-class ElectronDensity(Dim, Units):
+class ElectronDensity(Units):
     data: Data[L["n_e"], float]
     long_name: Attr[str] = "Electron density"
     units: Attr[str] = "cm^-3"
 
 
 @dataclass
-class HydrogenDensity(Dim, Units):
+class HydrogenDensity(Units):
     data: Data[L["n_H"], float]
     long_name: Attr[str] = "Hydrogen density"
     units: Attr[str] = "cm^-3"
 
 
 @dataclass
-class HeliumDensity(Dim, Units):
+class HeliumDensity(Units):
     data: Data[L["n_He"], float]
     long_name: Attr[str] = "Helium density"
     units: Attr[str] = "cm^-3"
 
 
 @dataclass
-class ProtonDensity(Dim, Units):
+class ProtonDensity(Units):
     data: Data[L["n_Hp"], float]
     long_name: Attr[str] = "Proton density"
     units: Attr[str] = "cm^-3"
 
 
 @dataclass
-class BackgroundTemperature(Dim, Units):
+class BackgroundTemperature(Units):
     data: Data[L["T_bg"], float]
     long_name: Attr[str] = "Background temperature"
     units: Attr[str] = "K"
 
 
 @dataclass
-class ColumnDensity(Dim, Units):
+class ColumnDensity(Units):
     data: Data[L["N"], float]
     long_name: Attr[str] = "Column density"
     units: Attr[str] = "cm^-2"
 
 
 @dataclass
-class LineWidth(Dim, Units):
+class LineWidth(Units):
     data: Data[L["dv"], float]
     long_name: Attr[str] = "Line width"
     units: Attr[str] = "km s^-1"
 
 
 @dataclass
-class RadexBinary(Dim):
+class RadexBinary:
     data: Data[L["radex"], str]
     long_name: Attr[str] = "RADEX binary"
 
 
+Dims = Tuple[
+    L["transition"],
+    L["T_kin"],
+    L["n_H2"],
+    L["n_pH2"],
+    L["n_oH2"],
+    L["n_e"],
+    L["n_H"],
+    L["n_He"],
+    L["n_Hp"],
+    L["T_bg"],
+    L["N"],
+    L["dv"],
+    L["radex"],
+]
+
+
 @dataclass
 class UpperStateEnergy(Units):
-    data: Data[DataDims, float]
+    data: Data[Dims, float]
     long_name: Attr[str] = "Upper state energy"
     units: Attr[str] = "K"
 
 
 @dataclass
 class Frequency(Units):
-    data: Data[DataDims, float]
+    data: Data[Dims, float]
     long_name: Attr[str] = "Frequency"
     units: Attr[str] = "GHz"
 
 
 @dataclass
 class Wavelength(Units):
-    data: Data[DataDims, float]
+    data: Data[Dims, float]
     long_name: Attr[str] = "Wavelength"
     units: Attr[str] = "um"
 
 
 @dataclass
 class ExcitationTemperature(Units):
-    data: Data[DataDims, float]
+    data: Data[Dims, float]
     long_name: Attr[str] = "Excitation temperature"
     units: Attr[str] = "K"
 
 
 @dataclass
 class OpticalDepth(Units):
-    data: Data[DataDims, float]
+    data: Data[Dims, float]
     long_name: Attr[str] = "Optical depth"
     units: Attr[str] = "dimensionless"
 
 
 @dataclass
 class PeakIntensity(Units):
-    data: Data[DataDims, float]
+    data: Data[Dims, float]
     long_name: Attr[str] = "Peak intensity"
     units: Attr[str] = "K"
 
 
 @dataclass
 class UpperStatePopulation(Units):
-    data: Data[DataDims, float]
+    data: Data[Dims, float]
     long_name: Attr[str] = "Upper state population"
     units: Attr[str] = "dimensionless"
 
 
 @dataclass
 class LowerStatePopulation(Units):
-    data: Data[DataDims, float]
+    data: Data[Dims, float]
     long_name: Attr[str] = "Lower state population"
     units: Attr[str] = "dimensionless"
 
 
 @dataclass
 class IntegratedIntensity(Units):
-    data: Data[DataDims, float]
+    data: Data[Dims, float]
     long_name: Attr[str] = "Integrated intensity"
     units: Attr[str] = "K km s^-1"
 
 
 @dataclass
 class Flux(Units):
-    data: Data[DataDims, float]
+    data: Data[Dims, float]
     long_name: Attr[str] = "Flux"
     units: Attr[str] = "erg s^-1 cm^-2"
 
 
 @dataclass
-class RADEX(AsDataset):
-    """Multidimensional RADEX dataset."""
+class EmptySet(AsDataset):
+    """Specification of an empty dataset."""
+
+    # attributes
+    datafile: Attr[str]
 
     # dimensions
-    transition: Coordof[Transition] = ""
-    """Transition name(s) or ID(s)."""
-
+    transition: Coordof[Transition]
     T_kin: Coordof[KineticTemperature] = 0.0
-    """Kinetic temperature(s) in units of K."""
-
     n_H2: Coordof[H2Density] = 0.0
-    """H2 density(ies) in units of cm^-3."""
-
-    n_pH2: Coordof[ParaH2Density] = 0.0
-    """Para-H2 density(ies) in units of cm^-3."""
-
-    n_oH2: Coordof[OrthoH2Density] = 0.0
-    """Ortho-H2 density(ies) in units of cm^-3."""
-
-    n_e: Coordof[ElectronDensity] = 0.0
-    """Electron density(ies) in units of cm^-3."""
-
-    n_H: Coordof[HydrogenDensity] = 0.0
-    """Hydrogen density(ies) in units of cm^-3."""
-
-    n_He: Coordof[HeliumDensity] = 0.0
-    """Helium density(ies) in units of cm^-3."""
-
-    n_Hp: Coordof[ProtonDensity] = 0.0
-    """Proton density(ies) in units of cm^-3."""
-
+    n_pH2: Coordof[ParaH2Density] = np.nan
+    n_oH2: Coordof[OrthoH2Density] = np.nan
+    n_e: Coordof[ElectronDensity] = np.nan
+    n_H: Coordof[HydrogenDensity] = np.nan
+    n_He: Coordof[HeliumDensity] = np.nan
+    n_Hp: Coordof[ProtonDensity] = np.nan
     T_bg: Coordof[BackgroundTemperature] = 0.0
-    """Background temperature(s) in units of K."""
-
     N: Coordof[ColumnDensity] = 0.0
-    """Column density(ies) in units of cm^-2."""
-
     dv: Coordof[LineWidth] = 0.0
-    """Line width(s) in units of km s^-1."""
-
-    radex: Coordof[RadexBinary] = ""
-    """RADEX binary(ies)."""
+    radex: Coordof[RadexBinary] = "radex"
 
     # data variables
-    E_up: Dataof[UpperStateEnergy] = 0.0
-    """Upper state energy(ies) in units of K."""
+    E_up: Dataof[UpperStateEnergy] = field(init=False)
+    freq: Dataof[Frequency] = field(init=False)
+    wavel: Dataof[Wavelength] = field(init=False)
+    T_ex: Dataof[ExcitationTemperature] = field(init=False)
+    tau: Dataof[OpticalDepth] = field(init=False)
+    T_R: Dataof[PeakIntensity] = field(init=False)
+    pop_up: Dataof[UpperStatePopulation] = field(init=False)
+    pop_low: Dataof[LowerStatePopulation] = field(init=False)
+    I: Dataof[IntegratedIntensity] = field(init=False)
+    F: Dataof[Flux] = field(init=False)
 
-    freq: Dataof[Frequency] = 0.0
-    """Frequency(ies) in units of GHz."""
+    def __post_init__(self) -> None:
+        """Set empty arrays to data variables."""
+        model = DataModel.from_dataclass(self)
+        shape = []
 
-    wavel: Dataof[Wavelength] = 0.0
-    """Wavelength(s) in units of um."""
+        for dim in [str(entry.name) for entry in model.coords]:
+            values = np.atleast_1d(getattr(self, dim))
+            setattr(self, dim, values)
+            shape.append(len(values))
 
-    T_ex: Dataof[ExcitationTemperature] = 0.0
-    """Excitation temperature(s) in units of K."""
-
-    tau: Dataof[OpticalDepth] = 0.0
-    """Optical depth(s)."""
-
-    T_R: Dataof[PeakIntensity] = 0.0
-    """Peak temperature(s) in units of K."""
-
-    pop_up: Dataof[UpperStatePopulation] = 0.0
-    """Upper state population(s)."""
-
-    pop_low: Dataof[LowerStatePopulation] = 0.0
-    """Lower state population(s)."""
-
-    I: Dataof[IntegratedIntensity] = 0.0
-    """Integrated intensity(ies) in units of K km s^-1."""
-
-    F: Dataof[Flux] = 0.0
-    """Flux(es) in units of erg s^-1 cm^-2."""
+        for var in [str(entry.name) for entry in model.data_vars]:
+            setattr(self, var, np.empty(shape))
