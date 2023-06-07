@@ -10,7 +10,7 @@ from logging import getLogger
 from os import devnull, getenv
 from pathlib import Path
 from subprocess import PIPE, CalledProcessError, TimeoutExpired, run as sprun
-from typing import Iterable, Iterator, List, Optional, Sequence, Tuple, Union
+from typing import Any, Iterable, Iterator, List, Optional, Sequence, Tuple, Union
 
 
 # dependencies
@@ -207,6 +207,7 @@ def to_input(
     T_bg: float = 0.0,
     N: float = 0.0,
     dv: float = 0.0,
+    **_: Any,
 ) -> Tuple[str, ...]:
     """Convert parameters to an input for RADEX.
 
