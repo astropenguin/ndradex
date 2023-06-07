@@ -3,7 +3,7 @@ __all__ = []
 
 # standard library
 from dataclasses import dataclass, field
-from typing import Any, Literal as L, Tuple
+from typing import Any, Literal, Tuple
 
 
 # dependencies
@@ -26,107 +26,107 @@ class Units:
 
 @dataclass
 class Transition:
-    data: Data[L["transition"], Any]
+    data: Data[Literal["transition"], Any]
     long_name: Attr[str] = "Transition"
 
 
 @dataclass
 class KineticTemperature(Units):
-    data: Data[L["T_kin"], float]
+    data: Data[Literal["T_kin"], float]
     long_name: Attr[str] = "Kinetic temperature"
     units: Attr[str] = "K"
 
 
 @dataclass
 class H2Density(Units):
-    data: Data[L["n_H2"], float]
+    data: Data[Literal["n_H2"], float]
     long_name: Attr[str] = "H2 density"
     units: Attr[str] = "cm^-3"
 
 
 @dataclass
 class ParaH2Density(Units):
-    data: Data[L["n_pH2"], float]
+    data: Data[Literal["n_pH2"], float]
     long_name: Attr[str] = "Para-H2 density"
     units: Attr[str] = "cm^-3"
 
 
 @dataclass
 class OrthoH2Density(Units):
-    data: Data[L["n_oH2"], float]
+    data: Data[Literal["n_oH2"], float]
     long_name: Attr[str] = "Ortho-H2 density"
     units: Attr[str] = "cm^-3"
 
 
 @dataclass
 class ElectronDensity(Units):
-    data: Data[L["n_e"], float]
+    data: Data[Literal["n_e"], float]
     long_name: Attr[str] = "Electron density"
     units: Attr[str] = "cm^-3"
 
 
 @dataclass
 class HydrogenDensity(Units):
-    data: Data[L["n_H"], float]
+    data: Data[Literal["n_H"], float]
     long_name: Attr[str] = "Hydrogen density"
     units: Attr[str] = "cm^-3"
 
 
 @dataclass
 class HeliumDensity(Units):
-    data: Data[L["n_He"], float]
+    data: Data[Literal["n_He"], float]
     long_name: Attr[str] = "Helium density"
     units: Attr[str] = "cm^-3"
 
 
 @dataclass
 class ProtonDensity(Units):
-    data: Data[L["n_Hp"], float]
+    data: Data[Literal["n_Hp"], float]
     long_name: Attr[str] = "Proton density"
     units: Attr[str] = "cm^-3"
 
 
 @dataclass
 class BackgroundTemperature(Units):
-    data: Data[L["T_bg"], float]
+    data: Data[Literal["T_bg"], float]
     long_name: Attr[str] = "Background temperature"
     units: Attr[str] = "K"
 
 
 @dataclass
 class ColumnDensity(Units):
-    data: Data[L["N"], float]
+    data: Data[Literal["N"], float]
     long_name: Attr[str] = "Column density"
     units: Attr[str] = "cm^-2"
 
 
 @dataclass
 class LineWidth(Units):
-    data: Data[L["dv"], float]
+    data: Data[Literal["dv"], float]
     long_name: Attr[str] = "Line width"
     units: Attr[str] = "km s^-1"
 
 
 @dataclass
 class RadexBinary:
-    data: Data[L["radex"], str]
+    data: Data[Literal["radex"], str]
     long_name: Attr[str] = "RADEX binary"
 
 
 Dims = Tuple[
-    L["transition"],
-    L["T_kin"],
-    L["n_H2"],
-    L["n_pH2"],
-    L["n_oH2"],
-    L["n_e"],
-    L["n_H"],
-    L["n_He"],
-    L["n_Hp"],
-    L["T_bg"],
-    L["N"],
-    L["dv"],
-    L["radex"],
+    Literal["transition"],
+    Literal["T_kin"],
+    Literal["n_H2"],
+    Literal["n_pH2"],
+    Literal["n_oH2"],
+    Literal["n_e"],
+    Literal["n_H"],
+    Literal["n_He"],
+    Literal["n_Hp"],
+    Literal["T_bg"],
+    Literal["N"],
+    Literal["dv"],
+    Literal["radex"],
 ]
 
 
