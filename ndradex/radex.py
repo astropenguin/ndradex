@@ -53,7 +53,7 @@ def build(
     set to the package's bin (``/path/to/ndradex/bin``):
     Otherwise, no build is run even if ``force=True``.
 
-    Args:
+    Keyword Args:
         force: Whether to forcibly rebuild the binaries.
         logfile: Path of the RADEX log file.
         miniter: Minimum number of iterations.
@@ -112,12 +112,14 @@ def run(
     Args:
         radex: Path of the RADEX binary to be run.
         input: Input to be passed to the RADEX binary.
+
+    Keyword Args:
         tail: Number of lines in a RADEX output file to be read.
         timeout: Timeout of the run in units of seconds.
             Defaults to ``None`` (unlimited run time).
 
     Returns:
-        RADEX output object (list of list of strings).
+        RADEX output object (list of tuple of strings).
 
     Examples:
         To get output of CO(1-0), CO(2-1), and CO(3-2)
@@ -170,6 +172,8 @@ def runmap(
     Args:
         radexes: Paths of the RADEX binaries to be run.
         inputs: Inputs to be passed to the RADEX binaries.
+
+    Keyword Args:
         tail: Number of lines in a RADEX outfile to be read.
         timeout: Timeout of the run in units of seconds.
             Defaults to ``None`` (unlimited run time).
