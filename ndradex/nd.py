@@ -3,14 +3,23 @@ __all__ = []
 
 # standard library
 from dataclasses import dataclass, field
-from typing import Any, Literal, Tuple
+from itertools import product
+from pathlib import Path
+from typing import Any, Dict, Iterator, Literal, Tuple, Union
 
 
 # dependencies
 import numpy as np
+import xarray as xr
 from astropy.units import Quantity
 from xarray_dataclasses import AsDataset, DataModel
 from xarray_dataclasses import Attr, Coordof, Data, Dataof
+from .lamda import get_lamda
+from .radex import Input, to_input
+
+
+# type hints
+PathLike = Union[Path, str]
 
 
 class Units:
@@ -205,7 +214,7 @@ class EmptySet(AsDataset):
     """Specification of an empty dataset."""
 
     # attributes
-    datafile: Attr[str]
+    datafile: Attr[PathLike]
 
     # dimensions
     transition: Coordof[Transition]
@@ -246,3 +255,38 @@ class EmptySet(AsDataset):
 
         for var in [str(entry.name) for entry in model.data_vars]:
             setattr(self, var, np.empty(shape))
+
+
+def gen_inputs(dataset: xr.Dataset, outfile: PathLike) -> Iterator[Input]:
+    """Generate inputs to be passed to the RADEX binaries."""
+    trans = dataset.transition.values.tolist()
+    lamda = get_lamda(dataset.datafile)
+    freq = lamda.transitions_loc[trans]["Frequency"]
+    freq_min = min(freq) - 1e-9  # type: ignore
+    freq_max = max(freq) + 1e-9  # type: ignore
+
+    with lamda.to_bottom(trans).to_tempfile() as datafile:
+        for index in walk_indexes(dataset):
+            yield to_input(
+                datafile=datafile.name,
+                outfile=outfile,
+                freq_min=freq_min,
+                freq_max=freq_max,
+                **index,
+            )
+
+
+def gen_radexes(dataset: xr.Dataset) -> Iterator[PathLike]:
+    """Generate paths of the RADEX binaries."""
+    for index in walk_indexes(dataset):
+        yield index["radex"]
+
+
+def walk_indexes(dataset: xr.Dataset) -> Iterator[Dict[str, Any]]:
+    """Generate combinations of indexes' values."""
+    indexes = dict(dataset.indexes)
+    indexes.pop("transition")
+
+    for values in product(*indexes.values()):
+        yield dict(zip(indexes, values))
+

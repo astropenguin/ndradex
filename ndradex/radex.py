@@ -10,7 +10,7 @@ from logging import getLogger
 from os import devnull, getenv
 from pathlib import Path
 from subprocess import PIPE, CalledProcessError, TimeoutExpired, run as sprun
-from typing import Any, Iterable, Iterator, List, Optional, Sequence, Tuple, Union
+from typing import Any, Iterable, Iterator, List, Optional, Tuple, Union
 
 
 # dependencies
@@ -18,7 +18,7 @@ from .consts import NDRADEX, RADEX_BIN, RADEX_VERSION
 
 
 # type hints
-Input = Sequence[str]
+Input = Tuple[str, ...]
 Output = List[Tuple[str, ...]]
 Parallel = Optional[int]
 PathLike = Union[Path, str]
