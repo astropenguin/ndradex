@@ -1,11 +1,11 @@
-__all__ = ["build", "run", "runmap"]
+__all__ = ["build", "run", "runmap", "to_input"]
 
 
 # standard library
 from concurrent.futures import ProcessPoolExecutor
 from contextlib import contextmanager
 from functools import partial
-from itertools import count
+from itertools import chain, count
 from logging import getLogger
 from os import devnull, getenv
 from pathlib import Path
@@ -184,6 +184,74 @@ def runmap(
 
     with ProcessPoolExecutor(parallel) as executor:
         yield from executor.map(run_, radexes, numbered(inputs))
+
+
+def to_input(
+    *,
+    datafile: PathLike,
+    outfile: PathLike,
+    freq_min: float = 0.0,
+    freq_max: float = 0.0,
+    T_kin: float = 0.0,
+    n_H2: float = 0.0,
+    n_pH2: float = 0.0,
+    n_oH2: float = 0.0,
+    n_e: float = 0.0,
+    n_H: float = 0.0,
+    n_He: float = 0.0,
+    n_Hp: float = 0.0,
+    T_bg: float = 0.0,
+    N: float = 0.0,
+    dv: float = 0.0,
+) -> Tuple[str, ...]:
+    """Convert parameters to an input for RADEX.
+
+    Keyword Args:
+        datafile: Path of RADEX datafile.
+        outfile: Path of RADEX output file.
+        freq_min: Minimum frequency (GHz).
+        freq_max: Maximum frequency (GHz).
+        T_kin: Kinetic temperature (K).
+        n_H2: H2 density (cm^-3).
+        n_pH2: Para-H2 density (cm^-3).
+        n_oH2: Ortho-H2 density (cm^-3).
+        n_e: Electron density (cm^-3).
+        n_H: Hydrogen density (cm^-3).
+        n_He: Helium density (cm^-3).
+        n_Hp: Proton density (cm^-3).
+        T_bg: Background temperature (K).
+        N: Column density (cm^-2).
+        dv: Line width (km s^-1).
+
+    Returns:
+        input: Input for ``run`` or ``runmap``.
+
+
+    """
+    n_all = [
+        ("H2", n_H2),
+        ("p-H2", n_pH2),
+        ("o-H2", n_oH2),
+        ("e", n_e),
+        ("H", n_H),
+        ("He", n_He),
+        ("H+", n_Hp),
+    ]
+    n_use = list(filter(lambda n: n[1], n_all))
+
+    input = (
+        datafile,
+        outfile,
+        f"{freq_min} {freq_max}",
+        T_kin,
+        len(n_use),
+        *chain(*n_use),
+        T_bg,
+        N,
+        dv,
+        0,
+    )
+    return tuple(map(str, input))
 
 
 @contextmanager
