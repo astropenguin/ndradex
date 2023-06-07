@@ -1,25 +1,138 @@
-__all__ = []
+__all__ = ["run"]
 
 
 # standard library
+from csv import writer as csv_writer
 from dataclasses import dataclass, field
 from itertools import product
 from pathlib import Path
-from typing import Any, Dict, Iterator, Literal, Tuple, Union
+from tempfile import TemporaryDirectory
+from typing import Any, Dict, Iterator, Literal, Sequence, Tuple, TypeVar, Union
 
 
 # dependencies
 import numpy as np
+import pandas as pd
 import xarray as xr
 from astropy.units import Quantity
-from xarray_dataclasses import AsDataset, DataModel
-from xarray_dataclasses import Attr, Coordof, Data, Dataof
+from tqdm import tqdm
+from xarray_dataclasses import AsDataset, DataModel, Attr, Coordof, Data, Dataof
 from .lamda import get_lamda
-from .radex import Input, to_input
+from .radex import RADEX_COLUMNS, Input, Parallel, Timeout, runmap, to_input
 
 
 # type hints
+T = TypeVar("T")
+Multiple = Union[Sequence[T], T]
 PathLike = Union[Path, str]
+
+
+# constants
+CSV = "radex.csv"
+OUTFILE = "radex.out"
+
+
+def run(
+    datafile: PathLike,
+    transition: Multiple[str],
+    *,
+    T_kin: Multiple[float] = 0.0,
+    n_H2: Multiple[float] = 0.0,
+    n_pH2: Multiple[float] = 0.0,
+    n_oH2: Multiple[float] = 0.0,
+    n_e: Multiple[float] = 0.0,
+    n_H: Multiple[float] = 0.0,
+    n_He: Multiple[float] = 0.0,
+    n_Hp: Multiple[float] = 0.0,
+    T_bg: Multiple[float] = 0.0,
+    N: Multiple[float] = 0.0,
+    dv: Multiple[float] = 0.0,
+    radex: Multiple[PathLike] = "radex-1",
+    # options
+    parallel: Parallel = None,
+    progress: bool = True,
+    squeeze: bool = True,
+    timeout: Timeout = None,
+) -> xr.Dataset:
+    """Run RADEX with multidimensional parameters.
+
+    Args:
+        datafile: Path of RADEX datafile.
+        transition: Name(s) or ID(s) of transition.
+
+    Keyword Args:
+        T_kin: Value(s) of kinetic temperature (K).
+        n_H2: Value(s) of H2 density (cm^-3).
+        n_pH2: Value(s) of para-H2 density (cm^-3).
+            Do not set nonzero value(s) together with ``n_H2``.
+            Defaults to ``0.0`` (not used as a collider).
+        n_oH2: Value(s) of ortho-H2 density (cm^-3).
+            Do not set nonzero value(s) together with ``n_H2``.
+            Defaults to ``0.0`` (not used as a collider).
+        n_e: Value(s) of electron density (cm^-3).
+            Defaults to ``0.0`` (not used as a collider).
+        n_H: Value(s) of hydrogen density (cm^-3).
+            Defaults to ``0.0`` (not used as a collider).
+        n_He: Value(s) of helium density (cm^-3).
+            Defaults to ``0.0`` (not used as a collider).
+        n_Hp: Value(s) of proton density (cm^-3).
+            Defaults to ``0.0`` (not used as a collider).
+        T_bg: Value(s) of background temperature (K).
+        N: Value(s) of column density (cm^-2).
+        dv: Value(s) of line width (km s^-1).
+        radex: Path(s) of RADEX binaries.
+        parallel: Number of runs in parallel.
+            Defaults to ``None`` (number of processors).
+        progress: Whether to show a progress bar during runs.
+        squeeze: Whether to drop dimensions whose length are 1.
+        timeout: Timeout per run in units of seconds.
+            Defaults to ``None`` (unlimited run time).
+
+    Returns:
+        dataset: Result of multidimensional RADEX runs.
+
+    """
+    ds = EmptySet.new(
+        datafile=datafile,
+        transition=transition,
+        T_kin=T_kin,
+        n_H2=n_H2,
+        n_pH2=n_pH2,
+        n_oH2=n_oH2,
+        n_e=n_e,
+        n_H=n_H,
+        n_He=n_He,
+        n_Hp=n_Hp,
+        T_bg=T_bg,
+        N=N,
+        dv=dv,
+        radex=radex,
+    )
+
+    with (
+        TemporaryDirectory() as dir,
+        open(Path(dir) / CSV, "w", buffering=1) as csv,
+        tqdm(total=ds.I.size, disable=not progress) as bar,
+    ):
+        writer = csv_writer(csv)
+        radexes = gen_radexes(ds)
+        inputs = gen_inputs(ds, Path(dir) / OUTFILE)
+        n_transitions = ds.transition.size
+
+        for output in runmap(
+            radexes=radexes,
+            inputs=inputs,
+            tail=n_transitions,
+            timeout=timeout,
+            parallel=parallel,
+        ):
+            writer.writerows(output)
+            bar.update(n_transitions)
+
+        if squeeze:
+            return update(ds, csv.name).squeeze()
+        else:
+            return update(ds, csv.name)
 
 
 class Units:
@@ -220,12 +333,12 @@ class EmptySet(AsDataset):
     transition: Coordof[Transition]
     T_kin: Coordof[KineticTemperature] = 0.0
     n_H2: Coordof[H2Density] = 0.0
-    n_pH2: Coordof[ParaH2Density] = np.nan
-    n_oH2: Coordof[OrthoH2Density] = np.nan
-    n_e: Coordof[ElectronDensity] = np.nan
-    n_H: Coordof[HydrogenDensity] = np.nan
-    n_He: Coordof[HeliumDensity] = np.nan
-    n_Hp: Coordof[ProtonDensity] = np.nan
+    n_pH2: Coordof[ParaH2Density] = 0.0
+    n_oH2: Coordof[OrthoH2Density] = 0.0
+    n_e: Coordof[ElectronDensity] = 0.0
+    n_H: Coordof[HydrogenDensity] = 0.0
+    n_He: Coordof[HeliumDensity] = 0.0
+    n_Hp: Coordof[ProtonDensity] = 0.0
     T_bg: Coordof[BackgroundTemperature] = 0.0
     N: Coordof[ColumnDensity] = 0.0
     dv: Coordof[LineWidth] = 0.0
@@ -244,7 +357,7 @@ class EmptySet(AsDataset):
     F: Dataof[Flux] = field(init=False)
 
     def __post_init__(self) -> None:
-        """Set empty arrays to data variables."""
+        """Set empty (dimensionless) arrays to data variables."""
         model = DataModel.from_dataclass(self)
         shape = []
 
@@ -259,13 +372,14 @@ class EmptySet(AsDataset):
 
 def gen_inputs(dataset: xr.Dataset, outfile: PathLike) -> Iterator[Input]:
     """Generate inputs to be passed to the RADEX binaries."""
-    trans = dataset.transition.values.tolist()
     lamda = get_lamda(dataset.datafile)
-    freq = lamda.transitions_loc[trans]["Frequency"]
+    transitions = dataset.transition.values.tolist()
+
+    freq = lamda.transitions_loc[transitions]["Frequency"]
     freq_min = min(freq) - 1e-9  # type: ignore
     freq_max = max(freq) + 1e-9  # type: ignore
 
-    with lamda.to_bottom(trans).to_tempfile() as datafile:
+    with lamda.to_bottom(transitions).to_tempfile() as datafile:
         for index in walk_indexes(dataset):
             yield to_input(
                 datafile=datafile.name,
@@ -282,6 +396,26 @@ def gen_radexes(dataset: xr.Dataset) -> Iterator[PathLike]:
         yield index["radex"]
 
 
+def update(dataset: xr.Dataset, csv: PathLike) -> xr.Dataset:
+    """Update data variables of a dataset by a CSV file."""
+    df = pd.read_csv(
+        csv,
+        header=None,
+        names=list(dataset.data_vars),
+        usecols=range(1, RADEX_COLUMNS),
+    )
+
+    # move transition to the last of dims
+    dims = list(dataset.dims)
+    dims.append(dims.pop(0))
+    transposed = dataset.transpose(*dims)
+
+    for name, var in transposed.data_vars.items():
+        var[:] = df[name].to_numpy().reshape(var.shape)
+
+    return dataset
+
+
 def walk_indexes(dataset: xr.Dataset) -> Iterator[Dict[str, Any]]:
     """Generate combinations of indexes' values."""
     indexes = dict(dataset.indexes)
@@ -289,4 +423,3 @@ def walk_indexes(dataset: xr.Dataset) -> Iterator[Dict[str, Any]]:
 
     for values in product(*indexes.values()):
         yield dict(zip(indexes, values))
-
