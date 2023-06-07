@@ -111,6 +111,8 @@ def run(
 
     Args:
         radex: Path of the RADEX binary to be run.
+            If the binary does not exist, then the function tries to
+            use an altenative binary of the same name in ``RADEX_BIN``.
         input: Input to be passed to the RADEX binary.
 
     Keyword Args:
@@ -134,6 +136,9 @@ def run(
 
     """
     with cleanup(input[1]):
+        if not (radex := Path(radex).expanduser()).exists():
+            radex = RADEX_BIN / radex.name
+
         try:
             sprun(
                 str(radex),
