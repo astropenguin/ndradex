@@ -1029,42 +1029,43 @@ testing-docutils = ["pygments", "pytest (>=7,<8)", "pytest-param-files (>=0.3.4,
 
 [[package]]
 name = "netcdf4"
-version = "1.6.3"
+version = "1.6.4"
 description = "Provides an object-oriented python interface to the netCDF version 4 library"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "netCDF4-1.6.3-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:ddd889dff168baa2fe4777e9117175ecd127e224304950786499744c8956d877"},
-    {file = "netCDF4-1.6.3-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:cb1647d2878a081b4a83fe6d5d5792d8befa59b2b18487bee93aae4b8efa0762"},
-    {file = "netCDF4-1.6.3-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:85384e575ddc7e329ca409d380a2d92bb52da5917a171055cf49435f0b6ce07e"},
-    {file = "netCDF4-1.6.3-cp310-cp310-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:729544be6ca6a4507d4b3fdd46af578d17c834e1bb53719bebb90ac108035f6a"},
-    {file = "netCDF4-1.6.3-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e62554a197a344858a526c0cc8340b56d4ab7708feab08528bb602150b8139b1"},
-    {file = "netCDF4-1.6.3-cp310-cp310-win_amd64.whl", hash = "sha256:6fc24dc9d39fee9206710f660b12eb3529d6817583a9de8391e62d4f9f4367fb"},
-    {file = "netCDF4-1.6.3-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:b46e8404e3526047070f88ad3a65acb813ffccf41d8ff12ff823320be730ba66"},
-    {file = "netCDF4-1.6.3-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:a02a8cd53311a447e0c5c185a0d79c3b5d57d49cb1743459417b5e8ca18561bb"},
-    {file = "netCDF4-1.6.3-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:bbfc767980f87c184f6d6fc9d5a164caa0895c0a6b1820c779f7ec7789c01b0e"},
-    {file = "netCDF4-1.6.3-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:1831f99bb84d8db5901a4ecb7e382bb8d93847269a48a56b3b3e18cd2b564fd8"},
-    {file = "netCDF4-1.6.3-cp311-cp311-win_amd64.whl", hash = "sha256:4f7735871ffc0c8fef710a6b8c5f5af04ed480fee2dc23e737a378f9630d9475"},
-    {file = "netCDF4-1.6.3-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:a006a912ca204f74f7ec625b1b8d8b06e2f8366fd5be46bacb5e20760684a852"},
-    {file = "netCDF4-1.6.3-cp37-cp37m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:ce9c0b86f603fdaf4723fb92f728265f456f9090544cd62abe27794046bee507"},
-    {file = "netCDF4-1.6.3-cp37-cp37m-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:3d6a4f7da760ee713aa1197e073c9f066476699dc0cd277428bd5256ebb3878a"},
-    {file = "netCDF4-1.6.3-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:628d48a31e4b094e807252423e5d1c5b39d4d173fde5cdbe7a18da7626cb606c"},
-    {file = "netCDF4-1.6.3-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:c94f95ac1ff5590aeb1793eee10519422a9a02da0ece1daf7efa597eabb4e246"},
-    {file = "netCDF4-1.6.3-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:d7c45f7f729cfdca8cb7b80373085036a08c88bd6f9d8bfcea559056206f3c3d"},
-    {file = "netCDF4-1.6.3-cp38-cp38-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:eb06c09bd5a6b44d65d38f544b62f503ede05dacdc9d5cfa6da25b6f738da1bb"},
-    {file = "netCDF4-1.6.3-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9dfab2b84b3f29902515897c6b2b5a92327a78abbfde6ac3917dae80dd17835b"},
-    {file = "netCDF4-1.6.3-cp38-cp38-win_amd64.whl", hash = "sha256:969470f70c6fb51f9fe851cc55d29769c798aeb2de2cb97200f8dac498f299b4"},
-    {file = "netCDF4-1.6.3-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:1194e88dbf5b35dc344a1e520c19140a0a51cc328c32f35d04c5a17ffc623614"},
-    {file = "netCDF4-1.6.3-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:f6b6d88480052efb3e8b0dd56f773064ed00edcf6ab028ef8fe79a9a06179f43"},
-    {file = "netCDF4-1.6.3-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:5de65543a325451c1ea23b1361fef19da42f7e9874a92a4475c290a045db90b4"},
-    {file = "netCDF4-1.6.3-cp39-cp39-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:f94a89db78f34fdf68342840efb064fe1474310e8359dffce42e90a9ddf88f2f"},
-    {file = "netCDF4-1.6.3-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ccb1524eb4ea9ec1c4360070b12840784c4afa5e539d509b1f2a921f26e49f39"},
-    {file = "netCDF4-1.6.3-cp39-cp39-win_amd64.whl", hash = "sha256:269f3817604bfbd08c7c8acccb6a5863a0a0222425203d9548ad42cbb554254b"},
-    {file = "netCDF4-1.6.3.tar.gz", hash = "sha256:8c98a3a8cda06920ee8bd24a71226ddf0328c22bd838b0afca9cb45fb4580d99"},
+    {file = "netCDF4-1.6.4-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:59eba11eac34f9c7bd209121b26954c71ff69a2eb2838d2ac339b39ea60a95c0"},
+    {file = "netCDF4-1.6.4-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:541286ce7318033b326da2e4325f08037b561887d5fd25d12c2b0cad74eb1edc"},
+    {file = "netCDF4-1.6.4-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:6620f7962daff02df2fbcbc8f7af53edf21512bc7f5697d846d424a094f96345"},
+    {file = "netCDF4-1.6.4-cp310-cp310-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:2dcf74f7b15ae6105c09df93af22ad61366a288fbb329fdbe3b9606c56c788f5"},
+    {file = "netCDF4-1.6.4-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b368fc185cac7d8890a8cf1016488cd252a144008144d06a615925b09bf8d67e"},
+    {file = "netCDF4-1.6.4-cp310-cp310-win_amd64.whl", hash = "sha256:eb19c51fa090b562be4f87ff736b629ffafc03d7bf1fa10f623f957d49417b4f"},
+    {file = "netCDF4-1.6.4-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:08a7efab50d5a4da6227244e544a74f676b732ccdff2b8a4678174c15a3f8dff"},
+    {file = "netCDF4-1.6.4-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:f9b7ad3f66d50970fa1bd5509c52bb8a99740c8a79fafa83bfd0bc7348b6ab5a"},
+    {file = "netCDF4-1.6.4-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:2c5cad50d4e6e5a3b35c76862c58393ddf93baa44de98b6e040ac21896145881"},
+    {file = "netCDF4-1.6.4-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:1c2395c53a37717b1047650e1c9de68a3d69542bb25df5c594e1e14e9480bb18"},
+    {file = "netCDF4-1.6.4-cp311-cp311-win_amd64.whl", hash = "sha256:c85f77599c61a88d512d6536e181ff1c01fd16f4740367e4f8e5cacb36500293"},
+    {file = "netCDF4-1.6.4-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:3e3efefdb9fc936503e89ff5b40b33f2c96527bae1e9672a2d369c5f7cb30bbd"},
+    {file = "netCDF4-1.6.4-cp37-cp37m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:74a3e720a9764d13d669763c1f3c73f3f719ef181dccecad062440eea03f069e"},
+    {file = "netCDF4-1.6.4-cp37-cp37m-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:c67bc7fafced3f9370fdef6ce7abe235a771bed7ebe534f4ba3c84d9689dae23"},
+    {file = "netCDF4-1.6.4-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b599a3b5c0d0e3affa70d7954c2b0c4ab7d7bdb52b0e413c811da9725982de33"},
+    {file = "netCDF4-1.6.4-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:b21d47c23edd02ff83160c8ccc1e4d4946a91d454b246e7f63d7a6d63901707c"},
+    {file = "netCDF4-1.6.4-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:8eff69acdf250ebaf817cc9bbfb457d241f92f989c7f9cca33eb29985c0f9797"},
+    {file = "netCDF4-1.6.4-cp38-cp38-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:4d6bcdf27fd611eaec891f4281caf5c56bbad6f5fc245ce3e6dd2dc4fc3fad56"},
+    {file = "netCDF4-1.6.4-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c99a3d476242d489da26f71e318ddd314723ca766f4db11270863a764b107bc3"},
+    {file = "netCDF4-1.6.4-cp38-cp38-win_amd64.whl", hash = "sha256:422077c7303cb17cbe8b9ace965cafda1f9d4c9b035809fc5c87091e7ff4d606"},
+    {file = "netCDF4-1.6.4-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:0050e49889c357ae0a73f96e2b9988f250396689b78142de88a39ac8b1e702aa"},
+    {file = "netCDF4-1.6.4-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:0a2cd2e2a9da98f1838e1edfeb011b840a434e04d156052b936ffe49f5298126"},
+    {file = "netCDF4-1.6.4-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:695cd0a40df49b4218350686c44e13b3a4671e53ee33faf7439a89940cbccc68"},
+    {file = "netCDF4-1.6.4-cp39-cp39-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:e582e6e41b27fc3a3296239afe065941bda60118d585df0ad41603f6f962888e"},
+    {file = "netCDF4-1.6.4-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:f7b4ab3f0cd28a6685031e8b9be00c3047b4256da576c9de540440d013a31cea"},
+    {file = "netCDF4-1.6.4-cp39-cp39-win_amd64.whl", hash = "sha256:1a950b3d8fcffca05e371a4cb64dc76580375588d1fca43b788192f409108ebe"},
+    {file = "netCDF4-1.6.4.tar.gz", hash = "sha256:66da6542cbc7a6045cd1d979397dfd5a3f6c880c76d52b8f98bb108c82ee8c6e"},
 ]
 
 [package.dependencies]
+certifi = "*"
 cftime = "*"
 numpy = "*"
 
@@ -1913,14 +1914,14 @@ six = "*"
 
 [[package]]
 name = "urllib3"
-version = "2.0.2"
+version = "2.0.3"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "urllib3-2.0.2-py3-none-any.whl", hash = "sha256:d055c2f9d38dc53c808f6fdc8eab7360b6fdbbde02340ed25cfbcd817c62469e"},
-    {file = "urllib3-2.0.2.tar.gz", hash = "sha256:61717a1095d7e155cdb737ac7bb2f4324a858a1e2e6466f6d03ff630ca68d3cc"},
+    {file = "urllib3-2.0.3-py3-none-any.whl", hash = "sha256:48e7fafa40319d358848e1bc6809b208340fafe2096f1725d05d67443d0483d1"},
+    {file = "urllib3-2.0.3.tar.gz", hash = "sha256:bee28b5e56addb8226c96f7f13ac28cb4c301dd5ea8a6ca179c0b9835e032825"},
 ]
 
 [package.extras]
@@ -1980,20 +1981,23 @@ viz = ["matplotlib", "nc-time-axis", "seaborn"]
 
 [[package]]
 name = "xarray-dataclasses"
-version = "1.5.0"
+version = "1.6.0"
 description = "xarray data creation made easy by dataclass"
 category = "main"
 optional = false
-python-versions = ">=3.7.1,<3.12"
+python-versions = ">=3.8,<3.12"
 files = [
-    {file = "xarray_dataclasses-1.5.0-py3-none-any.whl", hash = "sha256:95fbef16976dd7290c27d2c5522b532a42d87cf56409ada8a855134b7f8bf8a9"},
-    {file = "xarray_dataclasses-1.5.0.tar.gz", hash = "sha256:82ea0922147ef693fa859a552459686645eb0a861238c17c893d4858d352f494"},
+    {file = "xarray_dataclasses-1.6.0-py3-none-any.whl", hash = "sha256:0f89070f84ccde055ee153da0d8e2cd3e4cb60f265e0cac8fb8e8551c3de876d"},
+    {file = "xarray_dataclasses-1.6.0.tar.gz", hash = "sha256:5ea909a960e26d9022851d962fac1378e64ff2095b3e0dddfa3afa7911a92cae"},
 ]
 
 [package.dependencies]
-numpy = {version = ">=1.15,<2.0", markers = "python_version >= \"3.8\" and python_version < \"3.12\""}
-typing-extensions = ">=3.10,<5.0"
-xarray = {version = ">=0.18,<2023", markers = "python_version >= \"3.8\" and python_version < \"3.12\""}
+numpy = ">=1.22,<2.0"
+typing-extensions = ">=4.0,<5.0"
+xarray = [
+    {version = ">=2022.3,<2023.2", markers = "python_version >= \"3.8\" and python_version < \"3.9\""},
+    {version = ">=2022.3,<2023.0", markers = "python_version >= \"3.9\" and python_version < \"3.12\""},
+]
 
 [[package]]
 name = "zipp"
@@ -2014,4 +2018,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8, <3.12"
-content-hash = "58c18da1801189d9293ae69c7c8e1a7a4b9f77aec06b3a05d37a66dd5126e289"
+content-hash = "9145c7b0a75ae22d0fa20efeb7e4e59e75dd0c4bf2407d9356100af1acab70ad"
