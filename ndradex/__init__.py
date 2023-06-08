@@ -19,6 +19,7 @@ from . import db
 from . import grid
 from . import io
 from . import lamda
+from . import nd
 from . import radex
 from .grid import *
 from .io import *

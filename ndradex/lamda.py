@@ -19,6 +19,7 @@ from typing import (
     Tuple,
     Union,
 )
+from warnings import catch_warnings, simplefilter
 
 
 # dependencies
@@ -157,8 +158,10 @@ def get_lamda_by_path(query: str) -> LAMDA:
 
 def get_lamda_by_name(query: str, *, cache: bool, timeout: Timeout) -> LAMDA:
     """Create a LAMDA object by a datafile name."""
-    tables = Lamda.query(Path(query).stem, cache=cache, timeout=timeout)
-    return LAMDA.from_tables(tables)  # type: ignore
+    with catch_warnings():
+        simplefilter("ignore")
+        tables = Lamda.query(Path(query).stem, cache=cache, timeout=timeout)
+        return LAMDA.from_tables(tables)  # type: ignore
 
 
 def get_lamda_by_url(query: str, *, cache: bool, timeout: Timeout) -> LAMDA:
