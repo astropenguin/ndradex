@@ -150,6 +150,61 @@ def run(
             return update(ds, csv.name)
 
 
+def gen_inputs(dataset: xr.Dataset, outfile: PathLike) -> Iterator[Input]:
+    """Generate inputs to be passed to the RADEX binaries."""
+    lamda = get_lamda(dataset.datafile)
+    transitions = dataset.transition.values.tolist()
+
+    freq = lamda.transitions_loc[transitions]["Frequency"]
+    freq_min = min(freq) - 1e-9  # type: ignore
+    freq_max = max(freq) + 1e-9  # type: ignore
+
+    with lamda.to_bottom(transitions).to_tempfile() as datafile:
+        for index in walk_indexes(dataset):
+            yield to_input(
+                datafile=datafile.name,
+                outfile=outfile,
+                freq_min=freq_min,
+                freq_max=freq_max,
+                **index,
+            )
+
+
+def gen_radexes(dataset: xr.Dataset) -> Iterator[PathLike]:
+    """Generate paths of the RADEX binaries."""
+    for index in walk_indexes(dataset):
+        yield index["radex"]
+
+
+def update(dataset: xr.Dataset, csv: PathLike) -> xr.Dataset:
+    """Update data variables of a dataset by a CSV file."""
+    df = pd.read_csv(
+        csv,
+        header=None,
+        names=list(dataset.data_vars),
+        usecols=range(1, RADEX_COLUMNS),
+    )
+
+    # move transition to the last of dims
+    dims = list(dataset.dims)
+    dims.append(dims.pop(0))
+    transposed = dataset.transpose(*dims)
+
+    for name, var in transposed.data_vars.items():
+        var[:] = df[name].to_numpy().reshape(var.shape)
+
+    return dataset
+
+
+def walk_indexes(dataset: xr.Dataset) -> Iterator[Dict[str, Any]]:
+    """Generate combinations of indexes' values."""
+    indexes = dict(dataset.indexes)
+    indexes.pop("transition")
+
+    for values in product(*indexes.values()):
+        yield dict(zip(indexes, values))
+
+
 class Units:
     """Convert data with units to given units."""
 
@@ -364,58 +419,3 @@ class EmptySet(AsDataset):
 
         for entry in model.data_vars:
             setattr(self, str(entry.name), np.empty(shape))
-
-
-def gen_inputs(dataset: xr.Dataset, outfile: PathLike) -> Iterator[Input]:
-    """Generate inputs to be passed to the RADEX binaries."""
-    lamda = get_lamda(dataset.datafile)
-    transitions = dataset.transition.values.tolist()
-
-    freq = lamda.transitions_loc[transitions]["Frequency"]
-    freq_min = min(freq) - 1e-9  # type: ignore
-    freq_max = max(freq) + 1e-9  # type: ignore
-
-    with lamda.to_bottom(transitions).to_tempfile() as datafile:
-        for index in walk_indexes(dataset):
-            yield to_input(
-                datafile=datafile.name,
-                outfile=outfile,
-                freq_min=freq_min,
-                freq_max=freq_max,
-                **index,
-            )
-
-
-def gen_radexes(dataset: xr.Dataset) -> Iterator[PathLike]:
-    """Generate paths of the RADEX binaries."""
-    for index in walk_indexes(dataset):
-        yield index["radex"]
-
-
-def update(dataset: xr.Dataset, csv: PathLike) -> xr.Dataset:
-    """Update data variables of a dataset by a CSV file."""
-    df = pd.read_csv(
-        csv,
-        header=None,
-        names=list(dataset.data_vars),
-        usecols=range(1, RADEX_COLUMNS),
-    )
-
-    # move transition to the last of dims
-    dims = list(dataset.dims)
-    dims.append(dims.pop(0))
-    transposed = dataset.transpose(*dims)
-
-    for name, var in transposed.data_vars.items():
-        var[:] = df[name].to_numpy().reshape(var.shape)
-
-    return dataset
-
-
-def walk_indexes(dataset: xr.Dataset) -> Iterator[Dict[str, Any]]:
-    """Generate combinations of indexes' values."""
-    indexes = dict(dataset.indexes)
-    indexes.pop("transition")
-
-    for values in product(*indexes.values()):
-        yield dict(zip(indexes, values))
