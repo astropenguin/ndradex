@@ -384,18 +384,18 @@ class EmptySet(AsDataset):
 
     # dimensions
     transition: Coordof[Transition]
-    T_kin: Coordof[KineticTemperature] = 0.0
-    n_H2: Coordof[H2Density] = 0.0
-    n_pH2: Coordof[ParaH2Density] = 0.0
-    n_oH2: Coordof[OrthoH2Density] = 0.0
-    n_e: Coordof[ElectronDensity] = 0.0
-    n_H: Coordof[HydrogenDensity] = 0.0
-    n_He: Coordof[HeliumDensity] = 0.0
-    n_Hp: Coordof[ProtonDensity] = 0.0
-    T_bg: Coordof[BackgroundTemperature] = 0.0
-    N: Coordof[ColumnDensity] = 0.0
-    dv: Coordof[LineWidth] = 0.0
-    radex: Coordof[RadexBinary] = "radex"
+    T_kin: Coordof[KineticTemperature]
+    n_H2: Coordof[H2Density]
+    n_pH2: Coordof[ParaH2Density]
+    n_oH2: Coordof[OrthoH2Density]
+    n_e: Coordof[ElectronDensity]
+    n_H: Coordof[HydrogenDensity]
+    n_He: Coordof[HeliumDensity]
+    n_Hp: Coordof[ProtonDensity]
+    T_bg: Coordof[BackgroundTemperature]
+    N: Coordof[ColumnDensity]
+    dv: Coordof[LineWidth]
+    radex: Coordof[RadexBinary]
 
     # data variables
     E_up: Dataof[UpperStateEnergy] = field(init=False)
