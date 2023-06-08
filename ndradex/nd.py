@@ -25,6 +25,21 @@ from .radex import RADEX_COLUMNS, Input, Parallel, Timeout, runmap, to_input
 T = TypeVar("T")
 Multiple = Union[Sequence[T], T]
 PathLike = Union[Path, str]
+VarDims = Tuple[
+    Literal["transition"],
+    Literal["T_kin"],
+    Literal["n_H2"],
+    Literal["n_pH2"],
+    Literal["n_oH2"],
+    Literal["n_e"],
+    Literal["n_H"],
+    Literal["n_He"],
+    Literal["n_Hp"],
+    Literal["T_bg"],
+    Literal["N"],
+    Literal["dv"],
+    Literal["radex"],
+]
 
 
 # constants
@@ -235,89 +250,72 @@ class RadexBinary:
     long_name: Attr[str] = "RADEX binary"
 
 
-Dims = Tuple[
-    Literal["transition"],
-    Literal["T_kin"],
-    Literal["n_H2"],
-    Literal["n_pH2"],
-    Literal["n_oH2"],
-    Literal["n_e"],
-    Literal["n_H"],
-    Literal["n_He"],
-    Literal["n_Hp"],
-    Literal["T_bg"],
-    Literal["N"],
-    Literal["dv"],
-    Literal["radex"],
-]
-
-
 @dataclass
 class UpperStateEnergy(Units):
-    data: Data[Dims, float]
+    data: Data[VarDims, float]
     long_name: Attr[str] = "Upper state energy"
     units: Attr[str] = "K"
 
 
 @dataclass
 class Frequency(Units):
-    data: Data[Dims, float]
+    data: Data[VarDims, float]
     long_name: Attr[str] = "Frequency"
     units: Attr[str] = "GHz"
 
 
 @dataclass
 class Wavelength(Units):
-    data: Data[Dims, float]
+    data: Data[VarDims, float]
     long_name: Attr[str] = "Wavelength"
     units: Attr[str] = "um"
 
 
 @dataclass
 class ExcitationTemperature(Units):
-    data: Data[Dims, float]
+    data: Data[VarDims, float]
     long_name: Attr[str] = "Excitation temperature"
     units: Attr[str] = "K"
 
 
 @dataclass
 class OpticalDepth(Units):
-    data: Data[Dims, float]
+    data: Data[VarDims, float]
     long_name: Attr[str] = "Optical depth"
     units: Attr[str] = "dimensionless"
 
 
 @dataclass
 class PeakIntensity(Units):
-    data: Data[Dims, float]
+    data: Data[VarDims, float]
     long_name: Attr[str] = "Peak intensity"
     units: Attr[str] = "K"
 
 
 @dataclass
 class UpperStatePopulation(Units):
-    data: Data[Dims, float]
+    data: Data[VarDims, float]
     long_name: Attr[str] = "Upper state population"
     units: Attr[str] = "dimensionless"
 
 
 @dataclass
 class LowerStatePopulation(Units):
-    data: Data[Dims, float]
+    data: Data[VarDims, float]
     long_name: Attr[str] = "Lower state population"
     units: Attr[str] = "dimensionless"
 
 
 @dataclass
 class IntegratedIntensity(Units):
-    data: Data[Dims, float]
+    data: Data[VarDims, float]
     long_name: Attr[str] = "Integrated intensity"
     units: Attr[str] = "K km s^-1"
 
 
 @dataclass
 class Flux(Units):
-    data: Data[Dims, float]
+    data: Data[VarDims, float]
     long_name: Attr[str] = "Flux"
     units: Attr[str] = "erg s^-1 cm^-2"
 
@@ -357,17 +355,15 @@ class EmptySet(AsDataset):
     F: Dataof[Flux] = field(init=False)
 
     def __post_init__(self) -> None:
-        """Set empty (dimensionless) arrays to data variables."""
+        """Set empty arrays to data variables."""
         model = DataModel.from_dataclass(self)
         shape = []
 
-        for dim in [str(entry.name) for entry in model.coords]:
-            values = np.atleast_1d(getattr(self, dim))
-            setattr(self, dim, values)
-            shape.append(len(values))
+        for entry in model.coords:
+            shape.append(len(np.atleast_1d(entry.value)))
 
-        for var in [str(entry.name) for entry in model.data_vars]:
-            setattr(self, var, np.empty(shape))
+        for entry in model.data_vars:
+            setattr(self, str(entry.name), np.empty(shape))
 
 
 def gen_inputs(dataset: xr.Dataset, outfile: PathLike) -> Iterator[Input]:
