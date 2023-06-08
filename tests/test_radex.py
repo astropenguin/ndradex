@@ -1,26 +1,27 @@
 # standard library
+from itertools import repeat
 from pathlib import Path
 
 
 # dependencies
 from ndradex.consts import RADEX_BIN
 from ndradex.lamda import get_lamda
-from ndradex.radex import run
+from ndradex.radex import run, runmap, to_input
 
 
 # test data
-radex_input = [
+radex_input = (
     "radex.out",
-    "110 120",
-    "100",
+    "110.0 120.0",
+    "100.0",
     "1",
     "H2",
-    "1e3",
+    "1000.0",
     "2.73",
-    "1e15",
+    "1000000000000000.0",
     "1.0",
     "0",
-]
+)
 radex_output = [
     (
         "1      -- 0",
@@ -36,6 +37,22 @@ radex_output = [
         "2.684E-08",
     )
 ]
+radex_params = {
+    "outfile": "radex.out",
+    "freq_min": 110.0,
+    "freq_max": 120.0,
+    "T_kin": 100.0,
+    "n_H2": 1e3,
+    "n_pH2": 0.0,
+    "n_oH2": 0.0,
+    "n_e": 0.0,
+    "n_H": 0.0,
+    "n_He": 0.0,
+    "n_Hp": 0.0,
+    "T_bg": 2.73,
+    "N": 1e15,
+    "dv": 1.0,
+}
 
 
 # test functions
@@ -43,7 +60,7 @@ def test_run() -> None:
     with get_lamda("co").to_tempfile() as file:
         output = run(
             radex=RADEX_BIN / "radex-1",
-            input=[file.name] + radex_input,
+            input=(file.name, *radex_input),
         )
 
     # test non-existence of the input/output files
@@ -51,4 +68,26 @@ def test_run() -> None:
     assert not Path(radex_input[1]).exists()
 
     # test equality of the output values
-    assert output[0] == radex_output[0]
+    assert output == radex_output
+
+
+def test_runmap() -> None:
+    with get_lamda("co").to_tempfile() as file:
+        outputs = list(
+            runmap(
+                radexes=repeat(RADEX_BIN / "radex-1", 10),
+                inputs=repeat((file.name, *radex_input), 10),
+            )
+        )
+
+    # test non-existence of the input/output files
+    assert not Path(radex_input[0]).exists()
+    assert not Path(radex_input[1]).exists()
+
+    # test equality of the output values
+    assert outputs[0] == radex_output
+
+
+def test_to_input() -> None:
+    input = to_input(datafile="dummy", **radex_params)
+    assert input[1:] == radex_input
