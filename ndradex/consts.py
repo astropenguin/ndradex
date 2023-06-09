@@ -23,7 +23,7 @@ __all__ = [
 # standard library
 from os import getenv
 from pathlib import Path
-from typing import Dict, TypeVar
+from typing import TypeVar
 
 
 # dependencies
@@ -73,7 +73,7 @@ NDRADEX_CONFIG = ensure(NDRADEX_DIR / "config.toml")
 
 
 # query aliases for molecular/atomic databases
-LAMDA_ALIASES: Dict[str, str] = getval(NDRADEX_CONFIG, "lamda.aliases", {})
+LAMDA_ALIASES: dict[str, str] = getval(NDRADEX_CONFIG, "lamda.aliases", {})
 """Query aliases for the LAMDA database."""
 
 

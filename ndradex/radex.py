@@ -10,7 +10,7 @@ from logging import getLogger
 from os import devnull, getenv
 from pathlib import Path
 from subprocess import PIPE, CalledProcessError, TimeoutExpired, run as sprun
-from typing import Any, Iterable, Iterator, List, Optional, Tuple, Union
+from typing import Any, Iterable, Iterator, Optional, Union
 
 
 # dependencies
@@ -18,8 +18,8 @@ from .consts import NDRADEX, RADEX_BIN, RADEX_VERSION
 
 
 # type hints
-Input = Tuple[str, ...]
-Output = List[Tuple[str, ...]]
+Input = tuple[str, ...]
+Output = list[tuple[str, ...]]
 Parallel = Optional[int]
 PathLike = Union[Path, str]
 Timeout = Optional[float]
@@ -213,7 +213,7 @@ def to_input(
     N: float,
     dv: float,
     **_: Any,
-) -> Tuple[str, ...]:
+) -> tuple[str, ...]:
     """Convert parameters to an input for RADEX.
 
     Keyword Args:

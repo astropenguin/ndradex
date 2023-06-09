@@ -7,18 +7,7 @@ from dataclasses import dataclass, field, replace
 from pathlib import Path
 from re import compile
 from tempfile import NamedTemporaryFile
-from typing import (
-    Any,
-    Callable,
-    ClassVar,
-    Dict,
-    IO,
-    Generator,
-    Optional,
-    List,
-    Tuple,
-    Union,
-)
+from typing import Any, Callable, ClassVar, IO, Generator, Optional, Union
 from warnings import catch_warnings, simplefilter
 
 
@@ -34,9 +23,9 @@ from .consts import LAMDA_ALIASES
 # type hints
 LevelLike = Union[int, str]
 PathLike = Union[Path, str]
-Tables = Tuple[Dict[str, Table], Table, Table]
+Tables = tuple[dict[str, Table], Table, Table]
 Timeout = Optional[float]
-TransitionLike = Union[int, str, Tuple[LevelLike, LevelLike]]
+TransitionLike = Union[int, str, tuple[LevelLike, LevelLike]]
 
 
 # constants
@@ -63,7 +52,7 @@ class LAMDA:
     transitions: Table = field(repr=False)
     """Table of the transitions."""
 
-    colliders: Dict[str, Table] = field(repr=False)
+    colliders: dict[str, Table] = field(repr=False)
     """Tables of the collision partners."""
 
     @property
@@ -77,7 +66,7 @@ class LAMDA:
         return TableLoc(self.transitions, self)
 
     @property
-    def colliders_loc(self) -> Dict[str, "TableLoc"]:
+    def colliders_loc(self) -> dict[str, "TableLoc"]:
         """Custom TableLoc objects for the collision partners."""
         return {
             collider: TableLoc(table, self)
@@ -112,7 +101,7 @@ class LAMDA:
         self.to_datafile(file.name)
         return file
 
-    def to_bottom(self, transitions: List[TransitionLike]) -> Self:
+    def to_bottom(self, transitions: list[TransitionLike]) -> Self:
         """Move transitions to the bottom of the transition table."""
         ids_all = self.transitions[TRANSITION_COLUMN]
         ids_sel = self.transitions_loc[transitions][TRANSITION_COLUMN]
@@ -230,7 +219,7 @@ class TableLoc:
     lamda: LAMDA = field(repr=False)
     """LAMDA object for getting table IDs."""
 
-    get_ids: ClassVar[Dict[str, Callable[[Any, LAMDA], int]]]
+    get_ids: ClassVar[dict[str, Callable[[Any, LAMDA], int]]]
     """Functions for getting an ID from a query."""
 
     get_ids = {
@@ -238,7 +227,7 @@ class TableLoc:
         TRANSITION_COLUMN: get_transition_id,
     }
 
-    def index(self, query: Any) -> Union[slice, List[int], int]:
+    def index(self, query: Any) -> Union[slice, list[int], int]:
         """Convert a query to an index for a TableLoc object."""
         get_id = self.get_ids[self.table.colnames[0]]
 

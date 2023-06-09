@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from itertools import product
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Dict, Iterator, Literal, Sequence, Tuple, TypeVar, Union
+from typing import Any, Iterator, Literal, Sequence, TypeVar, Union
 
 
 # dependencies
@@ -25,7 +25,7 @@ from .radex import RADEX_COLUMNS, Input, Parallel, Timeout, runmap, to_input
 T = TypeVar("T")
 Multiple = Union[Sequence[T], T]
 PathLike = Union[Path, str]
-VarDims = Tuple[
+VarDims = tuple[
     Literal["transition"],
     Literal["T_kin"],
     Literal["n_H2"],
@@ -196,7 +196,7 @@ def update(dataset: xr.Dataset, csv: PathLike) -> xr.Dataset:
     return dataset
 
 
-def walk_indexes(dataset: xr.Dataset) -> Iterator[Dict[str, Any]]:
+def walk_indexes(dataset: xr.Dataset) -> Iterator[dict[str, Any]]:
     """Generate combinations of indexes' values."""
     indexes = dict(dataset.indexes)
     indexes.pop("transition")
