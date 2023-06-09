@@ -10,6 +10,7 @@ from logging import getLogger
 from os import devnull, getenv
 from pathlib import Path
 from subprocess import PIPE, CalledProcessError, TimeoutExpired, run as sprun
+from tempfile import TemporaryDirectory
 from typing import Any, Iterable, Iterator, Optional, Union
 
 
@@ -23,6 +24,7 @@ Output = list[tuple[str, ...]]
 Parallel = Optional[int]
 PathLike = Union[Path, str]
 Timeout = Optional[float]
+Workdir = Optional[PathLike]
 
 
 # constants
@@ -98,6 +100,7 @@ def run(
     # *,
     tail: int = 1,
     timeout: Timeout = None,
+    workdir: Workdir = None,
 ) -> Output:
     """Run RADEX and return an output object.
 
@@ -119,6 +122,8 @@ def run(
         tail: Number of lines in a RADEX output file to be read.
         timeout: Timeout of the run in units of seconds.
             Defaults to ``None`` (unlimited run time).
+        workdir: Path of the directory for a RADEX output file.
+            Defaults to ``None`` (temporary directory).
 
     Returns:
         RADEX output object (list of tuple of strings).
@@ -135,7 +140,7 @@ def run(
             output = run("/path/to/radex", input, tail=3)
 
     """
-    with cleanup(input[1]):
+    with set_workdir(workdir) as workdir:
         if not (radex := Path(radex).expanduser()).exists():
             radex = RADEX_BIN / radex.name
 
@@ -148,8 +153,9 @@ def run(
                 stderr=PIPE,
                 check=True,
                 text=True,
+                cwd=workdir,
             )
-            return parse_file(input[1], tail=tail)
+            return parse_file(workdir / input[1], tail=tail)
         except CalledProcessError as error:
             logger.warning(f"RADEX failed to run: {error.stderr}")
             return parse_error(error, tail=tail)
@@ -168,9 +174,10 @@ def runmap(
     radexes: Iterable[PathLike],
     inputs: Iterable[Input],
     # *,
+    parallel: Parallel = None,
     tail: int = 1,
     timeout: Timeout = None,
-    parallel: Parallel = None,
+    workdir: Workdir = None,
 ) -> Iterator[Output]:
     """Run RADEX in parallel and generate output objects.
 
@@ -179,19 +186,24 @@ def runmap(
         inputs: Inputs to be passed to the RADEX binaries.
 
     Keyword Args:
+        parallel: Number of runs in parallel.
+            Defaults to ``None`` (number of processors).
         tail: Number of lines in a RADEX outfile to be read.
         timeout: Timeout of the run in units of seconds.
             Defaults to ``None`` (unlimited run time).
-        parallel: Number of runs in parallel.
-            Defaults to ``None`` (number of processors).
+        workdir: Path of the directory for RADEX output files.
+            Defaults to ``None`` (temporary directory).
 
     Yields:
         RADEX output object (list of list of strings).
 
     """
-    run_ = partial(run, tail=tail, timeout=timeout)
 
-    with ProcessPoolExecutor(parallel) as executor:
+    with (
+        set_workdir(workdir) as workdir,
+        ProcessPoolExecutor(parallel) as executor,
+    ):
+        run_ = partial(run, tail=tail, timeout=timeout, workdir=workdir)
         yield from executor.map(run_, radexes, numbered(inputs))
 
 
@@ -264,16 +276,6 @@ def to_input(
     return tuple(map(str, input))
 
 
-@contextmanager
-def cleanup(*files: PathLike) -> Iterator[None]:
-    """Remove files when a context is finished."""
-    try:
-        yield None
-    finally:
-        for file in files:
-            Path(file).expanduser().unlink(missing_ok=True)
-
-
 def numbered(inputs: Iterable[Input]) -> Iterator[Input]:
     """Add serial numbers to the names of RADEX output files."""
     for number, input in zip(count(), inputs):
@@ -299,3 +301,13 @@ def parse_file(file: PathLike, tail: int) -> Output:
         output.append(tuple(line.rsplit(None, RADEX_COLUMNS - 1)))
 
     return output
+
+
+@contextmanager
+def set_workdir(dir: Optional[PathLike] = None) -> Iterator[Path]:
+    """Set a directory for RADEX output files."""
+    if dir is None:
+        with TemporaryDirectory() as dir:
+            yield Path(dir)
+    else:
+        yield Path(dir).expanduser()

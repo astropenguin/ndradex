@@ -18,7 +18,7 @@ from astropy.units import Quantity
 from tqdm import tqdm
 from xarray_dataclasses import AsDataset, DataModel, Attr, Coordof, Data, Dataof
 from .lamda import get_lamda
-from .radex import RADEX_COLUMNS, Input, Parallel, Timeout, runmap, to_input
+from .radex import RADEX_COLUMNS, Input, Parallel, Timeout, Workdir, runmap, to_input
 
 
 # type hints
@@ -68,6 +68,7 @@ def run(
     progress: bool = True,
     squeeze: bool = True,
     timeout: Timeout = None,
+    workdir: Workdir = None,
 ) -> xr.Dataset:
     """Run RADEX with multidimensional parameters.
 
@@ -102,6 +103,8 @@ def run(
         squeeze: Whether to drop dimensions whose length are 1.
         timeout: Timeout per run in units of seconds.
             Defaults to ``None`` (unlimited run time).
+        workdir: Path of the directory for intermediate files.
+            Defaults to ``None`` (temporary directory).
 
     Returns:
         dataset: Result of multidimensional RADEX runs.
@@ -131,7 +134,7 @@ def run(
     ):
         writer = csv_writer(csv)
         radexes = gen_radexes(ds)
-        inputs = gen_inputs(ds, Path(dir) / OUTFILE)
+        inputs = gen_inputs(ds)
         n_transitions = ds.transition.size
 
         for output in runmap(
@@ -140,6 +143,7 @@ def run(
             tail=n_transitions,
             timeout=timeout,
             parallel=parallel,
+            workdir=workdir,
         ):
             writer.writerows(output)
             bar.update(n_transitions)
@@ -150,7 +154,7 @@ def run(
             return update(ds, csv.name)
 
 
-def gen_inputs(dataset: xr.Dataset, outfile: PathLike) -> Iterator[Input]:
+def gen_inputs(dataset: xr.Dataset) -> Iterator[Input]:
     """Generate inputs to be passed to the RADEX binaries."""
     lamda = get_lamda(dataset.datafile)
     transitions = dataset.transition.values.tolist()
@@ -163,7 +167,7 @@ def gen_inputs(dataset: xr.Dataset, outfile: PathLike) -> Iterator[Input]:
         for index in walk_indexes(dataset):
             yield to_input(
                 datafile=datafile.name,
-                outfile=outfile,
+                outfile=OUTFILE,
                 freq_min=freq_min,
                 freq_max=freq_max,
                 **index,
