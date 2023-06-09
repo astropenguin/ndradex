@@ -124,11 +124,11 @@ def run(
         radex=radex,
     )
 
-    # fmt: off
-    with TemporaryDirectory() as dir, \
-         open(Path(dir) / CSV, "w", buffering=1) as csv, \
-         tqdm(total=ds.I.size, disable=not progress) as bar:
-    # fmt: on
+    with (
+        TemporaryDirectory() as dir,
+        open(Path(dir) / CSV, "w", buffering=1) as csv,
+        tqdm(total=ds.I.size, disable=not progress) as bar,
+    ):
         writer = csv_writer(csv)
         radexes = gen_radexes(ds)
         inputs = gen_inputs(ds, Path(dir) / OUTFILE)
