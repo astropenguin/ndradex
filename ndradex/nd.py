@@ -6,8 +6,8 @@ from csv import writer as csv_writer
 from dataclasses import dataclass, field
 from itertools import product
 from pathlib import Path
-from tempfile import TemporaryDirectory
-from typing import Any, Iterator, Literal, Sequence, TypeVar, Union
+from tempfile import TemporaryFile
+from typing import Any, IO, Iterator, Literal, Sequence, TypeVar, Union
 
 
 # dependencies
@@ -128,8 +128,7 @@ def run(
     )
 
     with (
-        TemporaryDirectory() as dir,
-        open(Path(dir) / CSV, "w", buffering=1) as csv,
+        TemporaryFile("w+", buffering=1) as csv,
         tqdm(total=ds.I.size, disable=not progress) as bar,
     ):
         writer = csv_writer(csv)
@@ -149,9 +148,9 @@ def run(
             bar.update(n_transitions)
 
         if squeeze:
-            return update(ds, csv.name).squeeze()
+            return update(ds, csv).squeeze()
         else:
-            return update(ds, csv.name)
+            return update(ds, csv)
 
 
 def gen_inputs(dataset: xr.Dataset) -> Iterator[Input]:
@@ -180,8 +179,10 @@ def gen_radexes(dataset: xr.Dataset) -> Iterator[PathLike]:
         yield index["radex"]
 
 
-def update(dataset: xr.Dataset, csv: PathLike) -> xr.Dataset:
+def update(dataset: xr.Dataset, csv: IO[str]) -> xr.Dataset:
     """Update data variables of a dataset by a CSV file."""
+    csv.seek(0)
+
     df = pd.read_csv(
         csv,
         header=None,
