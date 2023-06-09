@@ -1,9 +1,8 @@
 __all__ = [
     "consts",
-    "db",
-    "grid",
     "io",
     "lamda",
+    "nd",
     "radex",
     "run",
     "save_dataset",
@@ -15,13 +14,11 @@ __author__ = "Akio Taniguchi"
 
 # submodules
 from . import consts
-from . import db
-from . import grid
 from . import io
 from . import lamda
 from . import nd
 from . import radex
-from .grid import *
+from .nd import *
 from .io import *
 
 
