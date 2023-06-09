@@ -6,8 +6,8 @@ from csv import writer as csv_writer
 from dataclasses import dataclass, field
 from itertools import product
 from pathlib import Path
-from tempfile import TemporaryDirectory
-from typing import Any, Iterator, Literal, Sequence, TypeVar, Union
+from tempfile import TemporaryFile
+from typing import Any, IO, Iterator, Literal, Sequence, TypeVar, Union
 
 
 # dependencies
@@ -18,7 +18,7 @@ from astropy.units import Quantity
 from tqdm import tqdm
 from xarray_dataclasses import AsDataset, DataModel, Attr, Coordof, Data, Dataof
 from .lamda import get_lamda
-from .radex import RADEX_COLUMNS, Input, Parallel, Timeout, runmap, to_input
+from .radex import RADEX_COLUMNS, Input, Parallel, Timeout, Workdir, runmap, to_input
 
 
 # type hints
@@ -68,6 +68,7 @@ def run(
     progress: bool = True,
     squeeze: bool = True,
     timeout: Timeout = None,
+    workdir: Workdir = None,
 ) -> xr.Dataset:
     """Run RADEX with multidimensional parameters.
 
@@ -102,6 +103,8 @@ def run(
         squeeze: Whether to drop dimensions whose length are 1.
         timeout: Timeout per run in units of seconds.
             Defaults to ``None`` (unlimited run time).
+        workdir: Path of the directory for intermediate files.
+            Defaults to ``None`` (temporary directory).
 
     Returns:
         dataset: Result of multidimensional RADEX runs.
@@ -125,13 +128,12 @@ def run(
     )
 
     with (
-        TemporaryDirectory() as dir,
-        open(Path(dir) / CSV, "w", buffering=1) as csv,
+        TemporaryFile("w+", buffering=1) as csv,
         tqdm(total=ds.I.size, disable=not progress) as bar,
     ):
         writer = csv_writer(csv)
         radexes = gen_radexes(ds)
-        inputs = gen_inputs(ds, Path(dir) / OUTFILE)
+        inputs = gen_inputs(ds)
         n_transitions = ds.transition.size
 
         for output in runmap(
@@ -140,17 +142,18 @@ def run(
             tail=n_transitions,
             timeout=timeout,
             parallel=parallel,
+            workdir=workdir,
         ):
             writer.writerows(output)
             bar.update(n_transitions)
 
         if squeeze:
-            return update(ds, csv.name).squeeze()
+            return update(ds, csv).squeeze()
         else:
-            return update(ds, csv.name)
+            return update(ds, csv)
 
 
-def gen_inputs(dataset: xr.Dataset, outfile: PathLike) -> Iterator[Input]:
+def gen_inputs(dataset: xr.Dataset) -> Iterator[Input]:
     """Generate inputs to be passed to the RADEX binaries."""
     lamda = get_lamda(dataset.datafile)
     transitions = dataset.transition.values.tolist()
@@ -159,11 +162,11 @@ def gen_inputs(dataset: xr.Dataset, outfile: PathLike) -> Iterator[Input]:
     freq_min = min(freq) - 1e-9  # type: ignore
     freq_max = max(freq) + 1e-9  # type: ignore
 
-    with lamda.to_bottom(transitions).to_tempfile() as datafile:
-        for index in walk_indexes(dataset):
+    with lamda.to_bottom(transitions).to_tempfile() as f:
+        for index in walk_dims(dataset):
             yield to_input(
-                datafile=datafile.name,
-                outfile=outfile,
+                datafile=f.name,
+                outfile=OUTFILE,
                 freq_min=freq_min,
                 freq_max=freq_max,
                 **index,
@@ -172,12 +175,14 @@ def gen_inputs(dataset: xr.Dataset, outfile: PathLike) -> Iterator[Input]:
 
 def gen_radexes(dataset: xr.Dataset) -> Iterator[PathLike]:
     """Generate paths of the RADEX binaries."""
-    for index in walk_indexes(dataset):
+    for index in walk_dims(dataset):
         yield index["radex"]
 
 
-def update(dataset: xr.Dataset, csv: PathLike) -> xr.Dataset:
+def update(dataset: xr.Dataset, csv: IO[str]) -> xr.Dataset:
     """Update data variables of a dataset by a CSV file."""
+    csv.seek(0)
+
     df = pd.read_csv(
         csv,
         header=None,
@@ -196,13 +201,13 @@ def update(dataset: xr.Dataset, csv: PathLike) -> xr.Dataset:
     return dataset
 
 
-def walk_indexes(dataset: xr.Dataset) -> Iterator[dict[str, Any]]:
+def walk_dims(dataset: xr.Dataset) -> Iterator[dict[str, Any]]:
     """Generate combinations of indexes' values."""
-    indexes = dict(dataset.indexes)
-    indexes.pop("transition")
+    dims = dict(dataset.indexes)
+    dims.pop("transition")
 
-    for values in product(*indexes.values()):
-        yield dict(zip(indexes, values))
+    for values in product(*dims.values()):
+        yield dict(zip(dims.keys(), values))
 
 
 class Units:
