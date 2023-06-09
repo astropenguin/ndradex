@@ -1,6 +1,5 @@
 __all__ = [
     "consts",
-    "db",
     "grid",
     "io",
     "lamda",
@@ -15,7 +14,6 @@ __author__ = "Akio Taniguchi"
 
 # submodules
 from . import consts
-from . import db
 from . import grid
 from . import io
 from . import lamda
