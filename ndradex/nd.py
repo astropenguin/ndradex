@@ -163,10 +163,10 @@ def gen_inputs(dataset: xr.Dataset) -> Iterator[Input]:
     freq_min = min(freq) - 1e-9  # type: ignore
     freq_max = max(freq) + 1e-9  # type: ignore
 
-    with lamda.to_bottom(transitions).to_tempfile() as datafile:
-        for index in walk_indexes(dataset):
+    with lamda.to_bottom(transitions).to_tempfile() as f:
+        for index in walk_dims(dataset):
             yield to_input(
-                datafile=datafile.name,
+                datafile=f.name,
                 outfile=OUTFILE,
                 freq_min=freq_min,
                 freq_max=freq_max,
@@ -176,7 +176,7 @@ def gen_inputs(dataset: xr.Dataset) -> Iterator[Input]:
 
 def gen_radexes(dataset: xr.Dataset) -> Iterator[PathLike]:
     """Generate paths of the RADEX binaries."""
-    for index in walk_indexes(dataset):
+    for index in walk_dims(dataset):
         yield index["radex"]
 
 
@@ -200,13 +200,13 @@ def update(dataset: xr.Dataset, csv: PathLike) -> xr.Dataset:
     return dataset
 
 
-def walk_indexes(dataset: xr.Dataset) -> Iterator[dict[str, Any]]:
+def walk_dims(dataset: xr.Dataset) -> Iterator[dict[str, Any]]:
     """Generate combinations of indexes' values."""
-    indexes = dict(dataset.indexes)
-    indexes.pop("transition")
+    dims = dict(dataset.indexes)
+    dims.pop("transition")
 
-    for values in product(*indexes.values()):
-        yield dict(zip(indexes, values))
+    for values in product(*dims.values()):
+        yield dict(zip(dims.keys(), values))
 
 
 class Units:
