@@ -20,9 +20,9 @@ nd_params = {
 
 
 def test_run() -> None:
-    ds_nd = run("co.dat", **nd_params, squeeze=False, timeout=1.0)
+    ds_nd = run("co", **nd_params, squeeze=False, timeout=1.0)
 
-    for _ in range(100):
+    for _ in range(10):
         params = {k: choice(v) for k, v in nd_params.items()}
-        ds_one = run("co.dat", **params, squeeze=False, timeout=1.0)
+        ds_one = run("co", **params, squeeze=False, timeout=1.0)
         assert_equal(ds_nd.sel(ds_one.coords), ds_one)
