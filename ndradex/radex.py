@@ -97,7 +97,7 @@ def build(
 def run(
     radex: PathLike,
     input: Input,
-    # *,
+    *,
     tail: int = 1,
     timeout: Timeout = None,
     workdir: Workdir = None,
@@ -115,7 +115,7 @@ def run(
     Args:
         radex: Path of the RADEX binary to be run.
             If the binary does not exist, then the function tries to
-            use an altenative binary of the same name in ``RADEX_BIN``.
+            use an alternative binary of the same name in ``RADEX_BIN``.
         input: Input to be passed to the RADEX binary.
 
     Keyword Args:
@@ -173,7 +173,7 @@ def run(
 def runmap(
     radexes: Iterable[PathLike],
     inputs: Iterable[Input],
-    # *,
+    *,
     parallel: Parallel = None,
     tail: int = 1,
     timeout: Timeout = None,
@@ -225,7 +225,7 @@ def to_input(
     N: float,
     dv: float,
     **_: Any,
-) -> tuple[str, ...]:
+) -> Input:
     """Convert parameters to an input for RADEX.
 
     Keyword Args:
@@ -282,12 +282,12 @@ def numbered(inputs: Iterable[Input]) -> Iterator[Input]:
         yield (input[0], f"{input[1]}.{number}", *input[2:])
 
 
-def parse_error(error: Exception, tail: int) -> Output:
+def parse_error(error: Exception, *, tail: int) -> Output:
     """Parse a Python error and return an output object."""
     return [(NAN,) * RADEX_COLUMNS] * tail
 
 
-def parse_file(file: PathLike, tail: int) -> Output:
+def parse_file(file: PathLike, *, tail: int) -> Output:
     """Parse a RADEX output file and return an output object."""
     with open(file) as f:
         lines = f.readlines()
