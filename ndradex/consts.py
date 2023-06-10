@@ -4,19 +4,25 @@ __all__ = [
     "RADEX_BIN",
     "RADEX_VERSION",
     "LAMDA_ALIASES",
+    # defaults
     "DV",
-    "GEOM",
-    "N_H2",
-    "N_MOL",
-    "T_BG",
-    "T_KIN",
-    "TIMEOUT",
+    "N",
+    "RADEX",
     "N_E",
     "N_H",
+    "N_H2",
     "N_HE",
     "N_HP",
     "N_OH2",
     "N_PH2",
+    "PARALLEL",
+    "PROGRESS",
+    "RADEX",
+    "SQUEEZE",
+    "T_BG",
+    "T_KIN",
+    "TIMEOUT",
+    "WORKDIR",
 ]
 
 
@@ -107,26 +113,41 @@ RADEX_VERSION = "30nov2011"
 DV = getval(NDRADEX_CONFIG, "defaults.dv", 1.0)
 """Default value for the ``dv`` argument."""
 
-GEOM = getval(NDRADEX_CONFIG, "defaults.geom", "uni")
-"""Default value for the ``geom`` argument."""
+N = getval(NDRADEX_CONFIG, "defaults.N", 1e15)
+"""Default value for the ``N_mol`` argument."""
+
+N_E = getval(NDRADEX_CONFIG, "defaults.n_e", 0.0)
+"""Default value for the ``n_e`` argument."""
+
+N_H = getval(NDRADEX_CONFIG, "defaults.n_H", 0.0)
+"""Default value for the ``n_H`` argument."""
 
 N_H2 = getval(NDRADEX_CONFIG, "defaults.n_H2", 1e3)
 """Default value for the ``n_H2`` argument."""
 
-N_MOL = getval(NDRADEX_CONFIG, "defaults.N_mol", 1e15)
-"""Default value for the ``N_mol`` argument."""
+N_HE = getval(NDRADEX_CONFIG, "defaults.n_He", 0.0)
+"""Default value for the ``n_He`` argument."""
 
-N_PROCS = getval(NDRADEX_CONFIG, "defaults.n_procs", 2)
-"""Default value for the ``n_procs`` argument."""
+N_HP = getval(NDRADEX_CONFIG, "defaults.n_Hp", 0.0)
+"""Default value for the ``n_Hp`` argument."""
 
-PROGRESS = getval(NDRADEX_CONFIG, "defaults.progress", True)
+N_OH2 = getval(NDRADEX_CONFIG, "defaults.n_oH2", 0.0)
+"""Default value for the ``n_oH2`` argument."""
+
+N_PH2 = getval(NDRADEX_CONFIG, "defaults.n_pH2", 0.0)
+"""Default value for the ``n_pH2`` argument."""
+
+PARALLEL = getval(NDRADEX_CONFIG, "defaults.parallel", int)
+"""Default value for the ``parallel`` argument."""
+
+PROGRESS = getval(NDRADEX_CONFIG, "defaults.progress", False)
 """Default value for the ``progress`` argument."""
+
+RADEX = getval(NDRADEX_CONFIG, "defaults.radex", "radex-1")
+"""Default value for the ``radex`` argument."""
 
 SQUEEZE = getval(NDRADEX_CONFIG, "defaults.squeeze", True)
 """Default value for the ``squeeze`` argument."""
-
-TIMEOUT = getval(NDRADEX_CONFIG, "defaults.timeout", 30.0)
-"""Default value for the ``timeout`` argument."""
 
 T_BG = getval(NDRADEX_CONFIG, "defaults.T_bg", 2.73)
 """Default value for the ``T_bg`` argument."""
@@ -134,22 +155,8 @@ T_BG = getval(NDRADEX_CONFIG, "defaults.T_bg", 2.73)
 T_KIN = getval(NDRADEX_CONFIG, "defaults.T_kin", 100.0)
 """Default value for the ``T_kin`` argument."""
 
+TIMEOUT = getval(NDRADEX_CONFIG, "defaults.timeout", float)
+"""Default value for the ``timeout`` argument."""
 
-# default values for public functions (optional)
-N_E = getval(NDRADEX_CONFIG, "defaults.n_e", 0.0) or None
-"""Default value for the ``n_e`` argument."""
-
-N_H = getval(NDRADEX_CONFIG, "defaults.n_H", 0.0) or None
-"""Default value for the ``n_H`` argument."""
-
-N_HE = getval(NDRADEX_CONFIG, "defaults.n_He", 0.0) or None
-"""Default value for the ``n_He`` argument."""
-
-N_HP = getval(NDRADEX_CONFIG, "defaults.n_Hp", 0.0) or None
-"""Default value for the ``n_Hp`` argument."""
-
-N_OH2 = getval(NDRADEX_CONFIG, "defaults.n_oH2", 0.0) or None
-"""Default value for the ``n_oH2`` argument."""
-
-N_PH2 = getval(NDRADEX_CONFIG, "defaults.n_pH2", 0.0) or None
-"""Default value for the ``n_pH2`` argument."""
+WORKDIR = getval(NDRADEX_CONFIG, "defaults.workdir", Path)
+"""Default value for the ``workdir`` argument."""
