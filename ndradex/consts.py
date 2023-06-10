@@ -23,7 +23,7 @@ __all__ = [
 # standard library
 from os import getenv
 from pathlib import Path
-from typing import TypeVar
+from typing import Any, Optional, TypeVar, overload
 
 
 # dependencies
@@ -38,6 +38,9 @@ T = TypeVar("T")
 NDRADEX = Path(__file__).parent
 """Path of the ndRADEX package"""
 
+TOML_SEP = "."
+"""Separator between TOML keys."""
+
 
 # helper functions
 def ensure(toml: Path) -> Path:
@@ -49,16 +52,31 @@ def ensure(toml: Path) -> Path:
     return toml
 
 
+@overload
+def getval(toml: Path, keys: str, default: type[T]) -> Optional[T]:
+    ...
+
+
+@overload
 def getval(toml: Path, keys: str, default: T) -> T:
+    ...
+
+
+def getval(toml: Path, keys: str, default: Any) -> Any:
     """Return the value of the keys in a TOML file."""
-    with open(toml, "r") as file:
+    if isinstance(default, type):
+        type_, default_ = default, None
+    else:
+        type_, default_ = type(default), default
+
+    with open(toml) as file:
         doc = load(file)
 
-    for key in keys.split("."):
+    for key in keys.split(TOML_SEP):
         if (doc := doc.get(key)) is None:
-            return default
+            return default_
 
-    return type(default)(doc.unwrap())
+    return type_(doc.unwrap())
 
 
 # config file and directory for it
