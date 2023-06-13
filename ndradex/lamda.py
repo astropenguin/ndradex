@@ -17,7 +17,7 @@ from astropy.table import Table
 from astroquery.lamda import Lamda, parse_lamda_datafile, write_lamda_datafile
 from requests_cache import CachedSession
 from typing_extensions import Self
-from .consts import LAMDA_ALIASES
+from .consts import DATAFILE
 
 
 # type hints
@@ -129,7 +129,7 @@ def get_lamda(query: PathLike, *, cache: bool = True, timeout: Timeout = None) -
     if isinstance(query, Path):
         query_ = str(query)
     else:
-        query_ = LAMDA_ALIASES.get(query, query)
+        query_ = DATAFILE.get(query, query)
 
     if URL_REGEX.match(query_):
         return get_lamda_by_url(query_, cache=cache, timeout=timeout)

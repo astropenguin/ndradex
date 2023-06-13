@@ -1,13 +1,14 @@
 __all__ = [
+    # ndradex-related
     "NDRADEX",
     "NDRADEX_CONFIG",
+    "NDRADEX_DIR",
+    # radex-related
     "RADEX_BIN",
     "RADEX_VERSION",
-    "LAMDA_ALIASES",
     # defaults
     "DV",
     "N",
-    "RADEX",
     "N_E",
     "N_H",
     "N_H2",
@@ -23,6 +24,10 @@ __all__ = [
     "T_KIN",
     "TIMEOUT",
     "WORKDIR",
+    # aliases
+    "DATAFILE",
+    "LEVEL",
+    "TRANSITION",
 ]
 
 
@@ -38,14 +43,6 @@ from tomlkit import load
 
 # type hints
 T = TypeVar("T")
-
-
-# constants
-NDRADEX = Path(__file__).parent
-"""Path of the ndRADEX package"""
-
-TOML_SEP = "."
-"""Separator between TOML keys."""
 
 
 # helper functions
@@ -78,14 +75,23 @@ def getval(toml: Path, keys: str, default: Any) -> Any:
     with open(toml) as file:
         doc = load(file)
 
-    for key in keys.split(TOML_SEP):
+    for key in keys.split("."):
         if (doc := doc.get(key)) is None:
             return default_
 
     return type_(doc.unwrap())
 
 
-# config file and directory for it
+# ndradex-related
+NDRADEX = Path(__file__).parent
+"""Path of the ndRADEX package."""
+
+NDRADEX_CONFIG: Path
+"""Path of the ndRADEX config."""
+
+NDRADEX_DIR: Path
+"""Path of the ndRADEX directory."""
+
 if (env := getenv("NDRADEX_DIR")) is not None:
     NDRADEX_DIR = Path(env)
 elif (env := getenv("XDG_CONFIG_HOME")) is not None:
@@ -96,20 +102,15 @@ else:
 NDRADEX_CONFIG = ensure(NDRADEX_DIR / "config.toml")
 
 
-# query aliases for molecular/atomic databases
-LAMDA_ALIASES: dict[str, str] = getval(NDRADEX_CONFIG, "lamda.aliases", {})
-"""Query aliases for the LAMDA database."""
-
-
-# default values for RADEX binaries
-RADEX_BIN = getval(NDRADEX_CONFIG, "defaults.bin", NDRADEX / "bin")
+# radex-related
+RADEX_BIN = getval(NDRADEX_CONFIG, "radex.bin", NDRADEX / "bin")
 """Default path for the RADEX binaries."""
 
 RADEX_VERSION = "30nov2011"
 """Supported version of the RADEX binaries."""
 
 
-# default values for public functions
+# defaults
 DV = getval(NDRADEX_CONFIG, "defaults.dv", 1.0)
 """Default value for the ``dv`` argument."""
 
@@ -160,3 +161,14 @@ TIMEOUT = getval(NDRADEX_CONFIG, "defaults.timeout", float)
 
 WORKDIR = getval(NDRADEX_CONFIG, "defaults.workdir", Path)
 """Default value for the ``workdir`` argument."""
+
+
+# aliases
+DATAFILE = getval(NDRADEX_CONFIG, "aliases.datafile", dict[str, str]())
+"""Aliases for the ``datafile`` argument."""
+
+LEVEL = getval(NDRADEX_CONFIG, "aliases.level", dict[str, str]())
+"""Aliases for the ``level`` argument."""
+
+TRANSITION = getval(NDRADEX_CONFIG, "aliases.transition", dict[str, str]())
+"""Aliases for the ``transition`` argument."""
