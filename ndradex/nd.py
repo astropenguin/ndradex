@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from itertools import product
 from pathlib import Path
 from tempfile import TemporaryFile
-from typing import Any, IO, Iterator, Literal, Sequence, TypeVar, Union
+from typing import Any, Collection, IO, Iterator, Literal, TypeVar, Union
 
 
 # dependencies
@@ -17,13 +17,32 @@ import xarray as xr
 from astropy.units import Quantity
 from tqdm import tqdm
 from xarray_dataclasses import AsDataset, DataModel, Attr, Coordof, Data, Dataof
+from .consts import (
+    DV,
+    N,
+    N_E,
+    N_H,
+    N_H2,
+    N_HE,
+    N_HP,
+    N_OH2,
+    N_PH2,
+    PARALLEL,
+    PROGRESS,
+    RADEX,
+    SQUEEZE,
+    T_BG,
+    T_KIN,
+    TIMEOUT,
+    WORKDIR,
+)
 from .lamda import get_lamda
 from .radex import RADEX_COLUMNS, Input, Parallel, Timeout, Workdir, runmap, to_input
 
 
 # type hints
 T = TypeVar("T")
-Multiple = Union[Sequence[T], T]
+Multiple = Union[Collection[T], T]
 PathLike = Union[Path, str]
 VarDims = tuple[
     Literal["transition"],
@@ -51,24 +70,24 @@ def run(
     datafile: PathLike,
     transition: Multiple[str],
     *,
-    T_kin: Multiple[float] = 0.0,
-    n_H2: Multiple[float] = 0.0,
-    n_pH2: Multiple[float] = 0.0,
-    n_oH2: Multiple[float] = 0.0,
-    n_e: Multiple[float] = 0.0,
-    n_H: Multiple[float] = 0.0,
-    n_He: Multiple[float] = 0.0,
-    n_Hp: Multiple[float] = 0.0,
-    T_bg: Multiple[float] = 0.0,
-    N: Multiple[float] = 0.0,
-    dv: Multiple[float] = 0.0,
-    radex: Multiple[PathLike] = "radex-1",
+    T_kin: Multiple[float] = T_KIN,
+    n_H2: Multiple[float] = N_H2,
+    n_pH2: Multiple[float] = N_PH2,
+    n_oH2: Multiple[float] = N_OH2,
+    n_e: Multiple[float] = N_E,
+    n_H: Multiple[float] = N_H,
+    n_He: Multiple[float] = N_HE,
+    n_Hp: Multiple[float] = N_HP,
+    T_bg: Multiple[float] = T_BG,
+    N: Multiple[float] = N,
+    dv: Multiple[float] = DV,
+    radex: Multiple[PathLike] = RADEX,
     # options
-    parallel: Parallel = None,
-    progress: bool = True,
-    squeeze: bool = True,
-    timeout: Timeout = None,
-    workdir: Workdir = None,
+    parallel: Parallel = PARALLEL,
+    progress: bool = PROGRESS,
+    squeeze: bool = SQUEEZE,
+    timeout: Timeout = TIMEOUT,
+    workdir: Workdir = WORKDIR,
 ) -> xr.Dataset:
     """Run RADEX with multidimensional parameters.
 
@@ -101,7 +120,7 @@ def run(
             Defaults to ``None`` (number of processors).
         progress: Whether to show a progress bar during runs.
         squeeze: Whether to drop dimensions whose length are 1.
-        timeout: Timeout per run in units of seconds.
+        timeout: Timeout length per run in units of seconds.
             Defaults to ``None`` (unlimited run time).
         workdir: Path of the directory for intermediate files.
             Defaults to ``None`` (temporary directory).
@@ -155,7 +174,7 @@ def run(
 
 def gen_inputs(dataset: xr.Dataset) -> Iterator[Input]:
     """Generate inputs to be passed to the RADEX binaries."""
-    lamda = get_lamda(dataset.datafile)
+    lamda = get_lamda(str(dataset.datafile))
     transitions = dataset.transition.values.tolist()
 
     freq = lamda.transitions_loc[transitions]["Frequency"]

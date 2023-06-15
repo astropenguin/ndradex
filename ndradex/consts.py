@@ -1,29 +1,42 @@
 __all__ = [
+    # ndradex-related
     "NDRADEX",
     "NDRADEX_CONFIG",
+    "NDRADEX_DIR",
+    # radex-related
     "RADEX_BIN",
     "RADEX_VERSION",
-    "LAMDA_ALIASES",
+    # defaults
     "DV",
-    "GEOM",
-    "N_H2",
-    "N_MOL",
-    "T_BG",
-    "T_KIN",
-    "TIMEOUT",
+    "N",
     "N_E",
     "N_H",
+    "N_H2",
     "N_HE",
     "N_HP",
     "N_OH2",
     "N_PH2",
+    "PARALLEL",
+    "PROGRESS",
+    "RADEX",
+    "SQUEEZE",
+    "T_BG",
+    "T_KIN",
+    "TIMEOUT",
+    "WORKDIR",
+    # aliases
+    "DATAFILE",
+    "LEVEL",
+    "TRANSITION",
+    # helper functions
+    "alias",
 ]
 
 
 # standard library
 from os import getenv
 from pathlib import Path
-from typing import TypeVar
+from typing import Any, Optional, TypeVar, overload
 
 
 # dependencies
@@ -34,12 +47,12 @@ from tomlkit import load
 T = TypeVar("T")
 
 
-# constants
-NDRADEX = Path(__file__).parent
-"""Path of the ndRADEX package"""
-
-
 # helper functions
+def alias(name: str, aliases: dict[str, str]) -> str:
+    """Get the alias of a name if it exists."""
+    return aliases.get(name, name)
+
+
 def ensure(toml: Path) -> Path:
     """Create an empty TOML file if it does not exist."""
     if not toml.exists():
@@ -49,19 +62,43 @@ def ensure(toml: Path) -> Path:
     return toml
 
 
+@overload
+def getval(toml: Path, keys: str, default: type[T]) -> Optional[T]:
+    ...
+
+
+@overload
 def getval(toml: Path, keys: str, default: T) -> T:
+    ...
+
+
+def getval(toml: Path, keys: str, default: Any) -> Any:
     """Return the value of the keys in a TOML file."""
-    with open(toml, "r") as file:
+    if isinstance(default, type):
+        type_, default_ = default, None
+    else:
+        type_, default_ = type(default), default
+
+    with open(toml) as file:
         doc = load(file)
 
     for key in keys.split("."):
         if (doc := doc.get(key)) is None:
-            return default
+            return default_
 
-    return type(default)(doc.unwrap())
+    return type_(doc.unwrap())
 
 
-# config file and directory for it
+# ndradex-related
+NDRADEX = Path(__file__).parent
+"""Path of the ndRADEX package."""
+
+NDRADEX_CONFIG: Path
+"""Path of the ndRADEX config."""
+
+NDRADEX_DIR: Path
+"""Path of the ndRADEX directory."""
+
 if (env := getenv("NDRADEX_DIR")) is not None:
     NDRADEX_DIR = Path(env)
 elif (env := getenv("XDG_CONFIG_HOME")) is not None:
@@ -72,43 +109,53 @@ else:
 NDRADEX_CONFIG = ensure(NDRADEX_DIR / "config.toml")
 
 
-# query aliases for molecular/atomic databases
-LAMDA_ALIASES: dict[str, str] = getval(NDRADEX_CONFIG, "lamda.aliases", {})
-"""Query aliases for the LAMDA database."""
-
-
-# default values for RADEX binaries
-RADEX_BIN = getval(NDRADEX_CONFIG, "defaults.bin", NDRADEX / "bin")
+# radex-related
+RADEX_BIN = getval(NDRADEX_CONFIG, "radex.bin", NDRADEX / "bin")
 """Default path for the RADEX binaries."""
 
 RADEX_VERSION = "30nov2011"
 """Supported version of the RADEX binaries."""
 
 
-# default values for public functions
+# defaults
 DV = getval(NDRADEX_CONFIG, "defaults.dv", 1.0)
 """Default value for the ``dv`` argument."""
 
-GEOM = getval(NDRADEX_CONFIG, "defaults.geom", "uni")
-"""Default value for the ``geom`` argument."""
+N = getval(NDRADEX_CONFIG, "defaults.N", 1e15)
+"""Default value for the ``N_mol`` argument."""
+
+N_E = getval(NDRADEX_CONFIG, "defaults.n_e", 0.0)
+"""Default value for the ``n_e`` argument."""
+
+N_H = getval(NDRADEX_CONFIG, "defaults.n_H", 0.0)
+"""Default value for the ``n_H`` argument."""
 
 N_H2 = getval(NDRADEX_CONFIG, "defaults.n_H2", 1e3)
 """Default value for the ``n_H2`` argument."""
 
-N_MOL = getval(NDRADEX_CONFIG, "defaults.N_mol", 1e15)
-"""Default value for the ``N_mol`` argument."""
+N_HE = getval(NDRADEX_CONFIG, "defaults.n_He", 0.0)
+"""Default value for the ``n_He`` argument."""
 
-N_PROCS = getval(NDRADEX_CONFIG, "defaults.n_procs", 2)
-"""Default value for the ``n_procs`` argument."""
+N_HP = getval(NDRADEX_CONFIG, "defaults.n_Hp", 0.0)
+"""Default value for the ``n_Hp`` argument."""
 
-PROGRESS = getval(NDRADEX_CONFIG, "defaults.progress", True)
+N_OH2 = getval(NDRADEX_CONFIG, "defaults.n_oH2", 0.0)
+"""Default value for the ``n_oH2`` argument."""
+
+N_PH2 = getval(NDRADEX_CONFIG, "defaults.n_pH2", 0.0)
+"""Default value for the ``n_pH2`` argument."""
+
+PARALLEL = getval(NDRADEX_CONFIG, "defaults.parallel", int)
+"""Default value for the ``parallel`` argument."""
+
+PROGRESS = getval(NDRADEX_CONFIG, "defaults.progress", False)
 """Default value for the ``progress`` argument."""
+
+RADEX = getval(NDRADEX_CONFIG, "defaults.radex", "radex-1")
+"""Default value for the ``radex`` argument."""
 
 SQUEEZE = getval(NDRADEX_CONFIG, "defaults.squeeze", True)
 """Default value for the ``squeeze`` argument."""
-
-TIMEOUT = getval(NDRADEX_CONFIG, "defaults.timeout", 30.0)
-"""Default value for the ``timeout`` argument."""
 
 T_BG = getval(NDRADEX_CONFIG, "defaults.T_bg", 2.73)
 """Default value for the ``T_bg`` argument."""
@@ -116,22 +163,19 @@ T_BG = getval(NDRADEX_CONFIG, "defaults.T_bg", 2.73)
 T_KIN = getval(NDRADEX_CONFIG, "defaults.T_kin", 100.0)
 """Default value for the ``T_kin`` argument."""
 
+TIMEOUT = getval(NDRADEX_CONFIG, "defaults.timeout", float)
+"""Default value for the ``timeout`` argument."""
 
-# default values for public functions (optional)
-N_E = getval(NDRADEX_CONFIG, "defaults.n_e", 0.0) or None
-"""Default value for the ``n_e`` argument."""
+WORKDIR = getval(NDRADEX_CONFIG, "defaults.workdir", Path)
+"""Default value for the ``workdir`` argument."""
 
-N_H = getval(NDRADEX_CONFIG, "defaults.n_H", 0.0) or None
-"""Default value for the ``n_H`` argument."""
 
-N_HE = getval(NDRADEX_CONFIG, "defaults.n_He", 0.0) or None
-"""Default value for the ``n_He`` argument."""
+# aliases
+DATAFILE = getval(NDRADEX_CONFIG, "aliases.datafile", dict[str, str]())
+"""Aliases for the ``datafile`` argument."""
 
-N_HP = getval(NDRADEX_CONFIG, "defaults.n_Hp", 0.0) or None
-"""Default value for the ``n_Hp`` argument."""
+LEVEL = getval(NDRADEX_CONFIG, "aliases.level", dict[str, str]())
+"""Aliases for the ``level`` argument."""
 
-N_OH2 = getval(NDRADEX_CONFIG, "defaults.n_oH2", 0.0) or None
-"""Default value for the ``n_oH2`` argument."""
-
-N_PH2 = getval(NDRADEX_CONFIG, "defaults.n_pH2", 0.0) or None
-"""Default value for the ``n_pH2`` argument."""
+TRANSITION = getval(NDRADEX_CONFIG, "aliases.transition", dict[str, str]())
+"""Aliases for the ``transition`` argument."""

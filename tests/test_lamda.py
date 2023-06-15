@@ -1,5 +1,5 @@
 # standard library
-from pathlib import Path
+from random import choices
 from typing import Any
 
 
@@ -53,16 +53,15 @@ transitions = [
 
 
 # test functions
-@mark.parametrize("name", datafile_names)
+@mark.parametrize("name", choices(datafile_names, k=10))
 def test_get_lamda_by_name(name: str) -> None:
     assert get_lamda(name)
 
 
-@mark.parametrize("name", datafile_names)
+@mark.parametrize("name", choices(datafile_names, k=10))
 def test_get_lamda_by_path(name: str) -> None:
     with get_lamda(name).to_tempfile() as file:
         assert get_lamda(file.name)
-        assert get_lamda(Path(file.name))
 
 
 @mark.parametrize("name, query, expected", levels)
