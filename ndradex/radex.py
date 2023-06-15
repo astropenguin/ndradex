@@ -87,10 +87,10 @@ def build(
             f"RADEX_MINITER={miniter}",
             f"RADEX_MAXITER={maxiter}",
         ],
-        cwd=NDRADEX_BIN,
-        stdout=PIPE,
-        stderr=PIPE,
         check=True,
+        cwd=NDRADEX_BIN,
+        stderr=PIPE,
+        stdout=PIPE,
     )
 
 
@@ -148,12 +148,12 @@ def run(
             sprun(
                 str(radex),
                 input="\n".join(input),
-                timeout=timeout,
-                stdout=PIPE,
-                stderr=PIPE,
                 check=True,
-                text=True,
                 cwd=workdir,
+                text=True,
+                timeout=timeout,
+                stderr=PIPE,
+                stdout=PIPE,
             )
             return parse_file(workdir / input[1], tail=tail)
         except CalledProcessError as error:
