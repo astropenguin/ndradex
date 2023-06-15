@@ -17,7 +17,7 @@ from astropy.table import Table
 from astroquery.lamda import Lamda, parse_lamda_datafile, write_lamda_datafile
 from requests_cache import CachedSession
 from typing_extensions import Self
-from .consts import DATAFILE
+from .consts import DATAFILE, LEVEL, TRANSITION, alias
 
 
 # type hints
@@ -111,88 +111,87 @@ class LAMDA:
         return replace(self, transitions=self.transitions_loc[ids_new])
 
 
-def get_lamda(query: PathLike, *, cache: bool = True, timeout: Timeout = None) -> LAMDA:
-    """Create a LAMDA object from a query.
+def get_lamda(datafile: str, *, cache: bool = True, timeout: Timeout = None) -> LAMDA:
+    """Create a LAMDA object from a RADEX datafile.
 
     Args:
-        query: Query for a datafile. Either of the following:
+        datafile: Query for a datafile. Either of the following:
             (1) name of the datafile (e.g. ``"co"`` or ``"co.dat"``),
             (2) path of the datafile (e.g. ``"/path/to/co.dat"``),
             (3) URL of the datafile (e.g. ``"https://example.com/co.dat"``).
-        cache: Whether to cache the query result. Defaults to ``True``.
-        timeout: Timeout length in seconds. Defaults to ``None`` (no timeout).
+        cache: Whether to cache the LAMDA object creation.
+        timeout: Timeout length in units of seconds.
+            Defaults to ``None`` (unlimited creation time).
 
     Returns:
-        LAMDA object created from the query.
+        LAMDA object created from the RADEX datafile.
 
     """
-    if isinstance(query, Path):
-        query_ = str(query)
-    else:
-        query_ = DATAFILE.get(query, query)
-
-    if URL_REGEX.match(query_):
-        return get_lamda_by_url(query_, cache=cache, timeout=timeout)
+    if URL_REGEX.match(datafile := alias(datafile, DATAFILE)):
+        return get_lamda_by_url(datafile, cache=cache, timeout=timeout)
 
     try:
-        return get_lamda_by_path(query_)
+        return get_lamda_by_path(datafile)
     except FileNotFoundError:
-        return get_lamda_by_name(query_, cache=cache, timeout=timeout)
+        return get_lamda_by_name(datafile, cache=cache, timeout=timeout)
 
 
-def get_lamda_by_path(query: str) -> LAMDA:
-    """Create a LAMDA object by a local datafile path."""
-    return LAMDA.from_datafile(query)
+def get_lamda_by_path(datafile: str) -> LAMDA:
+    """Create a LAMDA object from a local RADEX datafile."""
+    return LAMDA.from_datafile(datafile)
 
 
-def get_lamda_by_name(query: str, *, cache: bool, timeout: Timeout) -> LAMDA:
-    """Create a LAMDA object by a datafile name."""
+def get_lamda_by_name(datafile: str, *, cache: bool, timeout: Timeout) -> LAMDA:
+    """Create a LAMDA object from an astroquery RADEX datafile."""
     with catch_warnings():
         simplefilter("ignore")
-        tables = Lamda.query(Path(query).stem, cache=cache, timeout=timeout)
+        tables = Lamda.query(Path(datafile).stem, cache=cache, timeout=timeout)
         return LAMDA.from_tables(tables)  # type: ignore
 
 
-def get_lamda_by_url(query: str, *, cache: bool, timeout: Timeout) -> LAMDA:
-    """Create a LAMDA object by a datafile URL."""
-    if cache:
-        response = HTTP_SESSION.get(query, timeout=timeout, expire_after=-1)
-    else:
-        response = HTTP_SESSION.get(query, timeout=timeout, expire_after=0)
+def get_lamda_by_url(datafile: str, *, cache: bool, timeout: Timeout) -> LAMDA:
+    """Create a LAMDA object from a remote RADEX datafile."""
+    response = HTTP_SESSION.get(
+        url=datafile,
+        timeout=timeout,
+        expire_after=-1 if cache else 0,
+    )
 
     if not response.ok:
-        raise FileNotFoundError(query)
+        raise FileNotFoundError(datafile)
 
     with NamedTemporaryFile("w", suffix=DATAFILE_SUFFIX) as file:
         file.write(response.text)
         return LAMDA.from_datafile(file.name)
 
 
-def get_level_id(query: LevelLike, lamda: LAMDA) -> int:
-    """Return a level ID from a query."""
-    if not isinstance(query, (int, str)):
-        raise TypeError(f"Query must be {LevelLike}.")
+def get_level_id(level: LevelLike, lamda: LAMDA) -> int:
+    """Return a level ID from a level-like object."""
+    if not isinstance(level, (int, str)):
+        raise TypeError(f"Level must be {LevelLike}.")
 
-    if isinstance(query, int):
-        return query
+    if isinstance(level, int):
+        return level
 
-    level = query.strip()
+    if isinstance(level, str):
+        level = alias(level, LEVEL).strip()
+
     frame = lamda.levels.to_pandas(False).set_index(LEVEL_NAME_COLUMN)
     return int(frame[LEVEL_COLUMN].loc[level])
 
 
-def get_transition_id(query: TransitionLike, lamda: LAMDA) -> int:
-    """Return a transition ID from a query."""
-    if not isinstance(query, (int, str, tuple)):
-        raise TypeError(f"Query must be {TransitionLike}.")
+def get_transition_id(transition: TransitionLike, lamda: LAMDA) -> int:
+    """Return a transition ID from a transition-like object."""
+    if not isinstance(transition, (int, str, tuple)):
+        raise TypeError(f"Transition must be {TransitionLike}.")
 
-    if isinstance(query, int):
-        return query
+    if isinstance(transition, int):
+        return transition
 
-    if isinstance(query, str):
-        query = tuple(query.split(TRANSITION_SEP))
+    if isinstance(transition, str):
+        transition = tuple(alias(transition, TRANSITION).split(TRANSITION_SEP))
 
-    uplow = tuple(get_level_id(level, lamda) for level in query)
+    uplow = tuple(get_level_id(level, lamda) for level in transition)
     frame = lamda.transitions.to_pandas(False).set_index(UPLOW_COLUMNS)
     return int(frame[TRANSITION_COLUMN].loc[uplow])
 

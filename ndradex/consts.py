@@ -28,6 +28,8 @@ __all__ = [
     "DATAFILE",
     "LEVEL",
     "TRANSITION",
+    # helper functions
+    "alias",
 ]
 
 
@@ -46,6 +48,11 @@ T = TypeVar("T")
 
 
 # helper functions
+def alias(name: str, aliases: dict[str, str]) -> str:
+    """Get the alias of a name if it exists."""
+    return aliases.get(name, name)
+
+
 def ensure(toml: Path) -> Path:
     """Create an empty TOML file if it does not exist."""
     if not toml.exists():
