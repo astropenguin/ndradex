@@ -189,7 +189,7 @@ def runmap(
         parallel: Number of runs in parallel.
             Defaults to ``None`` (number of processors).
         tail: Number of lines in a RADEX outfile to be read.
-        timeout: Timeout of the run in units of seconds.
+        timeout: Timeout length per run in units of seconds.
             Defaults to ``None`` (unlimited run time).
         workdir: Path of the directory for RADEX output files.
             Defaults to ``None`` (temporary directory).

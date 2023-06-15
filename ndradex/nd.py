@@ -120,7 +120,7 @@ def run(
             Defaults to ``None`` (number of processors).
         progress: Whether to show a progress bar during runs.
         squeeze: Whether to drop dimensions whose length are 1.
-        timeout: Timeout per run in units of seconds.
+        timeout: Timeout length per run in units of seconds.
             Defaults to ``None`` (unlimited run time).
         workdir: Path of the directory for intermediate files.
             Defaults to ``None`` (temporary directory).
