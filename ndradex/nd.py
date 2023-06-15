@@ -174,7 +174,7 @@ def run(
 
 def gen_inputs(dataset: xr.Dataset) -> Iterator[Input]:
     """Generate inputs to be passed to the RADEX binaries."""
-    lamda = get_lamda(dataset.datafile)
+    lamda = get_lamda(str(dataset.datafile))
     transitions = dataset.transition.values.tolist()
 
     freq = lamda.transitions_loc[transitions]["Frequency"]
