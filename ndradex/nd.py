@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from itertools import product
 from pathlib import Path
 from tempfile import TemporaryFile
-from typing import Any, IO, Iterator, Literal, Sequence, TypeVar, Union
+from typing import Any, Collection, IO, Iterator, Literal, TypeVar, Union
 
 
 # dependencies
@@ -42,7 +42,7 @@ from .radex import RADEX_COLUMNS, Input, Parallel, Timeout, Workdir, runmap, to_
 
 # type hints
 T = TypeVar("T")
-Multiple = Union[Sequence[T], T]
+Multiple = Union[Collection[T], T]
 PathLike = Union[Path, str]
 VarDims = tuple[
     Literal["transition"],
