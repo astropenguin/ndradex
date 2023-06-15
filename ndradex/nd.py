@@ -17,6 +17,25 @@ import xarray as xr
 from astropy.units import Quantity
 from tqdm import tqdm
 from xarray_dataclasses import AsDataset, DataModel, Attr, Coordof, Data, Dataof
+from .consts import (
+    DV,
+    N,
+    N_E,
+    N_H,
+    N_H2,
+    N_HE,
+    N_HP,
+    N_OH2,
+    N_PH2,
+    PARALLEL,
+    PROGRESS,
+    RADEX,
+    SQUEEZE,
+    T_BG,
+    T_KIN,
+    TIMEOUT,
+    WORKDIR,
+)
 from .lamda import get_lamda
 from .radex import RADEX_COLUMNS, Input, Parallel, Timeout, Workdir, runmap, to_input
 
@@ -51,24 +70,24 @@ def run(
     datafile: PathLike,
     transition: Multiple[str],
     *,
-    T_kin: Multiple[float] = 0.0,
-    n_H2: Multiple[float] = 0.0,
-    n_pH2: Multiple[float] = 0.0,
-    n_oH2: Multiple[float] = 0.0,
-    n_e: Multiple[float] = 0.0,
-    n_H: Multiple[float] = 0.0,
-    n_He: Multiple[float] = 0.0,
-    n_Hp: Multiple[float] = 0.0,
-    T_bg: Multiple[float] = 0.0,
-    N: Multiple[float] = 0.0,
-    dv: Multiple[float] = 0.0,
-    radex: Multiple[PathLike] = "radex-1",
+    T_kin: Multiple[float] = T_KIN,
+    n_H2: Multiple[float] = N_H2,
+    n_pH2: Multiple[float] = N_PH2,
+    n_oH2: Multiple[float] = N_OH2,
+    n_e: Multiple[float] = N_E,
+    n_H: Multiple[float] = N_H,
+    n_He: Multiple[float] = N_HE,
+    n_Hp: Multiple[float] = N_HP,
+    T_bg: Multiple[float] = T_BG,
+    N: Multiple[float] = N,
+    dv: Multiple[float] = DV,
+    radex: Multiple[PathLike] = RADEX,
     # options
-    parallel: Parallel = None,
-    progress: bool = True,
-    squeeze: bool = True,
-    timeout: Timeout = None,
-    workdir: Workdir = None,
+    parallel: Parallel = PARALLEL,
+    progress: bool = PROGRESS,
+    squeeze: bool = SQUEEZE,
+    timeout: Timeout = TIMEOUT,
+    workdir: Workdir = WORKDIR,
 ) -> xr.Dataset:
     """Run RADEX with multidimensional parameters.
 
