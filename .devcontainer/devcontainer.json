@@ -4,6 +4,9 @@
         "context": "..",
         "dockerfile": "Dockerfile"
     },
+    "containerEnv": {
+        "NDRADEX_DIR": "${containerWorkspaceFolder}/.config"
+    },
     "postCreateCommand": "poetry install",
     "customizations": {
         "vscode": {
