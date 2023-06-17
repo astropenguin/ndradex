@@ -1,4 +1,4 @@
-__all__ = ["LAMDA", "get_lamda"]
+__all__ = ["LAMDA", "query"]
 
 
 # standard library
@@ -112,7 +112,7 @@ class LAMDA:
         return replace(self, transitions=self.transitions_loc[ids_new])
 
 
-def get_lamda(datafile: str, *, cache: bool = True, timeout: Timeout = None) -> LAMDA:
+def query(datafile: str, *, cache: bool = True, timeout: Timeout = None) -> LAMDA:
     """Create a LAMDA object from a RADEX datafile.
 
     Args:

@@ -36,7 +36,7 @@ from .consts import (
     TIMEOUT,
     WORKDIR,
 )
-from .lamda import get_lamda
+from .lamda import query
 from .radex import RADEX_COLUMNS, Input, Parallel, Timeout, Workdir, runmap, to_input
 
 
@@ -174,7 +174,7 @@ def run(
 
 def gen_inputs(dataset: xr.Dataset) -> Iterator[Input]:
     """Generate inputs to be passed to the RADEX binaries."""
-    lamda = get_lamda(str(dataset.datafile))
+    lamda = query(str(dataset.datafile))
     transitions = dataset.transition.values.tolist()
 
     freq = lamda.transitions_loc[transitions]["Frequency"]
