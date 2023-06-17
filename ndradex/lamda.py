@@ -1,4 +1,4 @@
-__all__ = ["LAMDA", "get_lamda"]
+__all__ = ["LAMDA", "query"]
 
 
 # standard library
@@ -33,8 +33,9 @@ DATAFILE_SUFFIX = ".dat"
 HTTP_SESSION = CachedSession("ndradex", use_cache_dir=True)
 LEVEL_COLUMN = "Level"
 LEVEL_NAME_COLUMN = "J"
+LEVEL_NAME_REGEX = compile(r"^['\"\s]*(.+?)['\"\s]*$")
 TRANSITION_COLUMN = "Transition"
-TRANSITION_SEP = "-"
+TRANSITION_SEPS = "->", "/", "-"
 UPLOW_COLUMNS = ["Upper", "Lower"]
 URL_REGEX = compile(r"https?://")
 
@@ -85,7 +86,7 @@ class LAMDA:
         """Create a LAMDA object from tables."""
         return cls(
             name=tables[2].meta["molecule"],  # type: ignore
-            levels=tables[2],
+            levels=reformat_levels(tables[2]),
             transitions=tables[1],
             colliders=tables[0],
         )
@@ -111,7 +112,7 @@ class LAMDA:
         return replace(self, transitions=self.transitions_loc[ids_new])
 
 
-def get_lamda(datafile: str, *, cache: bool = True, timeout: Timeout = None) -> LAMDA:
+def query(datafile: str, *, cache: bool = True, timeout: Timeout = None) -> LAMDA:
     """Create a LAMDA object from a RADEX datafile.
 
     Args:
@@ -189,11 +190,22 @@ def get_transition_id(transition: TransitionLike, lamda: LAMDA) -> int:
         return transition
 
     if isinstance(transition, str):
-        transition = tuple(alias(transition, TRANSITION).split(TRANSITION_SEP))
+        transition = split_transition(alias(transition, TRANSITION))
 
     uplow = tuple(get_level_id(level, lamda) for level in transition)
     frame = lamda.transitions.to_pandas(False).set_index(UPLOW_COLUMNS)
     return int(frame[TRANSITION_COLUMN].loc[uplow])
+
+
+def reformat_levels(levels: Table) -> Table:
+    """Remove unnecessary strings from level names."""
+
+    @np.vectorize
+    def trim(level_name: str) -> str:
+        return LEVEL_NAME_REGEX.sub(r"\1", level_name)
+
+    levels["J"][:] = trim(levels["J"])  # type: ignore
+    return levels
 
 
 @contextmanager
@@ -206,6 +218,15 @@ def set_indices(lamda: LAMDA) -> Generator[None, Any, None]:
     finally:
         lamda.levels.remove_indices(LEVEL_COLUMN)
         lamda.transitions.remove_indices(TRANSITION_COLUMN)
+
+
+def split_transition(transition: str) -> tuple[str, str]:
+    """Split a transition string in upper and lower levels."""
+    for sep in TRANSITION_SEPS:
+        if len(subs := transition.split(sep, 1)) == 2:
+            return subs[0].strip(), subs[1].strip()
+
+    raise ValueError(f"{transition} cannot be split in two.")
 
 
 @dataclass

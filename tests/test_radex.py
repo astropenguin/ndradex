@@ -5,7 +5,7 @@ from pathlib import Path
 
 # dependencies
 from ndradex.consts import RADEX_BIN
-from ndradex.lamda import get_lamda
+from ndradex.lamda import query
 from ndradex.radex import run, runmap, to_input
 
 
@@ -57,7 +57,7 @@ radex_params = {
 
 # test functions
 def test_run() -> None:
-    with get_lamda("co").to_tempfile() as file:
+    with query("co").to_tempfile() as file:
         output = run(
             radex=RADEX_BIN / "radex-1",
             input=(file.name, *radex_input),
@@ -72,7 +72,7 @@ def test_run() -> None:
 
 
 def test_runmap() -> None:
-    with get_lamda("co").to_tempfile() as file:
+    with query("co").to_tempfile() as file:
         outputs = list(
             runmap(
                 radexes=repeat(RADEX_BIN / "radex-1", 10),
