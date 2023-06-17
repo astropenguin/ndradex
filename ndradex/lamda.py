@@ -33,6 +33,7 @@ DATAFILE_SUFFIX = ".dat"
 HTTP_SESSION = CachedSession("ndradex", use_cache_dir=True)
 LEVEL_COLUMN = "Level"
 LEVEL_NAME_COLUMN = "J"
+LEVEL_NAME_REGEX = compile(r"^['\"\s]*(.+?)['\"\s]*$")
 TRANSITION_COLUMN = "Transition"
 TRANSITION_SEPS = "->", "/", "-"
 UPLOW_COLUMNS = ["Upper", "Lower"]
@@ -85,7 +86,7 @@ class LAMDA:
         """Create a LAMDA object from tables."""
         return cls(
             name=tables[2].meta["molecule"],  # type: ignore
-            levels=tables[2],
+            levels=reformat_levels(tables[2]),
             transitions=tables[1],
             colliders=tables[0],
         )
@@ -194,6 +195,17 @@ def get_transition_id(transition: TransitionLike, lamda: LAMDA) -> int:
     uplow = tuple(get_level_id(level, lamda) for level in transition)
     frame = lamda.transitions.to_pandas(False).set_index(UPLOW_COLUMNS)
     return int(frame[TRANSITION_COLUMN].loc[uplow])
+
+
+def reformat_levels(levels: Table) -> Table:
+    """Remove unnecessary strings from level names."""
+
+    @np.vectorize
+    def trim(level_name: str) -> str:
+        return LEVEL_NAME_REGEX.sub(r"\1", level_name)
+
+    levels["J"][:] = trim(levels["J"])  # type: ignore
+    return levels
 
 
 @contextmanager
