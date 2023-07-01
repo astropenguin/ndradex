@@ -37,7 +37,7 @@ from .consts import (
     WORKDIR,
 )
 from .lamda import query
-from .radex import RADEX_COLUMNS, Input, Parallel, Timeout, Workdir, runmap, to_input
+from .radex import Input, Parallel, Timeout, Workdir, runmap, to_input
 
 
 # type hints
@@ -206,7 +206,6 @@ def update(dataset: xr.Dataset, csv: IO[str]) -> xr.Dataset:
         csv,
         header=None,
         names=list(dataset.data_vars),
-        usecols=range(1, RADEX_COLUMNS),
     )
 
     # move transition to the last of dims
@@ -330,6 +329,12 @@ class RadexBinary:
 
 
 @dataclass
+class Line:
+    data: Data[VarDims, str]
+    long_name: Attr[str] = "Line name"
+
+
+@dataclass
 class UpperStateEnergy(Units):
     data: Data[VarDims, float]
     long_name: Attr[str] = "Upper state energy"
@@ -422,6 +427,7 @@ class EmptySet(AsDataset):
     radex: Coordof[RadexBinary]
 
     # data variables
+    line: Dataof[Line] = field(init=False)
     E_up: Dataof[UpperStateEnergy] = field(init=False)
     freq: Dataof[Frequency] = field(init=False)
     wavel: Dataof[Wavelength] = field(init=False)
