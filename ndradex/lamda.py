@@ -204,7 +204,8 @@ def reformat_levels(levels: Table) -> Table:
     def trim(level_name: str) -> str:
         return LEVEL_NAME_REGEX.sub(r"\1", level_name)
 
-    levels["J"][:] = trim(levels["J"])  # type: ignore
+    level_names = levels[LEVEL_NAME_COLUMN]
+    level_names[:] = trim(level_names)  # type: ignore
     return levels
 
 
