@@ -151,20 +151,17 @@ def run(
         tqdm(total=ds.I.size, disable=not progress) as bar,
     ):
         writer = csv_writer(csv)
-        radexes = gen_radexes(ds)
-        inputs = gen_inputs(ds)
-        n_transitions = ds.transition.size
 
         for output in runmap(
-            radexes=radexes,
-            inputs=inputs,
-            tail=n_transitions,
+            radexes=gen_radexes(ds),
+            inputs=gen_inputs(ds),
+            tail=ds.transition.size,
             timeout=timeout,
             parallel=parallel,
             workdir=workdir,
         ):
             writer.writerows(output)
-            bar.update(n_transitions)
+            bar.update(ds.transition.size)
 
         if squeeze:
             return update(ds, csv).squeeze()
