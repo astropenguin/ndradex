@@ -6,24 +6,6 @@ __all__ = [
     # radex-related
     "RADEX_BIN",
     "RADEX_VERSION",
-    # defaults
-    "DV",
-    "N",
-    "N_E",
-    "N_H",
-    "N_H2",
-    "N_HE",
-    "N_HP",
-    "N_OH2",
-    "N_PH2",
-    "PARALLEL",
-    "PROGRESS",
-    "RADEX",
-    "SQUEEZE",
-    "T_BG",
-    "T_KIN",
-    "TIMEOUT",
-    "WORKDIR",
     # aliases
     "DATAFILE",
     "LEVEL",
@@ -115,59 +97,6 @@ RADEX_BIN = getval(NDRADEX_CONFIG, "radex.bin", NDRADEX / "bin")
 
 RADEX_VERSION = "30nov2011"
 """Supported version of the RADEX binaries."""
-
-
-# defaults
-DV = getval(NDRADEX_CONFIG, "defaults.dv", 1.0)
-"""Default value for the ``dv`` argument."""
-
-N = getval(NDRADEX_CONFIG, "defaults.N", 1e15)
-"""Default value for the ``N_mol`` argument."""
-
-N_E = getval(NDRADEX_CONFIG, "defaults.n_e", 0.0)
-"""Default value for the ``n_e`` argument."""
-
-N_H = getval(NDRADEX_CONFIG, "defaults.n_H", 0.0)
-"""Default value for the ``n_H`` argument."""
-
-N_H2 = getval(NDRADEX_CONFIG, "defaults.n_H2", 1e3)
-"""Default value for the ``n_H2`` argument."""
-
-N_HE = getval(NDRADEX_CONFIG, "defaults.n_He", 0.0)
-"""Default value for the ``n_He`` argument."""
-
-N_HP = getval(NDRADEX_CONFIG, "defaults.n_Hp", 0.0)
-"""Default value for the ``n_Hp`` argument."""
-
-N_OH2 = getval(NDRADEX_CONFIG, "defaults.n_oH2", 0.0)
-"""Default value for the ``n_oH2`` argument."""
-
-N_PH2 = getval(NDRADEX_CONFIG, "defaults.n_pH2", 0.0)
-"""Default value for the ``n_pH2`` argument."""
-
-PARALLEL = getval(NDRADEX_CONFIG, "defaults.parallel", int)
-"""Default value for the ``parallel`` argument."""
-
-PROGRESS = getval(NDRADEX_CONFIG, "defaults.progress", False)
-"""Default value for the ``progress`` argument."""
-
-RADEX = getval(NDRADEX_CONFIG, "defaults.radex", "radex-1")
-"""Default value for the ``radex`` argument."""
-
-SQUEEZE = getval(NDRADEX_CONFIG, "defaults.squeeze", True)
-"""Default value for the ``squeeze`` argument."""
-
-T_BG = getval(NDRADEX_CONFIG, "defaults.T_bg", 2.73)
-"""Default value for the ``T_bg`` argument."""
-
-T_KIN = getval(NDRADEX_CONFIG, "defaults.T_kin", 100.0)
-"""Default value for the ``T_kin`` argument."""
-
-TIMEOUT = getval(NDRADEX_CONFIG, "defaults.timeout", float)
-"""Default value for the ``timeout`` argument."""
-
-WORKDIR = getval(NDRADEX_CONFIG, "defaults.workdir", Path)
-"""Default value for the ``workdir`` argument."""
 
 
 # aliases
