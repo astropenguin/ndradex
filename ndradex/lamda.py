@@ -17,7 +17,6 @@ from astropy.table import Table
 from astroquery.lamda import Lamda, parse_lamda_datafile, write_lamda_datafile
 from requests_cache import CachedSession
 from typing_extensions import Self
-from .consts import DATAFILE, LEVEL, TRANSITION, alias
 
 
 # type hints
@@ -128,7 +127,7 @@ def query(datafile: str, *, cache: bool = True, timeout: Timeout = None) -> LAMD
         LAMDA object created from the RADEX datafile.
 
     """
-    if URL_REGEX.match(datafile := alias(datafile, DATAFILE)):
+    if URL_REGEX.match(datafile):
         return get_lamda_by_url(datafile, cache=cache, timeout=timeout)
 
     try:
@@ -175,7 +174,7 @@ def get_level_id(level: LevelLike, lamda: LAMDA) -> int:
         return level
 
     if isinstance(level, str):
-        level = alias(level, LEVEL).strip()
+        level = level.strip()
 
     frame = lamda.levels.to_pandas(False).set_index(LEVEL_NAME_COLUMN)
     return int(frame[LEVEL_COLUMN].loc[level])
@@ -190,7 +189,7 @@ def get_transition_id(transition: TransitionLike, lamda: LAMDA) -> int:
         return transition
 
     if isinstance(transition, str):
-        transition = split_transition(alias(transition, TRANSITION))
+        transition = split_transition(transition)
 
     uplow = tuple(get_level_id(level, lamda) for level in transition)
     frame = lamda.transitions.to_pandas(False).set_index(UPLOW_COLUMNS)

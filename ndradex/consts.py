@@ -6,12 +6,6 @@ __all__ = [
     # radex-related
     "RADEX_BIN",
     "RADEX_VERSION",
-    # aliases
-    "DATAFILE",
-    "LEVEL",
-    "TRANSITION",
-    # helper functions
-    "alias",
 ]
 
 
@@ -30,11 +24,6 @@ T = TypeVar("T")
 
 
 # helper functions
-def alias(name: str, aliases: dict[str, str]) -> str:
-    """Get the alias of a name if it exists."""
-    return aliases.get(name, name)
-
-
 def ensure(toml: Path) -> Path:
     """Create an empty TOML file if it does not exist."""
     if not toml.exists():
@@ -97,14 +86,3 @@ RADEX_BIN = getval(NDRADEX_CONFIG, "radex.bin", NDRADEX / "bin")
 
 RADEX_VERSION = "30nov2011"
 """Supported version of the RADEX binaries."""
-
-
-# aliases
-DATAFILE = getval(NDRADEX_CONFIG, "aliases.datafile", dict[str, str]())
-"""Aliases for the ``datafile`` argument."""
-
-LEVEL = getval(NDRADEX_CONFIG, "aliases.level", dict[str, str]())
-"""Aliases for the ``level`` argument."""
-
-TRANSITION = getval(NDRADEX_CONFIG, "aliases.transition", dict[str, str]())
-"""Aliases for the ``transition`` argument."""
