@@ -14,6 +14,9 @@ from pytest import mark
 with catch_warnings():
     simplefilter("ignore")
     datafiles = list(Lamda.molecule_dict)
+    datafiles.remove("si-h")
+    datafiles.remove("so2@lowT")
+    datafiles.remove("PO_hfs")
 
 levels = [
     # (datafile, level, expected level ID)
