@@ -10,29 +10,27 @@ on:
 
 jobs:
   job:
-    name: Test (Python ${{ matrix.python }})
+    name: Test (${{ matrix.env }})
     runs-on: ubuntu-latest
+    container: ghcr.io/astral-sh/uv:${{ matrix.env }}
     env:
-      POETRY_VIRTUALENVS_CREATE: false
+      PYTHON_DIRS: docs ndradex tests
+      UV_PROJECT_ENVIRONMENT: /usr/local
     strategy:
       fail-fast: false
       matrix:
-        python: ["3.9", "3.10", "3.11"]
+        env:
+          - python3.10-bookworm
+          - python3.11-bookworm
+          - python3.12-bookworm
+          - python3.13-bookworm
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: true
-      - uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python }}
-      - name: Install project dependencies
-        run: |
-          sudo apt-get install gfortran
-          pip install poetry
-          poetry install
-      - name: Test code's formatting (Black)
-        run: black --check ndradex tests
-      - name: Test code's execution (pytest)
-        run: pytest -v tests
-      - name: Test docs' building (Sphinx)
-        run: docs/build
+      - run: apt-get update && apt-get install -y gfortran
+      - run: uv sync --frozen
+      - run: black --check ${PYTHON_DIRS}
+      - run: pyright ${PYTHON_DIRS}
+      - run: pytest -v tests
+      - run: docs/build

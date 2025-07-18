@@ -9,14 +9,13 @@ jobs:
   job:
     name: PyPI
     runs-on: ubuntu-latest
+    container: ghcr.io/astral-sh/uv:python3.12-bookworm
     env:
-      POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_TOKEN }}
+      UV_PROJECT_ENVIRONMENT: /usr/local
+    permissions:
+      id-token: write
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: true
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "3.11"
-      - name: Publish package to PyPI
-        run: pip install poetry && poetry publish --build
+      - run: uv build && uv publish

@@ -4,15 +4,18 @@
         "context": "..",
         "dockerfile": "Dockerfile"
     },
+    "runArgs": [
+        "--name=ndradex"
+    ],
     "containerEnv": {
-        "NDRADEX_DIR": "${containerWorkspaceFolder}/.config"
+        "NDRADEX_DIR": "${containerWorkspaceFolder}/.config",
+        "UV_PROJECT_ENVIRONMENT": "/usr/local"
     },
-    "postCreateCommand": "poetry install",
+    "postCreateCommand": "uv sync --frozen",
     "customizations": {
         "vscode": {
             "extensions": [
-                "github.vscode-pull-request-github",
-                "mhutchie.git-graph",
+                "ms-python.black-formatter",
                 "ms-python.python",
                 "streetsidesoftware.code-spell-checker",
                 "tamasfe.even-better-toml"
@@ -20,12 +23,11 @@
             "settings": {
                 "files.insertFinalNewline": true,
                 "files.trimTrailingWhitespace": true,
-                "python.formatting.provider": "black",
+                "python.analysis.autoImportCompletions": true,
                 "python.languageServer": "Pylance",
                 "[python]": {
-                    "editor.formatOnSave": true,
-                    "editor.insertSpaces": true,
-                    "editor.tabSize": 4
+                    "editor.defaultFormatter": "ms-python.black-formatter",
+                    "editor.formatOnSave": true
                 }
             }
         }
