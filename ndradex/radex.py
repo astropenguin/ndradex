@@ -1,4 +1,4 @@
-__all__ = ["build", "run", "runmap", "to_input"]
+__all__ = ["RADEX_BIN", "build", "run"]
 
 
 # standard library
@@ -14,10 +14,6 @@ from tempfile import TemporaryDirectory
 from typing import Any, Iterable, Iterator, Optional, Union
 
 
-# dependencies
-from .consts import NDRADEX, RADEX_BIN, RADEX_VERSION
-
-
 # type hints
 Input = tuple[str, ...]
 Output = list[tuple[str, ...]]
@@ -30,11 +26,13 @@ Workdir = Optional[PathLike]
 # constants
 FC = getenv("FC", "gfortran")
 NAN = str(float("nan"))
-NDRADEX_BIN = NDRADEX / "bin"
+NDRADEX_BIN = Path(__file__).parent / "bin"
+RADEX_BIN = Path(getenv("RADEX_BIN", NDRADEX_BIN)).expanduser().resolve()
 RADEX_COLUMNS = 11
 RADEX_LOGFILE = devnull
 RADEX_MAXITER = 1_000_000
 RADEX_MINITER = 10
+RADEX_VERSION = "30nov2011"
 
 
 # module logger
@@ -55,7 +53,7 @@ def build(
     set to the package's bin (``/path/to/ndradex/bin``):
     Otherwise, no build is run even if ``force=True``.
 
-    Keyword Args:
+    Args:
         force: Whether to forcibly rebuild the binaries.
         logfile: Path of the RADEX log file.
         miniter: Minimum number of iterations.
@@ -72,7 +70,7 @@ def build(
     if force:
         sprun(
             args=["make", "clean"],
-            cwd=NDRADEX / "bin",
+            cwd=NDRADEX_BIN,
             stdout=PIPE,
             stderr=PIPE,
             check=True,

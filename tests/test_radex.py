@@ -4,9 +4,8 @@ from pathlib import Path
 
 
 # dependencies
-from ndradex.consts import RADEX_BIN
 from ndradex.lamda import query
-from ndradex.radex import run, runmap, to_input
+from ndradex.radex import RADEX_BIN, run, runmap, to_input
 
 
 # test data
