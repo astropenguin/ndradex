@@ -2,7 +2,7 @@ __all__ = ["LAMDA", "get_lamda"]
 
 
 # standard library
-from collections.abc import Iterator
+from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass, field, replace
 from os import PathLike
@@ -11,6 +11,7 @@ from tempfile import NamedTemporaryFile
 
 
 # dependencies
+import numpy as np
 from astropy.table import Table, join, vstack
 from astroquery.lamda import Lamda, parse_lamda_datafile, write_lamda_datafile
 from requests_cache import CachedSession
@@ -19,11 +20,13 @@ from typing_extensions import Self
 
 # type hints
 Tables = tuple[dict[str, Table], Table, Table]
+Transitions = Sequence[int] | Sequence[str]
 
 
 # constants
 HTTP_SESSION = CachedSession("ndradex", backend="memory")
 NAMED_TRANSITION = "NamedTransition"
+TRANSITION = "Transition"
 
 
 @dataclass(frozen=True)
@@ -61,12 +64,22 @@ class LAMDA:
         tables = self.colliders, saved_transitions, self.levels
         write_lamda_datafile(datafile, tables)
 
-    def prioritize(self, transitions: list[int | str], /) -> Self:
+    def prioritize(self, transitions: Transitions, /) -> Self:
         """Prioritize given transitions in the transitions table."""
-        top = self.transitions.copy()
-        bottom = top.loc[transitions]
-        top.remove_rows(top.loc_indices[transitions])
-        return replace(self, transitions=vstack([top, bottom]))
+        transitions = list(transitions)  # type: ignore
+
+        if (kind := np.array(transitions).dtype.kind) == "i":
+            name = TRANSITION
+        elif kind == "U":
+            name = NAMED_TRANSITION
+        else:
+            raise TypeError("Could not infer dtype of transitions.")
+
+        with set_index(self.transitions, name):
+            top = self.transitions.copy()
+            bottom = top.loc[transitions]
+            top.remove_rows(top.loc_indices[transitions])
+            return replace(self, transitions=vstack([top, bottom]))
 
     def __post_init__(self) -> None:
         if not hasattr(self, "name"):
