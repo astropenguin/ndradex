@@ -8,6 +8,7 @@ from dataclasses import dataclass, field, replace
 from os import PathLike
 from pathlib import Path
 from tempfile import NamedTemporaryFile
+from warnings import catch_warnings, simplefilter
 
 
 # dependencies
@@ -69,13 +70,13 @@ class LAMDA:
         transitions = list(transitions)  # type: ignore
 
         if (kind := np.array(transitions).dtype.kind) == "i":
-            name = TRANSITION
+            index = TRANSITION
         elif kind == "U":
-            name = NAMED_TRANSITION
+            index = NAMED_TRANSITION
         else:
             raise TypeError("Could not infer dtype of transitions.")
 
-        with set_index(self.transitions, name):
+        with set_index(self.transitions, index):
             top = self.transitions.copy()
             bottom = top.loc[transitions]
             top.remove_rows(top.loc_indices[transitions])
@@ -134,43 +135,46 @@ def get_lamda(
         cn = get_lamda("https://example.com/cn.dat")
 
     """
-    if (path := Path(query)).exists():
-        return LAMDA.from_datafile(query)
+    with catch_warnings():
+        simplefilter("ignore")
 
-    if path.stem in Lamda.molecule_dict:
-        tables = Lamda.query(
-            Path(query).stem,
-            cache=cache,
+        if (path := Path(query)).exists():
+            return LAMDA.from_datafile(query)
+
+        if path.stem in Lamda.molecule_dict:
+            tables = Lamda.query(
+                Path(query).stem,
+                cache=cache,
+                timeout=timeout,
+            )
+            return LAMDA(*tables)  # type: ignore
+
+        response = HTTP_SESSION.get(
+            url=str(path),
             timeout=timeout,
+            expire_after=-1 if cache else 0,
         )
-        return LAMDA(*tables)  # type: ignore
+        response.raise_for_status()
 
-    response = HTTP_SESSION.get(
-        url=str(path),
-        timeout=timeout,
-        expire_after=-1 if cache else 0,
-    )
-    response.raise_for_status()
-
-    with NamedTemporaryFile("w") as tempfile:
-        tempfile.write(response.text)
-        return LAMDA.from_datafile(tempfile.name)
+        with NamedTemporaryFile("w") as tempfile:
+            tempfile.write(response.text)
+            return LAMDA.from_datafile(tempfile.name)
 
 
 @contextmanager
-def set_index(table: Table, name: str, /) -> Iterator[None]:
+def set_index(table: Table, index: str, /) -> Iterator[None]:
     """Temporarily set a index to given table.
 
     Args:
         table: Table to which the index will be set.
-        name: Name of the index to be set.
+        index: Name of the index to be set.
 
     """
     if table.indices:
         raise ValueError("Indices already exist.")
 
     try:
-        table.add_index(name)
+        table.add_index(index)
         yield None
     finally:
-        table.remove_indices(name)
+        table.remove_indices(index)
