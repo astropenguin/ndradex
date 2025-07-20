@@ -2,6 +2,8 @@ __all__ = ["LAMDA"]
 
 
 # standard library
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass, field, replace
 from os import PathLike
 
@@ -83,3 +85,16 @@ class LAMDA:
             named_transition = joined["J_1"] + "-" + joined["J_2"]
             named_transition.name = NAMED_TRANSITION
             self.transitions.add_column(named_transition)
+
+
+@contextmanager
+def set_index(table: Table, name: str, /) -> Iterator[None]:
+    """Temporarily set a index to given table."""
+    if table.indices:
+        raise ValueError("Indices already exist.")
+
+    try:
+        table.add_index(name)
+        yield None
+    finally:
+        table.remove_indices(name)
