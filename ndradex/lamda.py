@@ -1,4 +1,4 @@
-__all__ = ["LAMDA"]
+__all__ = ["LAMDA", "get_lamda"]
 
 
 # standard library
@@ -6,11 +6,14 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field, replace
 from os import PathLike
+from pathlib import Path
+from tempfile import NamedTemporaryFile
 
 
 # dependencies
 from astropy.table import Table, join, vstack
-from astroquery.lamda import parse_lamda_datafile, write_lamda_datafile
+from astroquery.lamda import Lamda, parse_lamda_datafile, write_lamda_datafile
+from requests_cache import CachedSession
 from typing_extensions import Self
 
 
@@ -19,6 +22,7 @@ Tables = tuple[dict[str, Table], Table, Table]
 
 
 # constants
+HTTP_SESSION = CachedSession("ndradex", backend="memory")
 NAMED_TRANSITION = "NamedTransition"
 
 
@@ -87,9 +91,68 @@ class LAMDA:
             self.transitions.add_column(named_transition)
 
 
+def get_lamda(
+    query: str,
+    /,
+    *,
+    cache: bool = True,
+    timeout: float | None = None,
+) -> LAMDA:
+    """Parse given query to create a LAMDA object.
+
+    Args:
+        query: Query string for the LAMDA object.
+            If the query is path-like (e.g. ``'co.dat'``) and it exists,
+            the function creates from the datafile. If it does not exist
+            but is found in ``astroquery.lamda.Lamda.moledule_dict``,
+            the function creates from the dictionary.
+            If the query is a URL (e.g. ``'https://example.com/co.dat'``),
+            the function creates from the datafile at the URL.
+        cache: Whether to cache the HTTP session.
+        timeout: Timeout of the HTTP session in seconds.
+
+    Returns:
+        LAMDA object created from the parsed query.
+
+    Examples::
+
+        co = get_lamda("co")
+        cs = get_lamda("/path/to/cs.dat")
+        cn = get_lamda("https://example.com/cn.dat")
+
+    """
+    if (path := Path(query)).exists():
+        return LAMDA.from_datafile(query)
+
+    if path.stem in Lamda.molecule_dict:
+        tables = Lamda.query(
+            Path(query).stem,
+            cache=cache,
+            timeout=timeout,
+        )
+        return LAMDA(*tables)  # type: ignore
+
+    response = HTTP_SESSION.get(
+        url=str(path),
+        timeout=timeout,
+        expire_after=-1 if cache else 0,
+    )
+    response.raise_for_status()
+
+    with NamedTemporaryFile("w") as tempfile:
+        tempfile.write(response.text)
+        return LAMDA.from_datafile(tempfile.name)
+
+
 @contextmanager
 def set_index(table: Table, name: str, /) -> Iterator[None]:
-    """Temporarily set a index to given table."""
+    """Temporarily set a index to given table.
+
+    Args:
+        table: Table to which the index will be set.
+        name: Name of the index to be set.
+
+    """
     if table.indices:
         raise ValueError("Indices already exist.")
 
