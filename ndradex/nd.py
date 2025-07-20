@@ -6,7 +6,7 @@ from csv import writer as csv_writer
 from dataclasses import dataclass, field
 from itertools import product
 from pathlib import Path
-from tempfile import TemporaryFile
+from tempfile import NamedTemporaryFile, TemporaryFile
 from typing import Any, Collection, IO, Iterator, Literal, TypeVar, Union
 
 
@@ -17,7 +17,7 @@ import xarray as xr
 from astropy.units import Quantity
 from tqdm import tqdm
 from xarray_dataclasses import AsDataset, DataModel, Attr, Coordof, Data, Dataof
-from .lamda import query
+from .lamda import get_lamda
 from .radex import Input, Parallel, Timeout, Workdir, runmap, to_input
 
 
@@ -152,17 +152,19 @@ def run(
 
 def gen_inputs(dataset: xr.Dataset) -> Iterator[Input]:
     """Generate inputs to be passed to the RADEX binaries."""
-    lamda = query(str(dataset.datafile))
     transitions = dataset.transition.values.tolist()
+    lamda = get_lamda(dataset.datafile).prioritize(transitions)
 
-    freq = lamda.transitions_loc[transitions]["Frequency"]
+    freq = lamda.transitions[-len(transitions) :]["Frequency"]
     freq_min = min(freq) - 1e-9  # type: ignore
     freq_max = max(freq) + 1e-9  # type: ignore
 
-    with lamda.to_bottom(transitions).to_tempfile() as f:
+    with NamedTemporaryFile("w") as tempfile:
+        lamda.to_datafile(tempfile.name)
+
         for index in walk_dims(dataset):
             yield to_input(
-                datafile=f.name,
+                datafile=tempfile.name,
                 outfile=OUTFILE,
                 freq_min=freq_min,
                 freq_max=freq_max,
