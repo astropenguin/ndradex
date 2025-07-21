@@ -13,7 +13,7 @@ from warnings import catch_warnings, simplefilter
 
 # dependencies
 import numpy as np
-from astropy.table import Table, join, vstack
+from astropy.table import Table, vstack
 from astroquery.lamda import Lamda, parse_lamda_datafile, write_lamda_datafile
 from requests_cache import CachedSession
 from typing_extensions import Self
@@ -88,19 +88,11 @@ class LAMDA:
             object.__setattr__(self, "name", name)
 
         if NAMED_TRANSITION not in self.transitions.keys():
-            joined = join(
-                self.transitions,
-                self.levels,
-                keys_left="Upper",
-                keys_right="Level",
-            )
-            joined = join(
-                joined,
-                self.levels,
-                keys_left="Lower",
-                keys_right="Level",
-            )
-            named_transition = joined["J_1"] + "-" + joined["J_2"]
+            with set_index(self.levels, "Level"):
+                J_upper = self.levels.loc[self.transitions["Upper"]]["J"]
+                J_lower = self.levels.loc[self.transitions["Lower"]]["J"]
+
+            named_transition = J_upper + "-" + J_lower
             named_transition.name = NAMED_TRANSITION
             self.transitions.add_column(named_transition)
 
