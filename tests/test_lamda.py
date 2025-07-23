@@ -1,91 +1,66 @@
 # standard library
 from random import choices
-from typing import Any
+from tempfile import NamedTemporaryFile
 from warnings import catch_warnings, simplefilter
 
 
 # dependencies
+import numpy as np
 from astroquery.lamda import Lamda
-from ndradex.lamda import LEVEL_COLUMN, TRANSITION_COLUMN, query
+from ndradex.lamda import get_lamda, set_index
 from pytest import mark
 
 
 # test data
 with catch_warnings():
     simplefilter("ignore")
-    datafiles = list(Lamda.molecule_dict)
-    datafiles.remove("si-h")
-    datafiles.remove("so2@lowT")
-    datafiles.remove("PO_hfs")
 
-levels = [
-    # (datafile, level, expected level ID)
-    ("co", 1, 1),
-    ("co", [1, 2], [1, 2]),
-    ("co", slice(1, 2), [1, 2]),
-    ("co", "0", 1),
-    ("co", ["0", "1"], [1, 2]),
-    ("co", slice("0", "1"), [1, 2]),
-    ("oh", 1, 1),
-    ("oh", [1, 2], [1, 2]),
-    ("oh", slice(1, 2), [1, 2]),
-    ("oh", "1.5_-_1", 1),
-    ("oh", ["1.5_-_1", "1.5_+_1"], [1, 2]),
-    ("oh", slice("1.5_-_1", "1.5_+_1"), [1, 2]),
-]
-transitions = [
-    # (datafile, transition, expected transition ID)
-    ("co", 1, 1),
-    ("co", (2, 1), 1),
-    ("co", [1, 2], [1, 2]),
-    ("co", [(2, 1), (3, 2)], [1, 2]),
-    ("co", slice(1, 2), [1, 2]),
-    ("co", slice((2, 1), (3, 2)), [1, 2]),
-    ("co", "1->0", 1),
-    ("co", "1/0", 1),
-    ("co", "1-0", 1),
-    ("co", ("1", "0"), 1),
-    ("co", ["1->0", "2->1"], [1, 2]),
-    ("co", ["1/0", "2/1"], [1, 2]),
-    ("co", ["1-0", "2-1"], [1, 2]),
-    ("co", slice("1->0", "2->1"), [1, 2]),
-    ("co", slice("1/0", "2/1"), [1, 2]),
-    ("co", slice("1-0", "2-1"), [1, 2]),
-    ("oh", 1, 1),
-    ("oh", (3, 1), 1),
-    ("oh", [1, 2], [1, 2]),
-    ("oh", [(3, 1), (4, 2)], [1, 2]),
-    ("oh", slice(1, 2), [1, 2]),
-    ("oh", slice((3, 1), (4, 2)), [1, 2]),
-    ("oh", "2.5_+_1->1.5_-_1", 1),
-    ("oh", "2.5_+_1/1.5_-_1", 1),
-    ("oh", ("2.5_+_1", "1.5_-_1"), 1),
-    ("oh", ["2.5_+_1->1.5_-_1", "2.5_-_1->1.5_+_1"], [1, 2]),
-    ("oh", ["2.5_+_1/1.5_-_1", "2.5_-_1/1.5_+_1"], [1, 2]),
-    ("oh", slice("2.5_+_1->1.5_-_1", "2.5_-_1->1.5_+_1"), [1, 2]),
-    ("oh", slice("2.5_+_1/1.5_-_1", "2.5_-_1/1.5_+_1"), [1, 2]),
-]
+    molecule_dict = Lamda.molecule_dict.copy()
+    molecule_dict.pop("si-h")
+    molecule_dict.pop("so2@lowT")
+    molecule_dict.pop("PO_hfs")
+
+    datafiles = list(molecule_dict.keys())
+    dataurls = list(molecule_dict.values())
 
 
 # test functions
 @mark.parametrize("datafile", choices(datafiles, k=10))
-def test_query_by_name(datafile: str) -> None:
-    assert query(datafile)
+def test_LAMDA_init(datafile: str) -> None:
+    lamda = get_lamda(datafile)
+
+    with set_index(lamda.levels, "Level"):
+        J_upper = lamda.levels.loc[lamda.transitions["Upper"]]["J"]
+        J_lower = lamda.levels.loc[lamda.transitions["Lower"]]["J"]
+
+        left = J_upper + "-" + J_lower
+        right = lamda.transitions["NamedTransition"]
+        assert (left == right).all()
 
 
 @mark.parametrize("datafile", choices(datafiles, k=10))
-def test_query_by_path(datafile: str) -> None:
-    with query(datafile).to_tempfile() as file:
-        assert query(file.name)
+def test_LAMDA_prioritize(datafile: str) -> None:
+    lamda = get_lamda(datafile)
+    left = np.array(lamda.transitions["Transition"])
+    left = np.random.permutation(left[:10])
+
+    prioritized = lamda.prioritize(list(left))
+    right = prioritized.transitions["Transition"][-len(left) :]
+    assert (left == right).all()  # type: ignore
 
 
-@mark.parametrize("datafile, level, expected_id", levels)
-def test_levels(datafile: str, level: Any, expected_id: Any) -> None:
-    id = query(datafile).levels_loc[level][LEVEL_COLUMN]
-    assert (id == expected_id).all()
+@mark.parametrize("datafile", choices(datafiles, k=10))
+def test_get_lamda_by_path(datafile: str) -> None:
+    with NamedTemporaryFile("w") as tempfile:
+        get_lamda(datafile).to_datafile(tempfile.name)
+        assert get_lamda(tempfile.name)
 
 
-@mark.parametrize("datafile, transition, expected_id", transitions)
-def test_transitions(datafile: str, transition: Any, expected_id: Any) -> None:
-    id = query(datafile).transitions_loc[transition][TRANSITION_COLUMN]
-    assert (id == expected_id).all()
+@mark.parametrize("datafile", choices(datafiles, k=10))
+def test_get_lamda_by_dict(datafile: str) -> None:
+    assert get_lamda(datafile)
+
+
+@mark.parametrize("dataurl", choices(dataurls, k=10))
+def test_get_lamda_by_url(dataurl: str) -> None:
+    assert get_lamda(dataurl)
