@@ -78,7 +78,7 @@ class LAMDA:
 
         with set_index(self.transitions, index):
             top = self.transitions.copy()
-            bottom = top.loc[transitions]
+            bottom = top.copy().loc[transitions]
             top.remove_rows(top.loc_indices[transitions])
             return replace(self, transitions=vstack([top, bottom]))
 
@@ -89,10 +89,10 @@ class LAMDA:
 
         if NAMED_TRANSITION not in self.transitions.keys():
             with set_index(self.levels, "Level"):
-                J_upper = self.levels.loc[self.transitions["Upper"]]["J"]
-                J_lower = self.levels.loc[self.transitions["Lower"]]["J"]
+                J_upper = Table(self.levels.loc[self.transitions["Upper"]])["J"]
+                J_lower = Table(self.levels.loc[self.transitions["Lower"]])["J"]
 
-            named_transition = J_upper + "-" + J_lower
+            named_transition = J_upper + "-" + J_lower  # type: ignore
             named_transition.name = NAMED_TRANSITION
             self.transitions.add_column(named_transition)
 
