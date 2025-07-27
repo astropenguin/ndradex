@@ -1,10 +1,11 @@
 # standard library
 from itertools import repeat
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 
 
 # dependencies
-from ndradex.lamda import query
+from ndradex.lamda import get_lamda
 from ndradex.radex import RADEX_BIN, run, runmap, to_input
 
 
@@ -56,10 +57,11 @@ radex_params = {
 
 # test functions
 def test_run() -> None:
-    with query("co").to_tempfile() as file:
+    with NamedTemporaryFile("w") as tempfile:
+        get_lamda("co").to_datafile(tempfile.name)
         output = run(
             radex=RADEX_BIN / "radex-1",
-            input=(file.name, *radex_input),
+            input=(tempfile.name, *radex_input),
         )
 
     # test non-existence of the input/output files
@@ -71,11 +73,12 @@ def test_run() -> None:
 
 
 def test_runmap() -> None:
-    with query("co").to_tempfile() as file:
+    with NamedTemporaryFile("w") as tempfile:
+        get_lamda("co").to_datafile(tempfile.name)
         outputs = list(
             runmap(
                 radexes=repeat(RADEX_BIN / "radex-1", 10),
-                inputs=repeat((file.name, *radex_input), 10),
+                inputs=repeat((tempfile.name, *radex_input), 10),
             )
         )
 

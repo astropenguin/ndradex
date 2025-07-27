@@ -1,4 +1,4 @@
-__all__ = ["lamda", "nd", "radex", "run"]
+__all__ = ["LAMDA", "lamda", "get_lamda", "nd", "radex", "run"]
 __version__ = "0.3.1"
 
 
@@ -6,6 +6,7 @@ __version__ = "0.3.1"
 from . import lamda
 from . import nd
 from . import radex
+from .lamda import LAMDA, get_lamda
 from .nd import run
 
 
