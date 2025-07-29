@@ -29,12 +29,9 @@ StrPath = PathLike[str] | str
 
 # constants
 BIN = Path(__file__).parent / "bin"
+LOGGER = getLogger(__name__)
 RADEX_COLUMNS = 11
 RADEX_VERSION = "30nov2011"
-
-
-# module logger
-logger = getLogger(__name__)
 
 
 def build(
@@ -76,6 +73,7 @@ def build(
 def run(
     radex: StrPath,
     input: RadexInput,
+    /,
     *,
     tail: int = 1,
     timeout: float | None = None,
@@ -134,10 +132,10 @@ def run(
                 stderr=PIPE,
                 stdout=PIPE,
             )
-            return parse_file(workdir / input[1], tail=tail)
+            return on_success(workdir / input[1], tail=tail)
         except CalledProcessError as error:
-            logger.warning(f"RADEX failed to run: {error.stderr}")
-            return parse_error(error, tail=tail)
+            LOGGER.warning(f"RADEX failed to run: {error.stderr}")
+            return on_error(error, tail=tail)
         except (
             FileNotFoundError,
             IndexError,
@@ -145,13 +143,14 @@ def run(
             TimeoutExpired,
             TypeError,
         ) as error:
-            logger.warning(f"RADEX failed to run: {error}")
-            return parse_error(error, tail=tail)
+            LOGGER.warning(f"RADEX failed to run: {error}")
+            return on_error(error, tail=tail)
 
 
 def runmap(
     radexes: Iterable[StrPath],
     inputs: Iterable[RadexInput],
+    /,
     *,
     parallel: int | None = None,
     tail: int = 1,
@@ -255,18 +254,18 @@ def to_input(
     return tuple(map(str, input))
 
 
-def numbered(inputs: Iterable[RadexInput]) -> Iterator[RadexInput]:
+def numbered(inputs: Iterable[RadexInput], /) -> Iterator[RadexInput]:
     """Add serial numbers to the names of RADEX output files."""
     for number, input in zip(count(), inputs):
         yield (input[0], f"{input[1]}.{number}", *input[2:])
 
 
-def parse_error(error: Exception, *, tail: int) -> RadexOutput:
+def on_error(error: Exception, /, *, tail: int) -> RadexOutput:
     """Parse a Python error and return an output object."""
     return [("nan",) * RADEX_COLUMNS] * tail
 
 
-def parse_file(file: StrPath, *, tail: int) -> RadexOutput:
+def on_success(file: StrPath, /, *, tail: int) -> RadexOutput:
     """Parse a RADEX output file and return an output object."""
     with open(file) as f:
         lines = f.readlines()
@@ -283,7 +282,7 @@ def parse_file(file: StrPath, *, tail: int) -> RadexOutput:
 
 
 @contextmanager
-def set_workdir(workdir: StrPath | None = None) -> Iterator[Path]:
+def set_workdir(workdir: StrPath | None = None, /) -> Iterator[Path]:
     """Set a directory for RADEX output files."""
     if workdir is None:
         with TemporaryDirectory() as workdir:

@@ -134,8 +134,8 @@ def run(
         writer = csv_writer(csv)
 
         for output in runmap(
-            radexes=gen_radexes(ds),
-            inputs=gen_inputs(ds),
+            gen_radexes(ds),
+            gen_inputs(ds),
             tail=ds.transition.size,
             timeout=timeout,
             parallel=parallel,
