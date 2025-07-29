@@ -89,7 +89,7 @@ def to_input(
     dv: float,
     **_: Any,
 ) -> RadexInput:
-    """Convert parameters to an input for RADEX.
+    """Create a RADEX input from given parameters.
 
     Args:
         datafile: Path of RADEX datafile.
@@ -109,7 +109,7 @@ def to_input(
         dv: Line width (km s^-1).
 
     Returns:
-        input: Input for ``run`` or ``runmap``.
+        RADEX input for ``run`` or ``runmap``.
 
 
     """
@@ -148,11 +148,11 @@ def run(
     timeout: float | None = None,
     workdir: StrPath | None = None,
 ) -> RadexOutput:
-    """Run RADEX and return an output object.
+    """Run RADEX with given input.
 
     If RADEX fails to run due to an invalid input, timeout, etc,
     this function does not raise an exception but returns
-    an output object filled with ``'nan'``.
+    an output filled with ``'nan'``.
 
     Note that this function only reads the last N (= ``tail``) line(s)
     in a RADEX output file: This means that it only returns the results
@@ -160,11 +160,14 @@ def run(
 
     Args:
         radex: Path of the RADEX binary to be run.
+            If it does not exist, it will be looked up as a command name.
+            If it is still not found, it will be looked for the builtin
+            RADEX binaries of the package.
         input: RADEX input to be passed to the RADEX binary.
         tail: Number of lines in a RADEX output file to be read.
-        timeout: Timeout of the run in units of seconds.
+        timeout: Timeout length of the run in seconds.
             Defaults to ``None`` (unlimited run time).
-        workdir: Path of the directory for a RADEX output file.
+        workdir: Path of the directory for the RADEX output file.
             Defaults to ``None`` (temporary directory).
 
     Returns:
@@ -224,17 +227,20 @@ def runmap(
     timeout: float | None = None,
     workdir: StrPath | None = None,
 ) -> Iterator[RadexOutput]:
-    """Run RADEX in parallel and generate output objects.
+    """Run RADEX with given inputs in parallel.
 
     Args:
         radexes: Paths of the RADEX binaries to be run.
+            If they do not exist, they will be looked up as command names.
+            If they are still not found, they will be looked for the builtin
+            RADEX binaries of the package.
         inputs: RADEX inputs to be passed to the RADEX binaries.
         parallel: Number of runs in parallel.
             Defaults to ``None`` (number of processors).
         tail: Number of lines in a RADEX outfile to be read.
-        timeout: Timeout length per run in units of seconds.
+        timeout: Timeout length per run in seconds.
             Defaults to ``None`` (unlimited run time).
-        workdir: Path of the directory for RADEX output files.
+        workdir: Path of the directory for the RADEX output files.
             Defaults to ``None`` (temporary directory).
 
     Yields:
