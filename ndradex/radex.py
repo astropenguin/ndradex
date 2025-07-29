@@ -28,9 +28,9 @@ StrPath = PathLike[str] | str
 
 
 # constants
-BIN = Path(__file__).parent / "bin"
 LOGGER = getLogger(__name__)
-RADEX_COLUMNS = 11
+NDRADEX_BIN = Path(__file__).parent / "bin"
+RADEX_OUTPUT_COLUMNS = 11
 RADEX_VERSION = "30nov2011"
 
 
@@ -63,7 +63,7 @@ def build(
             f"RADEX_MINITER={miniter}",
             f"RADEX_MAXITER={maxiter}",
         ],
-        cwd=BIN,
+        cwd=NDRADEX_BIN,
         stderr=PIPE,
         stdout=PIPE,
         text=True,
@@ -188,7 +188,7 @@ def run(
         elif which(radex) is not None:
             radex = str(radex)
         else:
-            radex = str(BIN / radex)
+            radex = str(NDRADEX_BIN / radex)
 
         try:
             sprun(
@@ -259,7 +259,7 @@ def numbered(inputs: Iterable[RadexInput], /) -> Iterator[RadexInput]:
 def on_error(error: str, /, *, tail: int) -> RadexOutput:
     """Handle given RADEX error and return a RADEX output."""
     LOGGER.warning(f"RADEX failed to run: {error}")
-    return [("nan",) * RADEX_COLUMNS] * tail
+    return [("nan",) * RADEX_OUTPUT_COLUMNS] * tail
 
 
 def on_success(file: StrPath, /, *, tail: int) -> RadexOutput:
@@ -273,7 +273,7 @@ def on_success(file: StrPath, /, *, tail: int) -> RadexOutput:
     output: RadexOutput = []
 
     for line in lines[-tail:]:
-        output.append(tuple(line.rsplit(None, RADEX_COLUMNS - 1)))
+        output.append(tuple(line.rsplit(None, RADEX_OUTPUT_COLUMNS - 1)))
 
     return output
 
