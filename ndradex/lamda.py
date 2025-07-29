@@ -85,18 +85,19 @@ class LAMDA:
             return replace(self, transitions=vstack([top, bottom]))
 
     def __post_init__(self) -> None:
-        if not hasattr(self, "name"):
-            name = self.levels.meta["molecule"]  # type: ignore
-            object.__setattr__(self, "name", name)
+        name = self.levels.meta["molecule"]  # type: ignore
+        object.__setattr__(self, "name", name)
 
-        if NAMED_TRANSITION not in self.transitions.keys():
-            with set_index(self.levels, "Level"):
-                J_upper = Table(self.levels.loc[self.transitions["Upper"]])["J"]
-                J_lower = Table(self.levels.loc[self.transitions["Lower"]])["J"]
+        if NAMED_TRANSITION in self.transitions.keys():
+            return None
 
-            named_transition = J_upper + "-" + J_lower  # type: ignore
-            named_transition.name = NAMED_TRANSITION
-            self.transitions.add_column(named_transition)
+        with set_index(self.levels, "Level"):
+            J_upper = Table(self.levels.loc[self.transitions["Upper"]])["J"]
+            J_lower = Table(self.levels.loc[self.transitions["Lower"]])["J"]
+
+        named_transition = J_upper + "-" + J_lower  # type: ignore
+        named_transition.name = NAMED_TRANSITION
+        self.transitions.add_column(named_transition)
 
 
 def get_lamda(
