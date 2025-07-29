@@ -1,4 +1,4 @@
-__all__ = ["RADEX_BIN", "build", "run"]
+__all__ = ["build", "run"]
 
 
 # standard library
@@ -9,6 +9,7 @@ from itertools import chain, count
 from logging import getLogger
 from os import devnull, getenv
 from pathlib import Path
+from shutil import which
 from subprocess import PIPE, CalledProcessError, TimeoutExpired, run as sprun
 from tempfile import TemporaryDirectory
 from typing import Any, Iterable, Iterator, Optional, Union
@@ -26,8 +27,7 @@ Workdir = Optional[PathLike]
 # constants
 FC = getenv("FC", "gfortran")
 NAN = str(float("nan"))
-NDRADEX_BIN = Path(__file__).parent / "bin"
-RADEX_BIN = Path(getenv("RADEX_BIN", NDRADEX_BIN)).expanduser().resolve()
+BIN = Path(__file__).parent / "bin"
 RADEX_COLUMNS = 11
 RADEX_LOGFILE = devnull
 RADEX_MAXITER = 1_000_000
@@ -64,13 +64,10 @@ def build(
         This function returns nothing.
 
     """
-    if not RADEX_BIN == NDRADEX_BIN:
-        return None
-
     if force:
         sprun(
             args=["make", "clean"],
-            cwd=NDRADEX_BIN,
+            cwd=BIN,
             stdout=PIPE,
             stderr=PIPE,
             check=True,
@@ -86,7 +83,7 @@ def build(
             f"RADEX_MAXITER={maxiter}",
         ],
         check=True,
-        cwd=NDRADEX_BIN,
+        cwd=BIN,
         stderr=PIPE,
         stdout=PIPE,
     )
@@ -104,7 +101,7 @@ def run(
 
     If RADEX fails to run due to an invalid input, timeout, etc,
     this function does not raise an exception but returns
-    an output object filled with ``"nan"``.
+    an output object filled with ``'nan'``.
 
     Note that this function only reads the last N (= ``tail``) line(s)
     in a RADEX output file: This means that it only returns the results
@@ -112,11 +109,7 @@ def run(
 
     Args:
         radex: Path of the RADEX binary to be run.
-            If the binary does not exist, then the function tries to
-            use an alternative binary of the same name in ``RADEX_BIN``.
         input: Input to be passed to the RADEX binary.
-
-    Keyword Args:
         tail: Number of lines in a RADEX output file to be read.
         timeout: Timeout of the run in units of seconds.
             Defaults to ``None`` (unlimited run time).
@@ -139,12 +132,16 @@ def run(
 
     """
     with set_workdir(workdir) as workdir:
-        if not (radex := Path(radex).expanduser()).exists():
-            radex = RADEX_BIN / radex.name
+        if (path := Path(radex)).exists():
+            radex = str(path.expanduser().resolve())
+        elif which(radex) is not None:
+            radex = str(radex)
+        else:
+            radex = str(BIN / radex)
 
         try:
             sprun(
-                str(radex),
+                radex,
                 input="\n".join(input),
                 check=True,
                 cwd=workdir,
