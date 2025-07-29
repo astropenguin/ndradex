@@ -7,7 +7,7 @@ from contextlib import contextmanager
 from functools import partial
 from itertools import chain, count
 from logging import getLogger
-from os import devnull
+from os import PathLike, devnull
 from pathlib import Path
 from shutil import which
 from subprocess import (
@@ -18,25 +18,18 @@ from subprocess import (
     run as sprun,
 )
 from tempfile import TemporaryDirectory
-from typing import Any, Iterable, Iterator, Optional, Union
+from typing import Any, Iterable, Iterator
 
 
 # type hints
-Input = tuple[str, ...]
-Output = list[tuple[str, ...]]
-Parallel = Optional[int]
-PathLike = Union[Path, str]
-Timeout = Optional[float]
-Workdir = Optional[PathLike]
+RadexInput = tuple[str, ...]
+RadexOutput = list[tuple[str, ...]]
+StrPath = PathLike[str] | str
 
 
 # constants
-NAN = str(float("nan"))
 BIN = Path(__file__).parent / "bin"
 RADEX_COLUMNS = 11
-RADEX_LOGFILE = devnull
-RADEX_MAXITER = 1_000_000
-RADEX_MINITER = 10
 RADEX_VERSION = "30nov2011"
 
 
@@ -47,9 +40,9 @@ logger = getLogger(__name__)
 def build(
     *,
     force: bool = False,
-    logfile: PathLike = RADEX_LOGFILE,
-    miniter: int = RADEX_MINITER,
-    maxiter: int = RADEX_MAXITER,
+    logfile: StrPath = devnull,
+    miniter: int = 10,
+    maxiter: int = 1_000_000,
 ) -> CompletedProcess[str]:
     """Build the builtin RADEX binaries.
 
@@ -81,13 +74,13 @@ def build(
 
 
 def run(
-    radex: PathLike,
-    input: Input,
+    radex: StrPath,
+    input: RadexInput,
     *,
     tail: int = 1,
-    timeout: Timeout = None,
-    workdir: Workdir = None,
-) -> Output:
+    timeout: float | None = None,
+    workdir: StrPath | None = None,
+) -> RadexOutput:
     """Run RADEX and return an output object.
 
     If RADEX fails to run due to an invalid input, timeout, etc,
@@ -157,14 +150,14 @@ def run(
 
 
 def runmap(
-    radexes: Iterable[PathLike],
-    inputs: Iterable[Input],
+    radexes: Iterable[StrPath],
+    inputs: Iterable[RadexInput],
     *,
-    parallel: Parallel = None,
+    parallel: int | None = None,
     tail: int = 1,
-    timeout: Timeout = None,
-    workdir: Workdir = None,
-) -> Iterator[Output]:
+    timeout: float | None = None,
+    workdir: StrPath | None = None,
+) -> Iterator[RadexOutput]:
     """Run RADEX in parallel and generate output objects.
 
     Args:
@@ -181,7 +174,7 @@ def runmap(
             Defaults to ``None`` (temporary directory).
 
     Yields:
-        RADEX output object (list of list of strings).
+        RADEX output object (list of tuple of strings).
 
     """
 
@@ -195,8 +188,8 @@ def runmap(
 
 def to_input(
     *,
-    datafile: PathLike,
-    outfile: PathLike,
+    datafile: StrPath,
+    outfile: StrPath,
     freq_min: float,
     freq_max: float,
     T_kin: float,
@@ -211,7 +204,7 @@ def to_input(
     N: float,
     dv: float,
     **_: Any,
-) -> Input:
+) -> RadexInput:
     """Convert parameters to an input for RADEX.
 
     Keyword Args:
@@ -262,18 +255,18 @@ def to_input(
     return tuple(map(str, input))
 
 
-def numbered(inputs: Iterable[Input]) -> Iterator[Input]:
+def numbered(inputs: Iterable[RadexInput]) -> Iterator[RadexInput]:
     """Add serial numbers to the names of RADEX output files."""
     for number, input in zip(count(), inputs):
         yield (input[0], f"{input[1]}.{number}", *input[2:])
 
 
-def parse_error(error: Exception, *, tail: int) -> Output:
+def parse_error(error: Exception, *, tail: int) -> RadexOutput:
     """Parse a Python error and return an output object."""
-    return [(NAN,) * RADEX_COLUMNS] * tail
+    return [("nan",) * RADEX_COLUMNS] * tail
 
 
-def parse_file(file: PathLike, *, tail: int) -> Output:
+def parse_file(file: StrPath, *, tail: int) -> RadexOutput:
     """Parse a RADEX output file and return an output object."""
     with open(file) as f:
         lines = f.readlines()
@@ -281,7 +274,7 @@ def parse_file(file: PathLike, *, tail: int) -> Output:
     if RADEX_VERSION not in lines[0]:
         raise RuntimeError("RADEX version is not valid")
 
-    output: Output = []
+    output: RadexOutput = []
 
     for line in lines[-tail:]:
         output.append(tuple(line.rsplit(None, RADEX_COLUMNS - 1)))
@@ -290,10 +283,10 @@ def parse_file(file: PathLike, *, tail: int) -> Output:
 
 
 @contextmanager
-def set_workdir(dir: Optional[PathLike] = None) -> Iterator[Path]:
+def set_workdir(workdir: StrPath | None = None) -> Iterator[Path]:
     """Set a directory for RADEX output files."""
-    if dir is None:
-        with TemporaryDirectory() as dir:
-            yield Path(dir)
+    if workdir is None:
+        with TemporaryDirectory() as workdir:
+            yield Path(workdir)
     else:
-        yield Path(dir).expanduser()
+        yield Path(workdir).expanduser()

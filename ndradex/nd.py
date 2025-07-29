@@ -5,9 +5,9 @@ __all__ = ["run"]
 from csv import writer as csv_writer
 from dataclasses import dataclass, field
 from itertools import product
-from pathlib import Path
+from os import PathLike
 from tempfile import NamedTemporaryFile, TemporaryFile
-from typing import Any, Collection, IO, Iterator, Literal, TypeVar, Union
+from typing import Any, Collection, IO, Iterator, Literal, TypeVar
 
 
 # dependencies
@@ -18,13 +18,13 @@ from astropy.units import Quantity
 from tqdm import tqdm
 from xarray_dataclasses import AsDataset, DataModel, Attr, Coordof, Data, Dataof
 from .lamda import get_lamda
-from .radex import Input, Parallel, Timeout, Workdir, runmap, to_input
+from .radex import RadexInput, runmap, to_input
 
 
 # type hints
 T = TypeVar("T")
-Multiple = Union[Collection[T], T]
-PathLike = Union[Path, str]
+Multiple = Collection[T] | T
+StrPath = PathLike[str] | str
 VarDims = tuple[
     Literal["transition"],
     Literal["T_kin"],
@@ -48,7 +48,7 @@ OUTFILE = "radex.out"
 
 
 def run(
-    datafile: PathLike,
+    datafile: StrPath,
     transition: Multiple[str],
     *,
     T_kin: Multiple[float] = 1e2,
@@ -62,13 +62,13 @@ def run(
     T_bg: Multiple[float] = 2.73,
     N: Multiple[float] = 1e15,
     dv: Multiple[float] = 1.0,
-    radex: Multiple[PathLike] = "radex-uni",
+    radex: Multiple[StrPath] = "radex-uni",
     # options
-    parallel: Parallel = None,
+    parallel: int | None = None,
     progress: bool = False,
     squeeze: bool = True,
-    timeout: Timeout = None,
-    workdir: Workdir = None,
+    timeout: float | None = None,
+    workdir: StrPath | None = None,
 ) -> xr.Dataset:
     """Run RADEX with multidimensional parameters.
 
@@ -150,7 +150,7 @@ def run(
             return update(ds, csv)
 
 
-def gen_inputs(dataset: xr.Dataset) -> Iterator[Input]:
+def gen_inputs(dataset: xr.Dataset) -> Iterator[RadexInput]:
     """Generate inputs to be passed to the RADEX binaries."""
     transitions = dataset.transition.values.tolist()
     lamda = get_lamda(dataset.datafile).prioritize(transitions)
@@ -172,7 +172,7 @@ def gen_inputs(dataset: xr.Dataset) -> Iterator[Input]:
             )
 
 
-def gen_radexes(dataset: xr.Dataset) -> Iterator[PathLike]:
+def gen_radexes(dataset: xr.Dataset) -> Iterator[StrPath]:
     """Generate paths of the RADEX binaries."""
     for index in walk_dims(dataset):
         yield index["radex"]
@@ -389,7 +389,7 @@ class EmptySet(AsDataset):
     """Specification of an empty dataset."""
 
     # attributes
-    datafile: Attr[PathLike]
+    datafile: Attr[StrPath]
 
     # dimensions
     transition: Coordof[Transition]
