@@ -58,7 +58,7 @@ class LAMDA:
     @classmethod
     def from_datafile(cls, datafile: PathLike[str] | str, /) -> Self:
         """Create a LAMDA object from a LAMDA datafile."""
-        return cls(*parse_lamda_datafile(datafile))  # type: ignore
+        return cls(*parse_lamda_datafile(str(datafile)))  # type: ignore
 
     def to_datafile(self, datafile: PathLike[str] | str, /) -> None:
         """Save the LAMDA object to a LAMDA datafile."""
