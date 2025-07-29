@@ -6,7 +6,7 @@ from tempfile import NamedTemporaryFile
 
 # dependencies
 from ndradex.lamda import get_lamda
-from ndradex.radex import RADEX_BIN, run, runmap, to_input
+from ndradex.radex import run, runmap, to_input
 
 
 # test data
@@ -59,10 +59,7 @@ radex_params = {
 def test_run() -> None:
     with NamedTemporaryFile("w") as tempfile:
         get_lamda("co").to_datafile(tempfile.name)
-        output = run(
-            radex=RADEX_BIN / "radex-1",
-            input=(tempfile.name, *radex_input),
-        )
+        output = run("radex-1", (tempfile.name, *radex_input))
 
     # test non-existence of the input/output files
     assert not Path(radex_input[0]).exists()
@@ -77,8 +74,8 @@ def test_runmap() -> None:
         get_lamda("co").to_datafile(tempfile.name)
         outputs = list(
             runmap(
-                radexes=repeat(RADEX_BIN / "radex-1", 10),
-                inputs=repeat((tempfile.name, *radex_input), 10),
+                repeat("radex-1", 10),
+                repeat((tempfile.name, *radex_input), 10),
             )
         )
 

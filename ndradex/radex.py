@@ -1,4 +1,4 @@
-__all__ = ["RADEX_BIN", "build", "run"]
+__all__ = ["build", "to_input", "run", "runmap"]
 
 
 # standard library
@@ -7,208 +7,73 @@ from contextlib import contextmanager
 from functools import partial
 from itertools import chain, count
 from logging import getLogger
-from os import devnull, getenv
+from os import PathLike, devnull
 from pathlib import Path
-from subprocess import PIPE, CalledProcessError, TimeoutExpired, run as sprun
+from shutil import which
+from subprocess import (
+    PIPE,
+    CalledProcessError,
+    CompletedProcess,
+    TimeoutExpired,
+    run as sprun,
+)
 from tempfile import TemporaryDirectory
-from typing import Any, Iterable, Iterator, Optional, Union
+from typing import Any, Iterable, Iterator
 
 
 # type hints
-Input = tuple[str, ...]
-Output = list[tuple[str, ...]]
-Parallel = Optional[int]
-PathLike = Union[Path, str]
-Timeout = Optional[float]
-Workdir = Optional[PathLike]
+RadexInput = tuple[str, ...]
+RadexOutput = list[tuple[str, ...]]
+StrPath = PathLike[str] | str
 
 
 # constants
-FC = getenv("FC", "gfortran")
-NAN = str(float("nan"))
-NDRADEX_BIN = Path(__file__).parent / "bin"
-RADEX_BIN = Path(getenv("RADEX_BIN", NDRADEX_BIN)).expanduser().resolve()
+BIN = Path(__file__).parent / "bin"
+LOGGER = getLogger(__name__)
 RADEX_COLUMNS = 11
-RADEX_LOGFILE = devnull
-RADEX_MAXITER = 1_000_000
-RADEX_MINITER = 10
 RADEX_VERSION = "30nov2011"
-
-
-# module logger
-logger = getLogger(__name__)
 
 
 def build(
     *,
     force: bool = False,
-    logfile: PathLike = RADEX_LOGFILE,
-    miniter: int = RADEX_MINITER,
-    maxiter: int = RADEX_MAXITER,
-    fc: PathLike = FC,
-) -> None:
+    logfile: StrPath = devnull,
+    miniter: int = 10,
+    maxiter: int = 1_000_000,
+) -> CompletedProcess[str]:
     """Build the builtin RADEX binaries.
-
-    This function builds them only when ``RADEX_BIN`` is
-    set to the package's bin (``/path/to/ndradex/bin``):
-    Otherwise, no build is run even if ``force=True``.
 
     Args:
         force: Whether to forcibly rebuild the binaries.
         logfile: Path of the RADEX log file.
         miniter: Minimum number of iterations.
         maxiter: Maximum number of iterations.
-        fc: Path of the Fortran compiler.
 
     Returns:
-        This function returns nothing.
+        Completed process object as the result of the build.
 
     """
-    if not RADEX_BIN == NDRADEX_BIN:
-        return None
+    targets = ["clean", "build"] if force else ["build"]
 
-    if force:
-        sprun(
-            args=["make", "clean"],
-            cwd=NDRADEX_BIN,
-            stdout=PIPE,
-            stderr=PIPE,
-            check=True,
-        )
-
-    sprun(
+    return sprun(
         args=[
             "make",
-            "build",
-            f"FC={fc}",
+            *targets,
             f"RADEX_LOGFILE={logfile}",
             f"RADEX_MINITER={miniter}",
             f"RADEX_MAXITER={maxiter}",
         ],
-        check=True,
-        cwd=NDRADEX_BIN,
+        cwd=BIN,
         stderr=PIPE,
         stdout=PIPE,
+        text=True,
     )
-
-
-def run(
-    radex: PathLike,
-    input: Input,
-    *,
-    tail: int = 1,
-    timeout: Timeout = None,
-    workdir: Workdir = None,
-) -> Output:
-    """Run RADEX and return an output object.
-
-    If RADEX fails to run due to an invalid input, timeout, etc,
-    this function does not raise an exception but returns
-    an output object filled with ``"nan"``.
-
-    Note that this function only reads the last N (= ``tail``) line(s)
-    in a RADEX output file: This means that it only returns the results
-    of the last N transitions written in a RADEX datafile.
-
-    Args:
-        radex: Path of the RADEX binary to be run.
-            If the binary does not exist, then the function tries to
-            use an alternative binary of the same name in ``RADEX_BIN``.
-        input: Input to be passed to the RADEX binary.
-
-    Keyword Args:
-        tail: Number of lines in a RADEX output file to be read.
-        timeout: Timeout of the run in units of seconds.
-            Defaults to ``None`` (unlimited run time).
-        workdir: Path of the directory for a RADEX output file.
-            Defaults to ``None`` (temporary directory).
-
-    Returns:
-        RADEX output object (list of tuple of strings).
-
-    Examples:
-        To get output of CO(1-0), CO(2-1), and CO(3-2)
-        at T_kin = 100 K, T_bg = 2.73 K, N = 1e15 cm^-2,
-        n_H2 = 1e3 cm^-3, and dv = 1.0 km s^-1::
-
-            input = [
-                "co.dat", "radex.out", "100 400", "100",
-                "1", "H2", "1e3", "2.73", "1e15", "1.0", "0",
-            ]
-            output = run("/path/to/radex", input, tail=3)
-
-    """
-    with set_workdir(workdir) as workdir:
-        if not (radex := Path(radex).expanduser()).exists():
-            radex = RADEX_BIN / radex.name
-
-        try:
-            sprun(
-                str(radex),
-                input="\n".join(input),
-                check=True,
-                cwd=workdir,
-                text=True,
-                timeout=timeout,
-                stderr=PIPE,
-                stdout=PIPE,
-            )
-            return parse_file(workdir / input[1], tail=tail)
-        except CalledProcessError as error:
-            logger.warning(f"RADEX failed to run: {error.stderr}")
-            return parse_error(error, tail=tail)
-        except (
-            FileNotFoundError,
-            IndexError,
-            RuntimeError,
-            TimeoutExpired,
-            TypeError,
-        ) as error:
-            logger.warning(f"RADEX failed to run: {error}")
-            return parse_error(error, tail=tail)
-
-
-def runmap(
-    radexes: Iterable[PathLike],
-    inputs: Iterable[Input],
-    *,
-    parallel: Parallel = None,
-    tail: int = 1,
-    timeout: Timeout = None,
-    workdir: Workdir = None,
-) -> Iterator[Output]:
-    """Run RADEX in parallel and generate output objects.
-
-    Args:
-        radexes: Paths of the RADEX binaries to be run.
-        inputs: Inputs to be passed to the RADEX binaries.
-
-    Keyword Args:
-        parallel: Number of runs in parallel.
-            Defaults to ``None`` (number of processors).
-        tail: Number of lines in a RADEX outfile to be read.
-        timeout: Timeout length per run in units of seconds.
-            Defaults to ``None`` (unlimited run time).
-        workdir: Path of the directory for RADEX output files.
-            Defaults to ``None`` (temporary directory).
-
-    Yields:
-        RADEX output object (list of list of strings).
-
-    """
-
-    with (
-        set_workdir(workdir) as workdir,
-        ProcessPoolExecutor(parallel) as executor,
-    ):
-        run_ = partial(run, tail=tail, timeout=timeout, workdir=workdir)
-        yield from executor.map(run_, radexes, numbered(inputs))
 
 
 def to_input(
     *,
-    datafile: PathLike,
-    outfile: PathLike,
+    datafile: StrPath,
+    outfile: StrPath,
     freq_min: float,
     freq_max: float,
     T_kin: float,
@@ -223,10 +88,10 @@ def to_input(
     N: float,
     dv: float,
     **_: Any,
-) -> Input:
+) -> RadexInput:
     """Convert parameters to an input for RADEX.
 
-    Keyword Args:
+    Args:
         datafile: Path of RADEX datafile.
         outfile: Path of RADEX output file.
         freq_min: Minimum frequency (GHz).
@@ -274,26 +139,138 @@ def to_input(
     return tuple(map(str, input))
 
 
-def numbered(inputs: Iterable[Input]) -> Iterator[Input]:
+def run(
+    radex: StrPath,
+    input: RadexInput,
+    /,
+    *,
+    tail: int = 1,
+    timeout: float | None = None,
+    workdir: StrPath | None = None,
+) -> RadexOutput:
+    """Run RADEX and return an output object.
+
+    If RADEX fails to run due to an invalid input, timeout, etc,
+    this function does not raise an exception but returns
+    an output object filled with ``'nan'``.
+
+    Note that this function only reads the last N (= ``tail``) line(s)
+    in a RADEX output file: This means that it only returns the results
+    of the last N transitions written in a RADEX datafile.
+
+    Args:
+        radex: Path of the RADEX binary to be run.
+        input: RADEX input to be passed to the RADEX binary.
+        tail: Number of lines in a RADEX output file to be read.
+        timeout: Timeout of the run in units of seconds.
+            Defaults to ``None`` (unlimited run time).
+        workdir: Path of the directory for a RADEX output file.
+            Defaults to ``None`` (temporary directory).
+
+    Returns:
+        RADEX output as a list of string tuples.
+
+    Examples:
+        To get output of CO(1-0), CO(2-1), and CO(3-2)
+        at T_kin = 100 K, T_bg = 2.73 K, N = 1e15 cm^-2,
+        n_H2 = 1e3 cm^-3, and dv = 1.0 km s^-1::
+
+            input = [
+                "co.dat", "radex.out", "100 400", "100",
+                "1", "H2", "1e3", "2.73", "1e15", "1.0", "0",
+            ]
+            output = run("/path/to/radex", input, tail=3)
+
+    """
+    with set_workdir(workdir) as workdir:
+        if (path := Path(radex)).exists():
+            radex = str(path.expanduser().resolve())
+        elif which(radex) is not None:
+            radex = str(radex)
+        else:
+            radex = str(BIN / radex)
+
+        try:
+            sprun(
+                radex,
+                input="\n".join(input),
+                check=True,
+                cwd=workdir,
+                text=True,
+                timeout=timeout,
+                stderr=PIPE,
+                stdout=PIPE,
+            )
+            return on_success(workdir / input[1], tail=tail)
+        except CalledProcessError as error:
+            return on_error(str(error.stderr), tail=tail)
+        except (
+            FileNotFoundError,
+            IndexError,
+            RuntimeError,
+            TimeoutExpired,
+            TypeError,
+        ) as error:
+            return on_error(str(error), tail=tail)
+
+
+def runmap(
+    radexes: Iterable[StrPath],
+    inputs: Iterable[RadexInput],
+    /,
+    *,
+    parallel: int | None = None,
+    tail: int = 1,
+    timeout: float | None = None,
+    workdir: StrPath | None = None,
+) -> Iterator[RadexOutput]:
+    """Run RADEX in parallel and generate output objects.
+
+    Args:
+        radexes: Paths of the RADEX binaries to be run.
+        inputs: RADEX inputs to be passed to the RADEX binaries.
+        parallel: Number of runs in parallel.
+            Defaults to ``None`` (number of processors).
+        tail: Number of lines in a RADEX outfile to be read.
+        timeout: Timeout length per run in units of seconds.
+            Defaults to ``None`` (unlimited run time).
+        workdir: Path of the directory for RADEX output files.
+            Defaults to ``None`` (temporary directory).
+
+    Yields:
+        RADEX output as a list of string tuples.
+
+    """
+
+    with (
+        set_workdir(workdir) as workdir,
+        ProcessPoolExecutor(parallel) as executor,
+    ):
+        run_ = partial(run, tail=tail, timeout=timeout, workdir=workdir)
+        yield from executor.map(run_, radexes, numbered(inputs))
+
+
+def numbered(inputs: Iterable[RadexInput], /) -> Iterator[RadexInput]:
     """Add serial numbers to the names of RADEX output files."""
     for number, input in zip(count(), inputs):
         yield (input[0], f"{input[1]}.{number}", *input[2:])
 
 
-def parse_error(error: Exception, *, tail: int) -> Output:
-    """Parse a Python error and return an output object."""
-    return [(NAN,) * RADEX_COLUMNS] * tail
+def on_error(error: str, /, *, tail: int) -> RadexOutput:
+    """Handle given RADEX error and return a RADEX output."""
+    LOGGER.warning(f"RADEX failed to run: {error}")
+    return [("nan",) * RADEX_COLUMNS] * tail
 
 
-def parse_file(file: PathLike, *, tail: int) -> Output:
-    """Parse a RADEX output file and return an output object."""
+def on_success(file: StrPath, /, *, tail: int) -> RadexOutput:
+    """Handle given RADEX output file and return a RADEX output."""
     with open(file) as f:
         lines = f.readlines()
 
     if RADEX_VERSION not in lines[0]:
         raise RuntimeError("RADEX version is not valid")
 
-    output: Output = []
+    output: RadexOutput = []
 
     for line in lines[-tail:]:
         output.append(tuple(line.rsplit(None, RADEX_COLUMNS - 1)))
@@ -302,10 +279,10 @@ def parse_file(file: PathLike, *, tail: int) -> Output:
 
 
 @contextmanager
-def set_workdir(dir: Optional[PathLike] = None) -> Iterator[Path]:
+def set_workdir(workdir: StrPath | None = None, /) -> Iterator[Path]:
     """Set a directory for RADEX output files."""
-    if dir is None:
-        with TemporaryDirectory() as dir:
-            yield Path(dir)
+    if workdir is None:
+        with TemporaryDirectory() as workdir:
+            yield Path(workdir)
     else:
-        yield Path(dir).expanduser()
+        yield Path(workdir).expanduser()
