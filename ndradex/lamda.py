@@ -2,7 +2,7 @@ __all__ = ["LAMDA", "get_lamda"]
 
 
 # standard library
-from collections.abc import Iterator, Sequence
+from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field, replace
 from os import PathLike
@@ -16,13 +16,9 @@ from warnings import catch_warnings, simplefilter
 import numpy as np
 from astropy.table import Table, vstack
 from astroquery.lamda import Lamda, parse_lamda_datafile, write_lamda_datafile
+from numpy.typing import ArrayLike
 from requests_cache import CachedSession
 from typing_extensions import Self
-
-
-# type hints
-Tables = tuple[dict[str, Table], Table, Table]
-Transitions = Sequence[int] | Sequence[str]
 
 
 # constants
@@ -67,11 +63,11 @@ class LAMDA:
         tables = self.colliders, saved_transitions, self.levels
         write_lamda_datafile(datafile, tables)
 
-    def prioritize(self, transitions: Transitions, /) -> Self:
+    def prioritize(self, transitions: ArrayLike, /) -> Self:
         """Prioritize given transitions in the transitions table."""
-        transitions = list(transitions)  # type: ignore
+        transitions = np.atleast_1d(transitions)
 
-        if (kind := np.array(transitions).dtype.kind) == "i":
+        if (kind := transitions.dtype.kind) == "i":
             index = TRANSITION
         elif kind == "U":
             index = NAMED_TRANSITION
