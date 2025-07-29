@@ -7,10 +7,16 @@ from contextlib import contextmanager
 from functools import partial
 from itertools import chain, count
 from logging import getLogger
-from os import devnull, getenv
+from os import devnull
 from pathlib import Path
 from shutil import which
-from subprocess import PIPE, CalledProcessError, TimeoutExpired, run as sprun
+from subprocess import (
+    PIPE,
+    CalledProcessError,
+    CompletedProcess,
+    TimeoutExpired,
+    run as sprun,
+)
 from tempfile import TemporaryDirectory
 from typing import Any, Iterable, Iterator, Optional, Union
 
@@ -25,7 +31,6 @@ Workdir = Optional[PathLike]
 
 
 # constants
-FC = getenv("FC", "gfortran")
 NAN = str(float("nan"))
 BIN = Path(__file__).parent / "bin"
 RADEX_COLUMNS = 11
@@ -45,47 +50,33 @@ def build(
     logfile: PathLike = RADEX_LOGFILE,
     miniter: int = RADEX_MINITER,
     maxiter: int = RADEX_MAXITER,
-    fc: PathLike = FC,
-) -> None:
+) -> CompletedProcess[str]:
     """Build the builtin RADEX binaries.
-
-    This function builds them only when ``RADEX_BIN`` is
-    set to the package's bin (``/path/to/ndradex/bin``):
-    Otherwise, no build is run even if ``force=True``.
 
     Args:
         force: Whether to forcibly rebuild the binaries.
         logfile: Path of the RADEX log file.
         miniter: Minimum number of iterations.
         maxiter: Maximum number of iterations.
-        fc: Path of the Fortran compiler.
 
     Returns:
-        This function returns nothing.
+        Completed process object as the result of the build.
 
     """
-    if force:
-        sprun(
-            args=["make", "clean"],
-            cwd=BIN,
-            stdout=PIPE,
-            stderr=PIPE,
-            check=True,
-        )
+    targets = ["clean", "build"] if force else ["build"]
 
-    sprun(
+    return sprun(
         args=[
             "make",
-            "build",
-            f"FC={fc}",
+            *targets,
             f"RADEX_LOGFILE={logfile}",
             f"RADEX_MINITER={miniter}",
             f"RADEX_MAXITER={maxiter}",
         ],
-        check=True,
         cwd=BIN,
         stderr=PIPE,
         stdout=PIPE,
+        text=True,
     )
 
 
