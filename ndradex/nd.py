@@ -15,7 +15,7 @@ import xarray as xr
 from tqdm import tqdm
 from .lamda import get_lamda
 from .radex import RadexInput, runmap, to_input
-from .specs import EmptySet
+from .specs import NDRadexOutput
 
 
 # type hints
@@ -92,7 +92,7 @@ def run(
         dataset: Result of multidimensional RADEX runs.
 
     """
-    ds = EmptySet.new(
+    ds = NDRadexOutput.new(
         datafile=datafile,
         transition=transition,
         T_kin=T_kin,

@@ -236,8 +236,8 @@ class Flux(Units):
 
 
 @dataclass
-class EmptySet(AsDataset):
-    """Specification of an empty dataset."""
+class NDRadexOutput(AsDataset):
+    """Specifications for multidimensional RADEX outputs."""
 
     # attributes
     datafile: Attr[StrPath]
