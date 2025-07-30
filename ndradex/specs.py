@@ -7,7 +7,7 @@ from typing import Any, Literal
 # dependencies
 import numpy as np
 from astropy.units import Quantity
-from xarray_dataclasses import AsDataset, DataModel, Attr, Coordof, Data, Dataof
+from xarray_dataclasses import AsDataset, Attr, Coordof, Data, Dataof
 
 
 # type hints
@@ -27,6 +27,36 @@ VarDims = tuple[
     Literal["dv"],
     Literal["radex"],
 ]
+
+# constants
+DIMS = (
+    "transition",
+    "T_kin",
+    "n_H2",
+    "n_pH2",
+    "n_oH2",
+    "n_e",
+    "n_H",
+    "n_He",
+    "n_Hp",
+    "T_bg",
+    "N",
+    "dv",
+    "radex",
+)
+VARS = (
+    "line",
+    "E_up",
+    "freq",
+    "wavel",
+    "T_ex",
+    "tau",
+    "T_R",
+    "pop_up",
+    "pop_low",
+    "I",
+    "F",
+)
 
 
 class Units:
@@ -241,12 +271,11 @@ class EmptySet(AsDataset):
     F: Dataof[Flux] = field(init=False)
 
     def __post_init__(self) -> None:
-        """Set empty arrays to data variables."""
-        model = DataModel.from_dataclass(self)
-        shape = []
+        """Set empty arrays to the data variables."""
+        for dim in DIMS:
+            setattr(self, dim, np.atleast_1d(getattr(self, dim)))
 
-        for entry in model.coords:
-            shape.append(len(np.atleast_1d(entry.value)))
+        shape = [len(getattr(self, dim)) for dim in DIMS]
 
-        for entry in model.data_vars:
-            setattr(self, str(entry.name), np.empty(shape))
+        for var in VARS:
+            setattr(self, var, np.empty(shape))
