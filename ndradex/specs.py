@@ -21,7 +21,7 @@ VarDims = tuple[
     Literal["n_e"],
     Literal["n_H"],
     Literal["n_He"],
-    Literal["n_Hp"],
+    Literal["n_p"],
     Literal["T_bg"],
     Literal["N"],
     Literal["dv"],
@@ -38,7 +38,7 @@ DIMS = (
     "n_e",
     "n_H",
     "n_He",
-    "n_Hp",
+    "n_p",
     "T_bg",
     "N",
     "dv",
@@ -127,7 +127,7 @@ class HeliumDensity(Units):
 
 @dataclass
 class ProtonDensity(Units):
-    data: Data[Literal["n_Hp"], float]
+    data: Data[Literal["n_p"], float]
     long_name: Attr[str] = "Proton density"
     units: Attr[str] = "cm^-3"
 
@@ -251,7 +251,7 @@ class NDRadexOutput(AsDataset):
     n_e: Coordof[ElectronDensity]
     n_H: Coordof[HydrogenDensity]
     n_He: Coordof[HeliumDensity]
-    n_Hp: Coordof[ProtonDensity]
+    n_p: Coordof[ProtonDensity]
     T_bg: Coordof[BackgroundTemperature]
     N: Coordof[ColumnDensity]
     dv: Coordof[LineWidth]

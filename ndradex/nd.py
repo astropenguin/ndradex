@@ -40,7 +40,7 @@ def run(
     n_e: Multiple[float] = 0.0,
     n_H: Multiple[float] = 0.0,
     n_He: Multiple[float] = 0.0,
-    n_Hp: Multiple[float] = 0.0,
+    n_p: Multiple[float] = 0.0,
     T_bg: Multiple[float] = 2.73,
     N: Multiple[float] = 1e15,
     dv: Multiple[float] = 1.0,
@@ -73,7 +73,7 @@ def run(
             Defaults to ``0.0`` (not used as a collider).
         n_He: Value(s) of helium density (cm^-3).
             Defaults to ``0.0`` (not used as a collider).
-        n_Hp: Value(s) of proton density (cm^-3).
+        n_p: Value(s) of proton density (cm^-3).
             Defaults to ``0.0`` (not used as a collider).
         T_bg: Value(s) of background temperature (K).
         N: Value(s) of column density (cm^-2).
@@ -102,7 +102,7 @@ def run(
         n_e=n_e,
         n_H=n_H,
         n_He=n_He,
-        n_Hp=n_Hp,
+        n_p=n_p,
         T_bg=T_bg,
         N=N,
         dv=dv,

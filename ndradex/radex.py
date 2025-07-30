@@ -83,7 +83,7 @@ def to_input(
     n_e: float,
     n_H: float,
     n_He: float,
-    n_Hp: float,
+    n_p: float,
     T_bg: float,
     N: float,
     dv: float,
@@ -103,7 +103,7 @@ def to_input(
         n_e: Electron density (cm^-3).
         n_H: Hydrogen density (cm^-3).
         n_He: Helium density (cm^-3).
-        n_Hp: Proton density (cm^-3).
+        n_p: Proton density (cm^-3).
         T_bg: Background temperature (K).
         N: Column density (cm^-2).
         dv: Line width (km s^-1).
@@ -120,7 +120,7 @@ def to_input(
         ("e", n_e),
         ("H", n_H),
         ("He", n_He),
-        ("H+", n_Hp),
+        ("H+", n_p),
     ]
     n_use = list(filter(lambda n: n[1], n_all))
 
