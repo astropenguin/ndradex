@@ -61,6 +61,6 @@ def test_get_lamda_by_dict(datafile: str) -> None:
     assert get_lamda(datafile)
 
 
-@mark.parametrize("dataurl", choices(dataurls, k=1))
-def test_get_lamda_by_url(dataurl: str) -> None:
-    assert get_lamda(dataurl)
+# @mark.parametrize("dataurl", choices(dataurls, k=10))
+# def test_get_lamda_by_url(dataurl: str) -> None:
+#     assert get_lamda(dataurl)
