@@ -14,6 +14,7 @@ from xarray_dataclasses import AsDataset, Attr, Coordof, Data, Dataof
 StrPath = PathLike[str] | str
 VarDims = tuple[
     Literal["transition"],
+    Literal["N"],
     Literal["T_kin"],
     Literal["n_H2"],
     Literal["n_pH2"],
@@ -23,7 +24,6 @@ VarDims = tuple[
     Literal["n_He"],
     Literal["n_p"],
     Literal["T_bg"],
-    Literal["N"],
     Literal["dv"],
     Literal["radex"],
 ]
@@ -31,6 +31,7 @@ VarDims = tuple[
 # constants
 DIMS = (
     "transition",
+    "N",
     "T_kin",
     "n_H2",
     "n_pH2",
@@ -40,7 +41,6 @@ DIMS = (
     "n_He",
     "n_p",
     "T_bg",
-    "N",
     "dv",
     "radex",
 )
@@ -74,6 +74,13 @@ class Units:
 class Transition:
     data: Data[Literal["transition"], Any]
     long_name: Attr[str] = "Transition"
+
+
+@dataclass
+class ColumnDensity(Units):
+    data: Data[Literal["N"], float]
+    long_name: Attr[str] = "Column density"
+    units: Attr[str] = "cm^-2"
 
 
 @dataclass
@@ -137,13 +144,6 @@ class BackgroundTemperature(Units):
     data: Data[Literal["T_bg"], float]
     long_name: Attr[str] = "Background temperature"
     units: Attr[str] = "K"
-
-
-@dataclass
-class ColumnDensity(Units):
-    data: Data[Literal["N"], float]
-    long_name: Attr[str] = "Column density"
-    units: Attr[str] = "cm^-2"
 
 
 @dataclass
@@ -244,6 +244,7 @@ class NDRadexOutput(AsDataset):
 
     # dimensions
     transition: Coordof[Transition]
+    N: Coordof[ColumnDensity]
     T_kin: Coordof[KineticTemperature]
     n_H2: Coordof[H2Density]
     n_pH2: Coordof[ParaH2Density]
@@ -253,7 +254,6 @@ class NDRadexOutput(AsDataset):
     n_He: Coordof[HeliumDensity]
     n_p: Coordof[ProtonDensity]
     T_bg: Coordof[BackgroundTemperature]
-    N: Coordof[ColumnDensity]
     dv: Coordof[LineWidth]
     radex: Coordof[RadexBinary]
 

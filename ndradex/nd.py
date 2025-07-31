@@ -33,6 +33,7 @@ def run(
     datafile: StrPath,
     transition: Multiple[str],
     *,
+    N: Multiple[float] = 1e15,
     T_kin: Multiple[float] = 1e2,
     n_H2: Multiple[float] = 1e3,
     n_pH2: Multiple[float] = 0.0,
@@ -42,7 +43,6 @@ def run(
     n_He: Multiple[float] = 0.0,
     n_p: Multiple[float] = 0.0,
     T_bg: Multiple[float] = 2.73,
-    N: Multiple[float] = 1e15,
     dv: Multiple[float] = 1.0,
     radex: Multiple[StrPath] = "radex-uni",
     # options
@@ -57,8 +57,7 @@ def run(
     Args:
         datafile: Path of RADEX datafile.
         transition: Name(s) or ID(s) of transition.
-
-    Keyword Args:
+        N: Value(s) of column density (cm^-2).
         T_kin: Value(s) of kinetic temperature (K).
         n_H2: Value(s) of H2 density (cm^-3).
         n_pH2: Value(s) of para-H2 density (cm^-3).
@@ -76,7 +75,6 @@ def run(
         n_p: Value(s) of proton density (cm^-3).
             Defaults to ``0.0`` (not used as a collider).
         T_bg: Value(s) of background temperature (K).
-        N: Value(s) of column density (cm^-2).
         dv: Value(s) of line width (km s^-1).
         radex: Path(s) of RADEX binaries.
         parallel: Number of runs in parallel.
@@ -95,6 +93,7 @@ def run(
     ds = NDRadexOutput.new(
         datafile=datafile,
         transition=transition,
+        N=N,
         T_kin=T_kin,
         n_H2=n_H2,
         n_pH2=n_pH2,
@@ -104,7 +103,6 @@ def run(
         n_He=n_He,
         n_p=n_p,
         T_bg=T_bg,
-        N=N,
         dv=dv,
         radex=radex,
     )

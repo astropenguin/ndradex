@@ -76,6 +76,7 @@ def to_input(
     outfile: StrPath,
     freq_min: float,
     freq_max: float,
+    N: float,
     T_kin: float,
     n_H2: float,
     n_pH2: float,
@@ -85,7 +86,6 @@ def to_input(
     n_He: float,
     n_p: float,
     T_bg: float,
-    N: float,
     dv: float,
     **_: Any,
 ) -> RadexInput:
@@ -96,6 +96,7 @@ def to_input(
         outfile: Path of RADEX output file.
         freq_min: Minimum frequency (GHz).
         freq_max: Maximum frequency (GHz).
+        N: Column density (cm^-2).
         T_kin: Kinetic temperature (K).
         n_H2: H2 density (cm^-3).
         n_pH2: Para-H2 density (cm^-3).
@@ -105,7 +106,6 @@ def to_input(
         n_He: Helium density (cm^-3).
         n_p: Proton density (cm^-3).
         T_bg: Background temperature (K).
-        N: Column density (cm^-2).
         dv: Line width (km s^-1).
 
     Returns:
