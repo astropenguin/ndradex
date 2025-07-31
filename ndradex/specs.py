@@ -51,7 +51,7 @@ VARS = (
     "wavel",
     "T_ex",
     "tau",
-    "T_R",
+    "T_peak",
     "pop_up",
     "pop_low",
     "I",
@@ -264,7 +264,7 @@ class NDRadexOutput(AsDataset):
     wavel: Dataof[Wavelength] = field(init=False)
     T_ex: Dataof[ExcitationTemperature] = field(init=False)
     tau: Dataof[OpticalDepth] = field(init=False)
-    T_R: Dataof[PeakIntensity] = field(init=False)
+    T_peak: Dataof[PeakIntensity] = field(init=False)
     pop_up: Dataof[UpperStatePopulation] = field(init=False)
     pop_low: Dataof[LowerStatePopulation] = field(init=False)
     I: Dataof[IntegratedIntensity] = field(init=False)
