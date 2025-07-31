@@ -160,7 +160,7 @@ class RadexBinary:
 
 
 @dataclass
-class Line:
+class LineName:
     data: Data[VarDims, str]
     long_name: Attr[str] = "Line name"
 
@@ -258,7 +258,7 @@ class NDRadexOutput(AsDataset):
     radex: Coordof[RadexBinary]
 
     # data variables
-    line: Dataof[Line] = field(init=False)
+    line: Dataof[LineName] = field(init=False)
     E_up: Dataof[UpperStateEnergy] = field(init=False)
     freq: Dataof[Frequency] = field(init=False)
     wavel: Dataof[Wavelength] = field(init=False)
