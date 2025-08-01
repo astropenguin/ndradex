@@ -24,6 +24,7 @@ VarDims = tuple[
     Literal["n_He"],
     Literal["n_p"],
     Literal["T_bg"],
+    Literal["I_bg"],
     Literal["dv"],
     Literal["radex"],
 ]
@@ -41,6 +42,7 @@ DIMS = (
     "n_He",
     "n_p",
     "T_bg",
+    "I_bg",
     "dv",
     "radex",
 )
@@ -144,6 +146,12 @@ class BackgroundTemperature(Units):
     data: Data[Literal["T_bg"], float]
     long_name: Attr[str] = "Background temperature"
     units: Attr[str] = "K"
+
+
+@dataclass
+class BackgroundIntensity:
+    data: Data[Literal["I_bg"], str]
+    long_name: Attr[str] = "Background intensity"
 
 
 @dataclass
@@ -254,6 +262,7 @@ class NDRadexOutput(AsDataset):
     n_He: Coordof[HeliumDensity]
     n_p: Coordof[ProtonDensity]
     T_bg: Coordof[BackgroundTemperature]
+    I_bg: Coordof[BackgroundIntensity]
     dv: Coordof[LineWidth]
     radex: Coordof[RadexBinary]
 

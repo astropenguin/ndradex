@@ -1,4 +1,4 @@
-__all__ = ["build", "to_input", "run", "runmap"]
+__all__ = ["build", "run", "runmap"]
 
 
 # standard library
@@ -86,6 +86,7 @@ def to_input(
     n_He: float,
     n_p: float,
     T_bg: float,
+    I_bg: StrPath,
     dv: float,
     **_: Any,
 ) -> RadexInput:
@@ -106,6 +107,7 @@ def to_input(
         n_He: Helium density (cm^-3).
         n_p: Proton density (cm^-3).
         T_bg: Background temperature (K).
+        I_bg: User-defined background intensity file.
         dv: Line width (km s^-1).
 
     Returns:
@@ -134,6 +136,7 @@ def to_input(
         T_bg,
         N,
         dv,
+        *([I_bg] * (T_bg < 0)),
         0,
     )
     return tuple(map(str, input))

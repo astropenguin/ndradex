@@ -43,6 +43,7 @@ def run(
     n_He: Multiple[float] = 0.0,
     n_p: Multiple[float] = 0.0,
     T_bg: Multiple[float] = 2.73,
+    I_bg: Multiple[StrPath] = "",
     dv: Multiple[float] = 1.0,
     radex: Multiple[StrPath] = "radex-uni",
     # options
@@ -75,6 +76,7 @@ def run(
         n_p: Value(s) of proton density (cm^-3).
             Defaults to ``0.0`` (not used as a collider).
         T_bg: Value(s) of background temperature (K).
+        I_bg: File(s) of user-defined background intensity.
         dv: Value(s) of line width (km s^-1).
         radex: Path(s) of RADEX binaries.
         parallel: Number of runs in parallel.
@@ -103,6 +105,7 @@ def run(
         n_He=n_He,
         n_p=n_p,
         T_bg=T_bg,
+        I_bg=I_bg,
         dv=dv,
         radex=radex,
     )
