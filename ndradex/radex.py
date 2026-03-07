@@ -3,9 +3,8 @@ __all__ = ["build", "run", "runmap"]
 
 # standard library
 from concurrent.futures import ProcessPoolExecutor
-from contextlib import contextmanager
 from functools import partial
-from itertools import chain, count
+from itertools import chain
 from logging import getLogger
 from os import PathLike, devnull
 from pathlib import Path
@@ -17,7 +16,6 @@ from subprocess import (
     TimeoutExpired,
     run as sprun,
 )
-from tempfile import TemporaryDirectory
 from typing import Any, Iterable, Iterator
 
 
@@ -29,7 +27,7 @@ StrPath = PathLike[str] | str
 
 # constants
 LOGGER = getLogger(__name__)
-NDRADEX_BIN = Path(__file__).parent / "bin"
+RADEX_BIN = Path(__file__).parent / "bin"
 RADEX_OUTPUT_COLUMNS = 11
 RADEX_VERSION = "30nov2011"
 
@@ -63,7 +61,7 @@ def build(
             f"RADEX_MINITER={miniter}",
             f"RADEX_MAXITER={maxiter}",
         ],
-        cwd=NDRADEX_BIN,
+        cwd=RADEX_BIN,
         stderr=PIPE,
         stdout=PIPE,
         text=True,
@@ -149,7 +147,6 @@ def run(
     *,
     tail: int = 1,
     timeout: float | None = None,
-    workdir: StrPath | None = None,
 ) -> RadexOutput:
     """Run RADEX with given input.
 
@@ -170,8 +167,6 @@ def run(
         tail: Number of lines in a RADEX output file to be read.
         timeout: Timeout length of the run in seconds.
             Defaults to ``None`` (unlimited run time).
-        workdir: Path of the directory for the RADEX output file.
-            Defaults to ``None`` (temporary directory).
 
     Returns:
         RADEX output as a list of string tuples.
@@ -188,36 +183,34 @@ def run(
             output = run("/path/to/radex", input, tail=3)
 
     """
-    with set_workdir(workdir) as workdir:
-        if (path := Path(radex)).exists():
-            radex = str(path.expanduser().resolve())
-        elif which(radex) is not None:
-            radex = str(radex)
-        else:
-            radex = str(NDRADEX_BIN / radex)
+    if (path := Path(radex)).exists():
+        radex = str(path.expanduser().resolve())
+    elif which(radex) is not None:
+        radex = str(radex)
+    else:
+        radex = str(RADEX_BIN / radex)
 
-        try:
-            sprun(
-                radex,
-                input="\n".join(input),
-                check=True,
-                cwd=workdir,
-                text=True,
-                timeout=timeout,
-                stderr=PIPE,
-                stdout=PIPE,
-            )
-            return on_success(workdir / input[1], tail=tail)
-        except CalledProcessError as error:
-            return on_error(str(error.stderr), tail=tail)
-        except (
-            FileNotFoundError,
-            IndexError,
-            RuntimeError,
-            TimeoutExpired,
-            TypeError,
-        ) as error:
-            return on_error(str(error), tail=tail)
+    try:
+        sprun(
+            radex,
+            input="\n".join(input),
+            check=True,
+            text=True,
+            timeout=timeout,
+            stderr=PIPE,
+            stdout=PIPE,
+        )
+        return on_success(input[1], tail=tail)
+    except CalledProcessError as error:
+        return on_error(str(error.stderr), tail=tail)
+    except (
+        FileNotFoundError,
+        IndexError,
+        RuntimeError,
+        TimeoutExpired,
+        TypeError,
+    ) as error:
+        return on_error(str(error), tail=tail)
 
 
 def runmap(
@@ -228,7 +221,6 @@ def runmap(
     parallel: int | None = None,
     tail: int = 1,
     timeout: float | None = None,
-    workdir: StrPath | None = None,
 ) -> Iterator[RadexOutput]:
     """Run RADEX with given inputs in parallel.
 
@@ -243,26 +235,15 @@ def runmap(
         tail: Number of lines in a RADEX outfile to be read.
         timeout: Timeout length per run in seconds.
             Defaults to ``None`` (unlimited run time).
-        workdir: Path of the directory for the RADEX output files.
-            Defaults to ``None`` (temporary directory).
 
     Yields:
         RADEX output as a list of string tuples.
 
     """
 
-    with (
-        set_workdir(workdir) as workdir,
-        ProcessPoolExecutor(parallel) as executor,
-    ):
-        run_ = partial(run, tail=tail, timeout=timeout, workdir=workdir)
-        yield from executor.map(run_, radexes, numbered(inputs))
-
-
-def numbered(inputs: Iterable[RadexInput], /) -> Iterator[RadexInput]:
-    """Add serial numbers to the names of RADEX output files."""
-    for number, input in zip(count(), inputs):
-        yield (input[0], f"{input[1]}.{number}", *input[2:])
+    with ProcessPoolExecutor(parallel) as executor:
+        run_ = partial(run, tail=tail, timeout=timeout)
+        yield from executor.map(run_, radexes, inputs)
 
 
 def on_error(error: str, /, *, tail: int) -> RadexOutput:
@@ -285,13 +266,3 @@ def on_success(file: StrPath, /, *, tail: int) -> RadexOutput:
         output.append(tuple(line.rsplit(None, RADEX_OUTPUT_COLUMNS - 1)))
 
     return output
-
-
-@contextmanager
-def set_workdir(workdir: StrPath | None = None, /) -> Iterator[Path]:
-    """Set a directory for RADEX output files."""
-    if workdir is None:
-        with TemporaryDirectory() as workdir:
-            yield Path(workdir)
-    else:
-        yield Path(workdir).expanduser()

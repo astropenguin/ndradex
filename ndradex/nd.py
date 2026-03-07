@@ -2,10 +2,12 @@ __all__ = ["run"]
 
 
 # standard library
+from contextlib import contextmanager
 from csv import writer as csv_writer
 from itertools import product
 from os import PathLike
-from tempfile import NamedTemporaryFile, TemporaryFile
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any, Collection, IO, Iterator, TypeVar
 
 
@@ -25,8 +27,9 @@ StrPath = PathLike[str] | str
 
 
 # constants
-CSV = "radex.csv"
-OUTFILE = "radex.out"
+IN_FILE = "ndradex.in"
+OUT_FILE = "ndradex.out"
+NTH_FILE = "ndradex-{n}.out"
 
 
 def run(
@@ -111,67 +114,66 @@ def run(
     )
 
     with (
-        TemporaryFile("w+", buffering=1) as csv,
+        set_workdir(workdir) as workdir,
+        open(workdir / OUT_FILE, "w+", buffering=1) as csv,
         tqdm(total=ds.I.size, disable=not progress) as bar,
     ):
         writer = csv_writer(csv)
 
         for output in runmap(
             gen_radexes(ds),
-            gen_inputs(ds),
+            gen_inputs(ds, workdir),
             tail=ds.transition.size,
             timeout=timeout,
             parallel=parallel,
-            workdir=workdir,
         ):
             writer.writerows(output)
             bar.update(ds.transition.size)
 
         if squeeze:
-            return update(ds, csv).squeeze()
+            return update_dataset(ds, csv).squeeze()
         else:
-            return update(ds, csv)
+            return update_dataset(ds, csv)
 
 
-def gen_inputs(dataset: xr.Dataset) -> Iterator[RadexInput]:
+def gen_inputs(dataset: xr.Dataset, workdir: Path, /) -> Iterator[RadexInput]:
     """Generate inputs to be passed to the RADEX binaries."""
     transitions = dataset.transition.values.tolist()
     lamda = get_lamda(dataset.datafile).prioritize(transitions)
-
+    lamda.to_datafile(workdir / IN_FILE)
     freq = lamda.transitions[-len(transitions) :]["Frequency"]
-    freq_min = min(freq) - 1e-9  # type: ignore
-    freq_max = max(freq) + 1e-9  # type: ignore
 
-    with NamedTemporaryFile("w") as tempfile:
-        lamda.to_datafile(tempfile.name)
-
-        for index in walk_dims(dataset):
-            yield to_input(
-                datafile=tempfile.name,
-                outfile=OUTFILE,
-                freq_min=freq_min,
-                freq_max=freq_max,
-                **index,
-            )
+    for n, index in enumerate(walk_dims(dataset)):
+        yield to_input(
+            datafile=workdir / IN_FILE,
+            outfile=workdir / NTH_FILE.format(n=n),
+            freq_min=min(freq) - 1e-9,  # type: ignore
+            freq_max=max(freq) + 1e-9,  # type: ignore
+            **index,
+        )
 
 
-def gen_radexes(dataset: xr.Dataset) -> Iterator[StrPath]:
+def gen_radexes(dataset: xr.Dataset, /) -> Iterator[StrPath]:
     """Generate paths of the RADEX binaries."""
     for index in walk_dims(dataset):
         yield index["radex"]
 
 
-def update(dataset: xr.Dataset, csv: IO[str]) -> xr.Dataset:
+@contextmanager
+def set_workdir(workdir: StrPath | None = None, /) -> Iterator[Path]:
+    """Set a directory for RADEX output files."""
+    if workdir is None:
+        with TemporaryDirectory() as workdir:
+            yield Path(workdir).resolve()
+    else:
+        yield Path(workdir).expanduser().resolve()
+
+
+def update_dataset(dataset: xr.Dataset, csv: IO[str], /) -> xr.Dataset:
     """Update data variables of a dataset by a CSV file."""
     csv.seek(0)
+    df = pd.read_csv(csv, header=None, names=list(dataset.data_vars))
 
-    df = pd.read_csv(
-        csv,
-        header=None,
-        names=list(dataset.data_vars),
-    )
-
-    # move transition to the last of dims
     dims = list(dataset.dims)
     dims.append(dims.pop(0))
     transposed = dataset.transpose(*dims)
@@ -182,8 +184,8 @@ def update(dataset: xr.Dataset, csv: IO[str]) -> xr.Dataset:
     return dataset
 
 
-def walk_dims(dataset: xr.Dataset) -> Iterator[dict[str, Any]]:
-    """Generate combinations of indexes' values."""
+def walk_dims(dataset: xr.Dataset, /) -> Iterator[dict[str, Any]]:
+    """Generate combinations of the dataset's dimensions."""
     dims = dict(dataset.indexes)
     dims.pop("transition")
 
