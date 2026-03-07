@@ -1,10 +1,15 @@
 # standard library
+from multiprocessing import set_start_method
 from random import choice
 
 
 # dependencies
 from ndradex.nd import run
 from xarray.testing import assert_equal
+
+
+# use spawn for new process
+set_start_method("spawn", force=True)
 
 
 # test data

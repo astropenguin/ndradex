@@ -111,7 +111,7 @@ def get_lamda(
             the function creates from the datafile at the URL.
             If the query is path-like (e.g. ``'co.dat'``) and it exists,
             the function creates from the datafile. If it does not exist
-            but is found in ``astroquery.lamda.Lamda.moledule_dict``
+            but is found in ``astroquery.lamda.Lamda.molecule_dict``
             (e.g. ``'co'``), the function creates from the dictionary.
         cache: Whether to cache the HTTP session.
         timeout: Timeout of the HTTP session in seconds.

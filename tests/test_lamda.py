@@ -1,4 +1,5 @@
 # standard library
+from multiprocessing import set_start_method
 from random import choices
 from tempfile import NamedTemporaryFile
 from warnings import catch_warnings, simplefilter
@@ -9,6 +10,10 @@ import numpy as np
 from astroquery.lamda import Lamda
 from ndradex.lamda import get_lamda, set_index
 from pytest import mark
+
+
+# use spawn for new process
+set_start_method("spawn", force=True)
 
 
 # test data
@@ -59,8 +64,3 @@ def test_get_lamda_by_path(datafile: str) -> None:
 @mark.parametrize("datafile", choices(datafiles, k=10))
 def test_get_lamda_by_dict(datafile: str) -> None:
     assert get_lamda(datafile)
-
-
-# @mark.parametrize("dataurl", choices(dataurls, k=10))
-# def test_get_lamda_by_url(dataurl: str) -> None:
-#     assert get_lamda(dataurl)
