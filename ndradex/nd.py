@@ -7,6 +7,7 @@ from csv import writer as csv_writer
 from itertools import product
 from os import PathLike
 from pathlib import Path
+from shutil import which
 from tempfile import TemporaryDirectory
 from typing import Any, Collection, IO, Iterator, TypeVar
 
@@ -16,7 +17,7 @@ import pandas as pd
 import xarray as xr
 from tqdm import tqdm
 from .lamda import get_lamda
-from .radex import RadexInput, runmap, to_input
+from .radex import RADEX_BIN, RadexInput, runmap, to_input
 from .specs import NDRadexOutput
 
 
@@ -156,7 +157,12 @@ def gen_inputs(dataset: xr.Dataset, workdir: Path, /) -> Iterator[RadexInput]:
 def gen_radexes(dataset: xr.Dataset, /) -> Iterator[StrPath]:
     """Generate paths of the RADEX binaries."""
     for index in walk_dims(dataset):
-        yield index["radex"]
+        if (path := Path(index["radex"])).exists():
+            yield str(path.expanduser().resolve())
+        elif which(index["radex"]) is not None:
+            yield str(index["radex"])
+        else:
+            yield str(RADEX_BIN / index["radex"])
 
 
 @contextmanager

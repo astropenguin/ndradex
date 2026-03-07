@@ -8,7 +8,6 @@ from itertools import chain
 from logging import getLogger
 from os import PathLike, devnull
 from pathlib import Path
-from shutil import which
 from subprocess import (
     PIPE,
     CalledProcessError,
@@ -183,13 +182,6 @@ def run(
             output = run("/path/to/radex", input, tail=3)
 
     """
-    if (path := Path(radex)).exists():
-        radex = str(path.expanduser().resolve())
-    elif which(radex) is not None:
-        radex = str(radex)
-    else:
-        radex = str(RADEX_BIN / radex)
-
     try:
         sprun(
             radex,
@@ -240,7 +232,6 @@ def runmap(
         RADEX output as a list of string tuples.
 
     """
-
     with ProcessPoolExecutor(parallel) as executor:
         run_ = partial(run, tail=tail, timeout=timeout)
         yield from executor.map(run_, radexes, inputs)
