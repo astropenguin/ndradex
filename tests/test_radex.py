@@ -1,16 +1,21 @@
 # standard library
 from itertools import repeat
+from multiprocessing import set_start_method
 from pathlib import Path
-from tempfile import NamedTemporaryFile
+from tempfile import TemporaryDirectory
 
 
 # dependencies
 from ndradex.lamda import get_lamda
-from ndradex.radex import run, runmap, to_input
+from ndradex.radex import RADEX_BIN, run, runmap, to_input
+
+
+# use spawn for new process
+set_start_method("spawn", force=True)
 
 
 # test data
-radex_input = (
+RADEX_INPUT = (
     "radex.out",
     "110.0 120.0",
     "100.0",
@@ -22,7 +27,7 @@ radex_input = (
     "1.0",
     "0",
 )
-radex_output = [
+RADEX_OUTPUT = [
     (
         "1      -- 0",
         "5.5",
@@ -37,7 +42,7 @@ radex_output = [
         "2.684E-08",
     )
 ]
-radex_params = {
+RADEX_PARAMS = {
     "outfile": "radex.out",
     "freq_min": 110.0,
     "freq_max": 120.0,
@@ -50,6 +55,7 @@ radex_params = {
     "n_He": 0.0,
     "n_p": 0.0,
     "T_bg": 2.73,
+    "I_bg": "",
     "N": 1e15,
     "dv": 1.0,
 }
@@ -57,36 +63,36 @@ radex_params = {
 
 # test functions
 def test_run() -> None:
-    with NamedTemporaryFile("w") as tempfile:
-        get_lamda("co").to_datafile(tempfile.name)
-        output = run("radex-1", (tempfile.name, *radex_input))
+    with TemporaryDirectory() as workdir:
+        in_file = Path(workdir) / "co.dat"
+        out_file = Path(workdir) / RADEX_INPUT[0]
+        get_lamda("co").to_datafile(in_file)
+        output = run(
+            RADEX_BIN / "radex-1",
+            (str(in_file), str(out_file), *RADEX_INPUT[1:]),
+        )
 
-    # test non-existence of the input/output files
-    assert not Path(radex_input[0]).exists()
-    assert not Path(radex_input[1]).exists()
-
-    # test equality of the output values
-    assert output == radex_output
+    assert not in_file.exists()
+    assert not out_file.exists()
+    assert output == RADEX_OUTPUT
 
 
 def test_runmap() -> None:
-    with NamedTemporaryFile("w") as tempfile:
-        get_lamda("co").to_datafile(tempfile.name)
-        outputs = list(
-            runmap(
-                repeat("radex-1", 10),
-                repeat((tempfile.name, *radex_input), 10),
-            )
+    with TemporaryDirectory() as workdir:
+        in_file = Path(workdir) / "co.dat"
+        out_file = Path(workdir) / RADEX_INPUT[0]
+        get_lamda("co").to_datafile(in_file)
+        outputs = runmap(
+            repeat(RADEX_BIN / "radex-1", 10),
+            repeat((str(in_file), str(out_file), *RADEX_INPUT[1:]), 10),
         )
+        outputs = list(outputs)
 
-    # test non-existence of the input/output files
-    assert not Path(radex_input[0]).exists()
-    assert not Path(radex_input[1]).exists()
-
-    # test equality of the output values
-    assert outputs[0] == radex_output
+    assert not in_file.exists()
+    assert not out_file.exists()
+    assert outputs[0] == RADEX_OUTPUT
 
 
 def test_to_input() -> None:
-    input = to_input(datafile="dummy", **radex_params)
-    assert input[1:] == radex_input
+    input = to_input(datafile="dummy", **RADEX_PARAMS)
+    assert input[1:] == RADEX_INPUT
