@@ -4,11 +4,9 @@ from multiprocessing import set_start_method
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-
 # dependencies
 from ndradex.lamda import get_lamda
 from ndradex.radex import RADEX_BIN, run, runmap, to_input
-
 
 # use spawn for new process
 set_start_method("spawn", force=True)

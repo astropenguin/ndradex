@@ -4,13 +4,11 @@ from random import choices
 from tempfile import NamedTemporaryFile
 from warnings import catch_warnings, simplefilter
 
-
 # dependencies
 import numpy as np
 from astroquery.lamda import Lamda
 from ndradex.lamda import get_lamda, set_index
 from pytest import mark
-
 
 # use spawn for new process
 set_start_method("spawn", force=True)
