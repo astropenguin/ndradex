@@ -1,23 +1,19 @@
 __all__ = [
-    "LAMDA",
+    # submodules
     "lamda",
-    "get_lamda",
     "nd",
     "radex",
+    # aliases
+    "LAMDA",
+    "get_lamda",
     "run",
-    "specs",
 ]
 __version__ = "0.3.1"
 
-
 # dependencies
-from . import lamda
-from . import nd
-from . import radex
-from . import specs
+from . import lamda, nd, radex
 from .lamda import LAMDA, get_lamda
 from .nd import run
-
 
 # builtin RADEX binaries
 radex.build()

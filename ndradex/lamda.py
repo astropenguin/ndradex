@@ -1,6 +1,5 @@
 __all__ = ["LAMDA", "get_lamda"]
 
-
 # standard library
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -11,7 +10,6 @@ from re import compile
 from tempfile import NamedTemporaryFile
 from warnings import catch_warnings, simplefilter
 
-
 # dependencies
 import numpy as np
 from astropy.table import Table, vstack
@@ -19,7 +17,6 @@ from astroquery.lamda import Lamda, parse_lamda_datafile, write_lamda_datafile
 from numpy.typing import ArrayLike
 from requests_cache import CachedSession
 from typing_extensions import Self
-
 
 # constants
 HTTP_REGEX = compile(r"https?://")
