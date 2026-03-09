@@ -11,7 +11,6 @@ from ndradex.radex import RADEX_BIN, run, runmap, to_input
 # use spawn for new process
 set_start_method("spawn", force=True)
 
-
 # test data
 RADEX_INPUT = (
     "radex.out",
@@ -59,7 +58,6 @@ RADEX_PARAMS = {
 }
 
 
-# test functions
 def test_run() -> None:
     with TemporaryDirectory() as workdir:
         in_file = Path(workdir) / "co.dat"

@@ -9,9 +9,8 @@ from xarray.testing import assert_equal
 # use spawn for new process
 set_start_method("spawn", force=True)
 
-
 # test data
-nd_params = {
+PARAMS = {
     "radex": ["radex-1", "radex-2"],
     "transition": ["1-0", "2-1", "3-2"],
     "T_kin": [100.0, 200.0, 300.0, 400.0],
@@ -23,9 +22,9 @@ nd_params = {
 
 
 def test_run() -> None:
-    ds_nd = run("co", **nd_params, squeeze=False, timeout=1.0)
+    ds_nd = run("co", **PARAMS, squeeze=False, timeout=1.0)
 
     for _ in range(10):
-        params = {k: choice(v) for k, v in nd_params.items()}
+        params = {k: choice(v) for k, v in PARAMS.items()}
         ds_one = run("co", **params, squeeze=False, timeout=1.0)
         assert_equal(ds_nd.sel(ds_one.coords), ds_one)
