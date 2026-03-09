@@ -8,7 +8,6 @@
         "--name=ndradex"
     ],
     "containerEnv": {
-        "NDRADEX_DIR": "${containerWorkspaceFolder}/.config",
         "UV_PROJECT_ENVIRONMENT": "/usr/local"
     },
     "postCreateCommand": "uv sync --frozen",
@@ -21,9 +20,7 @@
                 "tamasfe.even-better-toml"
             ],
             "settings": {
-                "files.insertFinalNewline": true,
-                "files.trimTrailingWhitespace": true,
-                "python.analysis.autoImportCompletions": true,
+                "black-formatter.importStrategy": "fromEnvironment",
                 "python.languageServer": "Pylance",
                 "[python]": {
                     "editor.defaultFormatter": "ms-python.black-formatter",
