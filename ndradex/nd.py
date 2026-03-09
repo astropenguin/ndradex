@@ -9,7 +9,7 @@ from os import PathLike
 from pathlib import Path
 from shutil import which
 from tempfile import TemporaryDirectory
-from typing import Any, Annotated, Collection, IO, Iterator, TypeVar
+from typing import Any, Annotated, Collection, Iterator, TypeVar
 
 # dependencies
 import numpy as np
@@ -159,20 +159,15 @@ def run(
             writer.writerows(output)
             bar.update(ds.transition.size)
 
-        if squeeze:
-            return update_dataset(ds, csv).squeeze()
-        else:
-            return update_dataset(ds, csv)
+        csv.seek(0)
+        df = pd.read_csv(csv, header=None, names=list(ds.data_vars))
 
+    ds = ds.transpose(*RADEX_DIMS[1:], RADEX_DIMS[0])
 
-def dataarray_with_units(*args: Any, **kwargs: Any) -> xr.DataArray:
-    """Create a DataArray with values converted to given units."""
-    da = xr.DataArray(*args, **kwargs)
+    for name, var in ds.data_vars.items():
+        var[:] = df[name].to_numpy().reshape(var.shape)
 
-    if isinstance(da.data, Quantity):
-        da.data = da.data.to(da.units).value
-
-    return da
+    return ds.squeeze() if squeeze else ds
 
 
 def gen_inputs(dataset: xr.Dataset, workdir: Path, /) -> Iterator[RadexInput]:
@@ -192,15 +187,25 @@ def gen_inputs(dataset: xr.Dataset, workdir: Path, /) -> Iterator[RadexInput]:
         )
 
 
-def gen_radexes(dataset: xr.Dataset, /) -> Iterator[StrPath]:
+def gen_radexes(dataset: xr.Dataset, /) -> Iterator[Path]:
     """Generate paths of the RADEX binaries."""
     for index in walk_dims(dataset):
         if (path := Path(index["radex"])).exists():
-            yield str(path.expanduser().resolve())
+            yield path.expanduser().resolve()
         elif which(index["radex"]) is not None:
-            yield str(index["radex"])
+            yield Path(index["radex"])
         else:
-            yield str(RADEX_BIN / index["radex"])
+            yield RADEX_BIN / index["radex"]
+
+
+def get_dataarray(*args: Any, **kwargs: Any) -> xr.DataArray:
+    """Create a DataArray with values converted to given units."""
+    da = xr.DataArray(*args, **kwargs)
+
+    if isinstance(da.data, Quantity):
+        da.data = da.data.to(da.units).value
+
+    return da
 
 
 @contextmanager
@@ -211,21 +216,6 @@ def set_workdir(workdir: StrPath | None = None, /) -> Iterator[Path]:
             yield Path(workdir).resolve()
     else:
         yield Path(workdir).expanduser().resolve()
-
-
-def update_dataset(dataset: xr.Dataset, csv: IO[str], /) -> xr.Dataset:
-    """Update data variables of a dataset by a CSV file."""
-    csv.seek(0)
-    df = pd.read_csv(csv, header=None, names=list(dataset.data_vars))
-
-    dims = list(dataset.dims)
-    dims.append(dims.pop(0))
-    transposed = dataset.transpose(*dims)
-
-    for name, var in transposed.data_vars.items():
-        var[:] = df[name].to_numpy().reshape(var.shape)
-
-    return dataset
 
 
 def walk_dims(dataset: xr.Dataset, /) -> Iterator[dict[str, Any]]:
@@ -242,7 +232,7 @@ class NDRadexOutput(xs.AsDataset):
     """Specifications for multidimensional RADEX outputs."""
 
     # attributes
-    datafile: Annotated[PathLike[str] | str, xs.use("attr")]
+    datafile: Annotated[StrPath, xs.use("attr")]
 
     # dimensions
     transition: Annotated[
@@ -257,7 +247,7 @@ class NDRadexOutput(xs.AsDataset):
         xs.dims("N"),
         xs.dtype("f8"),
         xs.attrs(long_name="Column density", units="cm^-2"),
-        xs.type(dataarray_with_units),
+        xs.type(get_dataarray),
     ]
     T_kin: Annotated[
         Any,
@@ -265,7 +255,7 @@ class NDRadexOutput(xs.AsDataset):
         xs.dims("T_kin"),
         xs.dtype("f8"),
         xs.attrs(long_name="Kinetic temperature", units="K"),
-        xs.type(dataarray_with_units),
+        xs.type(get_dataarray),
     ]
     n_H2: Annotated[
         Any,
@@ -273,7 +263,7 @@ class NDRadexOutput(xs.AsDataset):
         xs.dims("n_H2"),
         xs.dtype("f8"),
         xs.attrs(long_name="H2 density", units="cm^-3"),
-        xs.type(dataarray_with_units),
+        xs.type(get_dataarray),
     ]
     n_pH2: Annotated[
         Any,
@@ -281,7 +271,7 @@ class NDRadexOutput(xs.AsDataset):
         xs.dims("n_pH2"),
         xs.dtype("f8"),
         xs.attrs(long_name="Para-H2 density", units="cm^-3"),
-        xs.type(dataarray_with_units),
+        xs.type(get_dataarray),
     ]
     n_oH2: Annotated[
         Any,
@@ -289,7 +279,7 @@ class NDRadexOutput(xs.AsDataset):
         xs.dims("n_oH2"),
         xs.dtype("f8"),
         xs.attrs(long_name="Ortho-H2 density", units="cm^-3"),
-        xs.type(dataarray_with_units),
+        xs.type(get_dataarray),
     ]
     n_e: Annotated[
         Any,
@@ -297,7 +287,7 @@ class NDRadexOutput(xs.AsDataset):
         xs.dims("n_e"),
         xs.dtype("f8"),
         xs.attrs(long_name="Electron density", units="cm^-3"),
-        xs.type(dataarray_with_units),
+        xs.type(get_dataarray),
     ]
     n_H: Annotated[
         Any,
@@ -305,7 +295,7 @@ class NDRadexOutput(xs.AsDataset):
         xs.dims("n_H"),
         xs.dtype("f8"),
         xs.attrs(long_name="Hydrogen density", units="cm^-3"),
-        xs.type(dataarray_with_units),
+        xs.type(get_dataarray),
     ]
     n_He: Annotated[
         Any,
@@ -313,7 +303,7 @@ class NDRadexOutput(xs.AsDataset):
         xs.dims("n_He"),
         xs.dtype("f8"),
         xs.attrs(long_name="Helium density", units="cm^-3"),
-        xs.type(dataarray_with_units),
+        xs.type(get_dataarray),
     ]
     n_p: Annotated[
         Any,
@@ -321,7 +311,7 @@ class NDRadexOutput(xs.AsDataset):
         xs.dims("n_p"),
         xs.dtype("f8"),
         xs.attrs(long_name="Proton density", units="cm^-3"),
-        xs.type(dataarray_with_units),
+        xs.type(get_dataarray),
     ]
     T_bg: Annotated[
         Any,
@@ -329,7 +319,7 @@ class NDRadexOutput(xs.AsDataset):
         xs.dims("T_bg"),
         xs.dtype("f8"),
         xs.attrs(long_name="Background temperature", units="K"),
-        xs.type(dataarray_with_units),
+        xs.type(get_dataarray),
     ]
     I_bg: Annotated[
         Any,
@@ -344,7 +334,7 @@ class NDRadexOutput(xs.AsDataset):
         xs.dims("dv"),
         xs.dtype("f8"),
         xs.attrs(long_name="Line width", units="km s^-1"),
-        xs.type(dataarray_with_units),
+        xs.type(get_dataarray),
     ]
     radex: Annotated[
         Any,
@@ -368,7 +358,7 @@ class NDRadexOutput(xs.AsDataset):
         xs.dims(RADEX_DIMS),
         xs.dtype("f8"),
         xs.attrs(long_name="Upper state energy", units="K"),
-        xs.type(dataarray_with_units),
+        xs.type(get_dataarray),
     ] = field(init=False)
     freq: Annotated[
         Any,
@@ -376,7 +366,7 @@ class NDRadexOutput(xs.AsDataset):
         xs.dims(RADEX_DIMS),
         xs.dtype("f8"),
         xs.attrs(long_name="Frequency", units="GHz"),
-        xs.type(dataarray_with_units),
+        xs.type(get_dataarray),
     ] = field(init=False)
     wavel: Annotated[
         Any,
@@ -384,7 +374,7 @@ class NDRadexOutput(xs.AsDataset):
         xs.dims(RADEX_DIMS),
         xs.dtype("f8"),
         xs.attrs(long_name="Wavelength", units="um"),
-        xs.type(dataarray_with_units),
+        xs.type(get_dataarray),
     ] = field(init=False)
     T_ex: Annotated[
         Any,
@@ -392,7 +382,7 @@ class NDRadexOutput(xs.AsDataset):
         xs.dims(RADEX_DIMS),
         xs.dtype("f8"),
         xs.attrs(long_name="Excitation temperature", units="K"),
-        xs.type(dataarray_with_units),
+        xs.type(get_dataarray),
     ] = field(init=False)
     tau: Annotated[
         Any,
@@ -400,7 +390,7 @@ class NDRadexOutput(xs.AsDataset):
         xs.dims(RADEX_DIMS),
         xs.dtype("f8"),
         xs.attrs(long_name="Optical depth", units="dimensionless"),
-        xs.type(dataarray_with_units),
+        xs.type(get_dataarray),
     ] = field(init=False)
     T_peak: Annotated[
         Any,
@@ -408,7 +398,7 @@ class NDRadexOutput(xs.AsDataset):
         xs.dims(RADEX_DIMS),
         xs.dtype("f8"),
         xs.attrs(long_name="Peak intensity", units="K"),
-        xs.type(dataarray_with_units),
+        xs.type(get_dataarray),
     ] = field(init=False)
     pop_up: Annotated[
         Any,
@@ -416,7 +406,7 @@ class NDRadexOutput(xs.AsDataset):
         xs.dims(RADEX_DIMS),
         xs.dtype("f8"),
         xs.attrs(long_name="Upper state population", units="dimensionless"),
-        xs.type(dataarray_with_units),
+        xs.type(get_dataarray),
     ] = field(init=False)
     pop_low: Annotated[
         Any,
@@ -424,7 +414,7 @@ class NDRadexOutput(xs.AsDataset):
         xs.dims(RADEX_DIMS),
         xs.dtype("f8"),
         xs.attrs(long_name="Lower state population", units="dimensionless"),
-        xs.type(dataarray_with_units),
+        xs.type(get_dataarray),
     ] = field(init=False)
     I: Annotated[
         Any,
@@ -432,7 +422,7 @@ class NDRadexOutput(xs.AsDataset):
         xs.dims(RADEX_DIMS),
         xs.dtype("f8"),
         xs.attrs(long_name="Integrated intensity", units="K km s^-1"),
-        xs.type(dataarray_with_units),
+        xs.type(get_dataarray),
     ] = field(init=False)
     F: Annotated[
         Any,
@@ -440,7 +430,7 @@ class NDRadexOutput(xs.AsDataset):
         xs.dims(RADEX_DIMS),
         xs.dtype("f8"),
         xs.attrs(long_name="Flux", units="erg s^-1 cm^-2"),
-        xs.type(dataarray_with_units),
+        xs.type(get_dataarray),
     ] = field(init=False)
 
     def __post_init__(self) -> None:
