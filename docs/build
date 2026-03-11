@@ -5,4 +5,4 @@ export LC_ALL=C.UTF-8
 
 sphinx-apidoc -efMT -d 2 -o docs/_apidoc ndradex
 sphinx-build -a -b html docs docs/_build
-sphinx-build -a -b html docs docs/_build/0.3.1
+sphinx-build -a -b html docs docs/_build/1.0.0rc1

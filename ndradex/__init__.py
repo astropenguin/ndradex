@@ -8,7 +8,7 @@ __all__ = [
     "get_lamda",
     "run",
 ]
-__version__ = "0.3.1"
+__version__ = "1.0.0rc1"
 
 # dependencies
 from . import lamda, nd, radex

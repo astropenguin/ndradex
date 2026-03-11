@@ -18,6 +18,6 @@ html_theme_options = {
     ],
     "switcher": {
         "json_url": "https://astropenguin.github.io/ndradex/_static/switcher.json",
-        "version_match": "0.3.1",
+        "version_match": "1.0.0rc1",
     },
 }
