@@ -14,6 +14,3 @@ __version__ = "1.0.0rc1"
 from . import lamda, nd, radex
 from .lamda import LAMDA, get_lamda
 from .nd import run
-
-# builtin RADEX binaries
-radex.build()
