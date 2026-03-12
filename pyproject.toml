@@ -1,23 +1,26 @@
 [project]
 name = "ndradex"
-version = "0.3.1"
-description = " Multidimensional RADEX calculator"
+version = "1.0.0rc1"
+description = "Multidimensional RADEX calculator"
 readme = "README.md"
-keywords = ["astronomy", "radio-astronomy", "radex", "xarray"]
-requires-python = ">=3.10,<3.14"
+keywords = [
+    "astronomy",
+    "python",
+    "radio-astronomy",
+    "radex",
+    "xarray",
+]
+requires-python = ">=3.10,<3.15"
 dependencies = [
     "astropy>=6,<8",
     "astroquery>=0.4,<1.0",
     "numpy>=2,<3",
     "pandas>=2,<3",
-    "pandas-stubs>=2,<3",
-    "requests-cache>=1,<2",
-    "tomlkit>=0.10,<1.0",
+    "requests>=2,<3",
     "tqdm>=4,<5",
     "typing-extensions>=4,<5",
-    "xarray>=2022,<2026",
-    "xarray-dataclasses>=1,<2",
-
+    "xarray>=2025,<2027",
+    "xarrayspecs>=0.5,<1.0",
 ]
 classifiers = [
     "License :: OSI Approved :: MIT License",
@@ -26,11 +29,12 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
 ]
 
 [[project.authors]]
 name = "Akio Taniguchi"
-email = "taniguchi.akio@gmail.com"
+email = "a-taniguchi@mail.kitami-it.ac.jp"
 
 [project.license]
 file = "LICENSE"
@@ -45,13 +49,14 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
-    "black>=25,<26",
+    "black>=25,<27",
     "ipython>=8,<10",
     "myst-parser>=3,<5",
-    "pydata-sphinx-theme>=0.15,<1.0",
+    "pandas-stubs>=2,<3",
+    "pydata-sphinx-theme>=0.16,<1.0",
     "pyright>=1,<2",
-    "pytest>=8,<9",
-    "sphinx>=7,<9",
+    "pytest>=9,<10",
+    "sphinx>=8,<9",
 ]
 
 [tool.pyright]

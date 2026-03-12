@@ -1,6 +1,5 @@
 __all__ = ["build", "run", "runmap"]
 
-
 # standard library
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
@@ -17,12 +16,10 @@ from subprocess import (
 )
 from typing import Any, Iterable, Iterator
 
-
 # type hints
 RadexInput = tuple[str, ...]
 RadexOutput = list[tuple[str, ...]]
 StrPath = PathLike[str] | str
-
 
 # constants
 LOGGER = getLogger(__name__)

@@ -1,18 +1,4 @@
-# project information
-project = "ndRADEX"
-author = "Akio Taniguchi"
-copyright = "2019-2023 Akio Taniguchi"
-
-
-# general configuration
-add_module_names = False
-autodoc_typehints = "both"
-autodoc_typehints_format = "short"
-exclude_patterns = [
-    "_build",
-    "Thumbs.db",
-    ".DS_Store",
-]
+copyright = "2019-2026 Akio Taniguchi"
 extensions = [
     "myst_parser",
     "sphinx.ext.autodoc",
@@ -20,13 +6,18 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
 ]
-myst_heading_anchors = 3
-templates_path = ["_templates"]
-
-
-# options for HTML output
+html_static_path = ["_static"]
 html_theme = "pydata_sphinx_theme"
 html_theme_options = {
     "github_url": "https://github.com/astropenguin/ndradex",
     "logo": {"text": "ndRADEX"},
+    "navbar_end": [
+        "version-switcher",
+        "theme-switcher",
+        "navbar-icon-links",
+    ],
+    "switcher": {
+        "json_url": "https://astropenguin.github.io/ndradex/_static/switcher.json",
+        "version_match": "1.0.0rc1",
+    },
 }

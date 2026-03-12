@@ -1,36 +1,64 @@
 __all__ = ["run"]
 
-
 # standard library
 from contextlib import contextmanager
+from dataclasses import dataclass, field
 from csv import writer as csv_writer
 from itertools import product
 from os import PathLike
 from pathlib import Path
 from shutil import which
 from tempfile import TemporaryDirectory
-from typing import Any, Collection, IO, Iterator, TypeVar
-
+from typing import Any, Annotated, Collection, Iterator, TypeVar
 
 # dependencies
+import numpy as np
 import pandas as pd
 import xarray as xr
+import xarrayspecs as xs
 from tqdm import tqdm
+from astropy.units import Quantity
 from .lamda import get_lamda
 from .radex import RADEX_BIN, RadexInput, runmap, to_input
-from .specs import NDRadexOutput
-
 
 # type hints
 T = TypeVar("T")
 Multiple = Collection[T] | T
 StrPath = PathLike[str] | str
 
-
 # constants
 IN_FILE = "ndradex.in"
 OUT_FILE = "ndradex.out"
 NTH_FILE = "ndradex-{n}.out"
+RADEX_DIMS = (
+    "transition",
+    "N",
+    "T_kin",
+    "n_H2",
+    "n_pH2",
+    "n_oH2",
+    "n_e",
+    "n_H",
+    "n_He",
+    "n_p",
+    "T_bg",
+    "I_bg",
+    "dv",
+    "radex",
+)
+RADEX_VARS = (
+    "line",
+    "E_up",
+    "freq",
+    "wavel",
+    "T_ex",
+    "tau",
+    "T_peak",
+    "pop_up",
+    "pop_low",
+    "I",
+    "F",
+)
 
 
 def run(
@@ -131,10 +159,15 @@ def run(
             writer.writerows(output)
             bar.update(ds.transition.size)
 
-        if squeeze:
-            return update_dataset(ds, csv).squeeze()
-        else:
-            return update_dataset(ds, csv)
+        csv.seek(0)
+        df = pd.read_csv(csv, header=None, names=list(ds.data_vars))
+
+    ds = ds.transpose(*RADEX_DIMS[1:], RADEX_DIMS[0])
+
+    for name, var in ds.data_vars.items():
+        var[:] = df[name].to_numpy().reshape(var.shape)
+
+    return ds.squeeze() if squeeze else ds
 
 
 def gen_inputs(dataset: xr.Dataset, workdir: Path, /) -> Iterator[RadexInput]:
@@ -154,15 +187,25 @@ def gen_inputs(dataset: xr.Dataset, workdir: Path, /) -> Iterator[RadexInput]:
         )
 
 
-def gen_radexes(dataset: xr.Dataset, /) -> Iterator[StrPath]:
+def gen_radexes(dataset: xr.Dataset, /) -> Iterator[Path]:
     """Generate paths of the RADEX binaries."""
     for index in walk_dims(dataset):
         if (path := Path(index["radex"])).exists():
-            yield str(path.expanduser().resolve())
+            yield path.expanduser().resolve()
         elif which(index["radex"]) is not None:
-            yield str(index["radex"])
+            yield Path(index["radex"])
         else:
-            yield str(RADEX_BIN / index["radex"])
+            yield RADEX_BIN / index["radex"]
+
+
+def get_dataarray(*args: Any, **kwargs: Any) -> xr.DataArray:
+    """Create a DataArray with values converted to given units."""
+    da = xr.DataArray(*args, **kwargs)
+
+    if isinstance(da.data, Quantity):
+        da.data = da.data.to(da.units).value
+
+    return da
 
 
 @contextmanager
@@ -175,21 +218,6 @@ def set_workdir(workdir: StrPath | None = None, /) -> Iterator[Path]:
         yield Path(workdir).expanduser().resolve()
 
 
-def update_dataset(dataset: xr.Dataset, csv: IO[str], /) -> xr.Dataset:
-    """Update data variables of a dataset by a CSV file."""
-    csv.seek(0)
-    df = pd.read_csv(csv, header=None, names=list(dataset.data_vars))
-
-    dims = list(dataset.dims)
-    dims.append(dims.pop(0))
-    transposed = dataset.transpose(*dims)
-
-    for name, var in transposed.data_vars.items():
-        var[:] = df[name].to_numpy().reshape(var.shape)
-
-    return dataset
-
-
 def walk_dims(dataset: xr.Dataset, /) -> Iterator[dict[str, Any]]:
     """Generate combinations of the dataset's dimensions."""
     dims = dict(dataset.indexes)
@@ -197,3 +225,220 @@ def walk_dims(dataset: xr.Dataset, /) -> Iterator[dict[str, Any]]:
 
     for values in product(*dims.values()):
         yield dict(zip(dims.keys(), values))
+
+
+@dataclass
+class NDRadexOutput(xs.AsDataset):
+    """Specifications for multidimensional RADEX outputs."""
+
+    # attributes
+    datafile: Annotated[StrPath, xs.use("attr")]
+
+    # dimensions
+    transition: Annotated[
+        Any,
+        xs.use("coord"),
+        xs.dims("transition"),
+        xs.attrs(long_name="Transition"),
+    ]
+    N: Annotated[
+        Any,
+        xs.use("coord"),
+        xs.dims("N"),
+        xs.dtype("f8"),
+        xs.attrs(long_name="Column density", units="cm^-2"),
+        xs.type(get_dataarray),
+    ]
+    T_kin: Annotated[
+        Any,
+        xs.use("coord"),
+        xs.dims("T_kin"),
+        xs.dtype("f8"),
+        xs.attrs(long_name="Kinetic temperature", units="K"),
+        xs.type(get_dataarray),
+    ]
+    n_H2: Annotated[
+        Any,
+        xs.use("coord"),
+        xs.dims("n_H2"),
+        xs.dtype("f8"),
+        xs.attrs(long_name="H2 density", units="cm^-3"),
+        xs.type(get_dataarray),
+    ]
+    n_pH2: Annotated[
+        Any,
+        xs.use("coord"),
+        xs.dims("n_pH2"),
+        xs.dtype("f8"),
+        xs.attrs(long_name="Para-H2 density", units="cm^-3"),
+        xs.type(get_dataarray),
+    ]
+    n_oH2: Annotated[
+        Any,
+        xs.use("coord"),
+        xs.dims("n_oH2"),
+        xs.dtype("f8"),
+        xs.attrs(long_name="Ortho-H2 density", units="cm^-3"),
+        xs.type(get_dataarray),
+    ]
+    n_e: Annotated[
+        Any,
+        xs.use("coord"),
+        xs.dims("n_e"),
+        xs.dtype("f8"),
+        xs.attrs(long_name="Electron density", units="cm^-3"),
+        xs.type(get_dataarray),
+    ]
+    n_H: Annotated[
+        Any,
+        xs.use("coord"),
+        xs.dims("n_H"),
+        xs.dtype("f8"),
+        xs.attrs(long_name="Hydrogen density", units="cm^-3"),
+        xs.type(get_dataarray),
+    ]
+    n_He: Annotated[
+        Any,
+        xs.use("coord"),
+        xs.dims("n_He"),
+        xs.dtype("f8"),
+        xs.attrs(long_name="Helium density", units="cm^-3"),
+        xs.type(get_dataarray),
+    ]
+    n_p: Annotated[
+        Any,
+        xs.use("coord"),
+        xs.dims("n_p"),
+        xs.dtype("f8"),
+        xs.attrs(long_name="Proton density", units="cm^-3"),
+        xs.type(get_dataarray),
+    ]
+    T_bg: Annotated[
+        Any,
+        xs.use("coord"),
+        xs.dims("T_bg"),
+        xs.dtype("f8"),
+        xs.attrs(long_name="Background temperature", units="K"),
+        xs.type(get_dataarray),
+    ]
+    I_bg: Annotated[
+        Any,
+        xs.use("coord"),
+        xs.dims("I_bg"),
+        xs.dtype(str),
+        xs.attrs(long_name="Background intensity"),
+    ]
+    dv: Annotated[
+        Any,
+        xs.use("coord"),
+        xs.dims("dv"),
+        xs.dtype("f8"),
+        xs.attrs(long_name="Line width", units="km s^-1"),
+        xs.type(get_dataarray),
+    ]
+    radex: Annotated[
+        Any,
+        xs.use("coord"),
+        xs.dims("radex"),
+        xs.dtype(str),
+        xs.attrs(long_name="RADEX binary"),
+    ]
+
+    # data variables
+    line: Annotated[
+        Any,
+        xs.use("data"),
+        xs.dims(RADEX_DIMS),
+        xs.dtype(str),
+        xs.attrs(long_name="Line name"),
+    ] = field(init=False)
+    E_up: Annotated[
+        Any,
+        xs.use("data"),
+        xs.dims(RADEX_DIMS),
+        xs.dtype("f8"),
+        xs.attrs(long_name="Upper state energy", units="K"),
+        xs.type(get_dataarray),
+    ] = field(init=False)
+    freq: Annotated[
+        Any,
+        xs.use("data"),
+        xs.dims(RADEX_DIMS),
+        xs.dtype("f8"),
+        xs.attrs(long_name="Frequency", units="GHz"),
+        xs.type(get_dataarray),
+    ] = field(init=False)
+    wavel: Annotated[
+        Any,
+        xs.use("data"),
+        xs.dims(RADEX_DIMS),
+        xs.dtype("f8"),
+        xs.attrs(long_name="Wavelength", units="um"),
+        xs.type(get_dataarray),
+    ] = field(init=False)
+    T_ex: Annotated[
+        Any,
+        xs.use("data"),
+        xs.dims(RADEX_DIMS),
+        xs.dtype("f8"),
+        xs.attrs(long_name="Excitation temperature", units="K"),
+        xs.type(get_dataarray),
+    ] = field(init=False)
+    tau: Annotated[
+        Any,
+        xs.use("data"),
+        xs.dims(RADEX_DIMS),
+        xs.dtype("f8"),
+        xs.attrs(long_name="Optical depth", units="dimensionless"),
+        xs.type(get_dataarray),
+    ] = field(init=False)
+    T_peak: Annotated[
+        Any,
+        xs.use("data"),
+        xs.dims(RADEX_DIMS),
+        xs.dtype("f8"),
+        xs.attrs(long_name="Peak intensity", units="K"),
+        xs.type(get_dataarray),
+    ] = field(init=False)
+    pop_up: Annotated[
+        Any,
+        xs.use("data"),
+        xs.dims(RADEX_DIMS),
+        xs.dtype("f8"),
+        xs.attrs(long_name="Upper state population", units="dimensionless"),
+        xs.type(get_dataarray),
+    ] = field(init=False)
+    pop_low: Annotated[
+        Any,
+        xs.use("data"),
+        xs.dims(RADEX_DIMS),
+        xs.dtype("f8"),
+        xs.attrs(long_name="Lower state population", units="dimensionless"),
+        xs.type(get_dataarray),
+    ] = field(init=False)
+    I: Annotated[
+        Any,
+        xs.use("data"),
+        xs.dims(RADEX_DIMS),
+        xs.dtype("f8"),
+        xs.attrs(long_name="Integrated intensity", units="K km s^-1"),
+        xs.type(get_dataarray),
+    ] = field(init=False)
+    F: Annotated[
+        Any,
+        xs.use("data"),
+        xs.dims(RADEX_DIMS),
+        xs.dtype("f8"),
+        xs.attrs(long_name="Flux", units="erg s^-1 cm^-2"),
+        xs.type(get_dataarray),
+    ] = field(init=False)
+
+    def __post_init__(self) -> None:
+        """Set empty arrays to the data variables."""
+        for dim in RADEX_DIMS:
+            setattr(self, dim, np.atleast_1d(getattr(self, dim)))
+
+        shape = [len(getattr(self, dim)) for dim in RADEX_DIMS]
+
+        for var in RADEX_VARS:
+            setattr(self, var, np.empty(shape))

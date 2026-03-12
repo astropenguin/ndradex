@@ -21,10 +21,8 @@ jobs:
       - run: sudo apt-get install gfortran
       - run: uv sync --frozen
       - run: docs/build
-      - run: echo "tag=${GITHUB_REF##*/}" >> $GITHUB_OUTPUT
-        id: tag
       - uses: peaceiris/actions-gh-pages@v4
         with:
-          destination_dir: ${{ steps.tag.outputs.tag }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./docs/_build
+          keep_files: true
