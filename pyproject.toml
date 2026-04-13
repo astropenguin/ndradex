@@ -50,7 +50,7 @@ dev = [
     "myst-parser>=3,<5",
     "pydata-sphinx-theme>=0.15,<1.0",
     "pyright>=1,<2",
-    "pytest>=8,<9",
+    "pytest>=9.0.3,<10",
     "sphinx>=7,<9",
 ]
 
